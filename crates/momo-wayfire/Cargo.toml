@@ -1,0 +1,7 @@
+[package]
+name = "momo-wayfire"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+momo-compositor = { path = "../momo-compositor" }

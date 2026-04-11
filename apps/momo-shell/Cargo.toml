@@ -1,0 +1,11 @@
+[package]
+name = "momo-shell"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+momo-app = { path = "../../crates/momo-app" }
+momo-ui = { path = "../../crates/momo-ui" }
+momo-wayfire = { path = "../../crates/momo-wayfire" }
+daiko = { workspace = true }
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }

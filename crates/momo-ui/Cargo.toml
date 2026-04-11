@@ -1,0 +1,8 @@
+[package]
+name = "momo-ui"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+daiko.workspace = true
+momo-app = { path = "../momo-app" }

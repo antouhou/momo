@@ -1,8 +1,8 @@
 mod components;
 
+use crate::components::home::Home;
 use daiko::{App, AppContext};
 use momo_app::ShellViewModel;
-use crate::components::home::Home;
 
 pub struct MomoUi {
     view_model: ShellViewModel,
@@ -21,11 +21,11 @@ impl MomoUi {
 impl App for MomoUi {
     type RootComponent = Home;
 
-    fn create(&mut self, app_context: &mut AppContext) -> Self::RootComponent {
-        Home
+    fn create(&mut self, _app_context: &mut AppContext) -> Self::RootComponent {
+        Home::new()
     }
 
-    fn stop(&mut self, app_context: &mut AppContext) {
+    fn stop(&mut self, _app_context: &mut AppContext) {
         println!("Stopping MomoUi");
     }
 }

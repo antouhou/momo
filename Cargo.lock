@@ -617,7 +617,6 @@ checksum = "f27ae1dd37df86211c42e150270f82743308803d90a6f6e6651cd730d5e1732f"
 [[package]]
 name = "daiko"
 version = "0.0.2"
-source = "git+ssh://git@github.com/antouhou/daiko.git#af994c2c7bda9e54cc31c9a9a248c0a863bb8d67"
 dependencies = [
  "arboard",
  "crossbeam-channel",
@@ -634,7 +633,6 @@ dependencies = [
 [[package]]
 name = "daikore"
 version = "0.0.2"
-source = "git+ssh://git@github.com/antouhou/daiko.git#af994c2c7bda9e54cc31c9a9a248c0a863bb8d67"
 dependencies = [
  "ahash",
  "anycow",

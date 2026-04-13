@@ -13,4 +13,4 @@ edition = "2024"
 version = "0.1.0"
 
 [workspace.dependencies]
-daiko = { git = "ssh://git@github.com/antouhou/daiko.git" }
+daiko = { path = "../daiko/crates/daiko" }

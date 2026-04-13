@@ -25,7 +25,7 @@ impl Component for AppGrid {
                     .with_align_items(AlignItems::Center),
             )
             .with_content(
-                Scrollable::new(content, HOME_SCROLLABLE_ID), // .with_style(Style::new().with_size_constraint(SizeConstraint::at_least_parent_size())),
+                Scrollable::new(content, HOME_SCROLLABLE_ID),
             )
     }
 }
@@ -34,10 +34,6 @@ struct ScrollableContents;
 
 impl Component for ScrollableContents {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        let layout = ctx.layout();
-        if layout.is_none() {
-            return Element::new();
-        }
         let available_width = ctx
             .layout()
             .map(|layout| layout.size.x)

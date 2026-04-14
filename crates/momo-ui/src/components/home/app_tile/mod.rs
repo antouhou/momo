@@ -1,10 +1,8 @@
-use crate::components::home::model::{
-    HOME_STATUS_STATE_ID, MockApp, TILE_HEIGHT, TILE_WIDTH, color,
-};
-use daiko::animation::{AnimationParameters, TransitionOptions, transition};
+use crate::components::home::model::{MockApp, TILE_HEIGHT, TILE_WIDTH, color};
+use daiko::animation::{Animation, AnimationParameters, TransitionOptions, transition};
 use daiko::component::{Component, ComponentContext};
 use daiko::navigation::{FocusKey, FocusOrigin};
-use daiko::style::{Border, BorderRadius, Color, Stroke, Style, StyleProperty};
+use daiko::style::{Border, BorderRadius, Color, Stroke, Style, StyleProperty, Transform};
 use daiko::widgets::adorners;
 use daiko::widgets::container::{Container, Fit};
 use daiko::widgets::text::{Text, TextStyle, TextWrap};
@@ -25,15 +23,14 @@ impl Component for AppTile {
         focusable.set_focus_key(FocusKey::new(self.app.id));
         focusable.set_preferred_focus(self.preferred_focus);
 
-        let is_activated = focusable.just_activated() || pointer.just_pressed();
+        let just_activated = focusable.just_activated() || pointer.just_pressed();
 
         if pointer.just_pressed() {
             focusable.request_focus(FocusOrigin::Pointer);
         }
 
-        if is_activated {
-            *ctx.use_global_state(Id::new(HOME_STATUS_STATE_ID), String::new)
-                .write() = format!("Launching {} (mock)", self.app.name);
+        if just_activated {
+            println!("Activated app: {}", self.app.name);
         }
 
         let is_pressed = pointer.is_pressed();
@@ -56,34 +53,49 @@ impl Component for AppTile {
             Color::from_rgb(52, 65, 89)
         };
 
-        let style = transition(
-            Style::new()
-                .with_fixed_size(TILE_WIDTH, TILE_HEIGHT)
-                .with_direction(daiko::layout::FlexDirection::Column)
-                .with_align_items(daiko::layout::AlignItems::FlexStart)
-                .with_padding(16.0)
-                .with_spacing((12.0, 12.0))
-                .with_background_color(background)
-                .with_border(Border::uniform(Stroke::new(2.0, border_color)))
-                .with_border_radius(BorderRadius::all(18.0)),
-            Some([
-                TransitionOptions {
-                    property: StyleProperty::Background,
-                    animation_parameters: AnimationParameters {
-                        duration: Duration::from_millis(180),
-                        ..AnimationParameters::default()
-                    },
-                },
-                TransitionOptions {
-                    property: StyleProperty::Border,
-                    animation_parameters: AnimationParameters {
-                        duration: Duration::from_millis(180),
-                        ..AnimationParameters::default()
-                    },
-                },
-            ]),
-            ctx,
+        let mut style = Style::new()
+            .with_fixed_size(TILE_WIDTH, TILE_HEIGHT)
+            .with_direction(daiko::layout::FlexDirection::Column)
+            .with_align_items(daiko::layout::AlignItems::FlexStart)
+            .with_padding(16.0)
+            .with_spacing((12.0, 12.0))
+            .with_background_color(transition(
+                background,
+                AnimationParameters::default()
+                    .with_duration(Duration::from_millis(180))
+                    .to_transition_options(),
+                ctx,
+            ))
+            .with_border(Border::uniform(Stroke::new(
+                2.0,
+                transition(
+                    border_color,
+                    AnimationParameters::default()
+                        .with_duration(Duration::from_millis(180))
+                        .to_transition_options(),
+                    ctx,
+                ),
+            )))
+            .with_border_radius(BorderRadius::all(18.0));
+
+        let activation_animation = ctx.animation_with_id(
+            Id::new(1),
+            AnimationParameters::default().with_duration(Duration::from_millis(180)),
         );
+
+        if just_activated {
+            activation_animation.restart_reset();
+        }
+
+        let activation_progress = activation_animation.progress();
+
+        if activation_progress > 0.0 && activation_progress < 1.0 {
+            let activation_transform = Transform::scale(
+                1.0 + 0.05 * activation_progress,
+                1.0 + 0.05 * activation_progress,
+            );
+            style.transform = Some(activation_transform);
+        }
 
         let icon = Element::new()
             .with_style(

@@ -3,7 +3,6 @@ use daiko::style::Color;
 pub(super) const HOME_SCROLLABLE_ID: &str = "momo_home_apps_scrollable";
 pub(super) const HOME_CLOCK_THREAD_ID: &str = "momo_home_clock_thread_started";
 pub(super) const HOME_CLOCK_STATE_ID: &str = "momo_home_clock_text";
-pub(super) const HOME_STATUS_STATE_ID: &str = "momo_home_last_opened";
 
 pub(super) const SCREEN_PADDING: f32 = 40.0;
 pub(super) const SECTION_GAP: f32 = 24.0;

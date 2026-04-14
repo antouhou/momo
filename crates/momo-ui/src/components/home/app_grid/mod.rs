@@ -13,26 +13,6 @@ use daiko::widgets::scrollable::Scrollable;
 pub(super) struct AppGrid;
 
 impl Component for AppGrid {
-    fn to_element(&self, _ctx: &mut ComponentContext) -> Element {
-        let content = ScrollableContents;
-
-        Element::new()
-            .with_tag("apps-grid")
-            .with_style(
-                Style::new()
-                    .with_direction(daiko::layout::FlexDirection::Column)
-                    .with_justify_content(JustifyContent::Center)
-                    .with_align_items(AlignItems::Center),
-            )
-            .with_content(
-                Scrollable::new(content, HOME_SCROLLABLE_ID),
-            )
-    }
-}
-
-struct ScrollableContents;
-
-impl Component for ScrollableContents {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         let available_width = ctx
             .layout()
@@ -64,6 +44,14 @@ impl Component for ScrollableContents {
             content.add_content(row_container);
         }
 
-        content
+        Element::new()
+            .with_tag("apps-grid")
+            .with_style(
+                Style::new()
+                    .with_direction(daiko::layout::FlexDirection::Column)
+                    .with_justify_content(JustifyContent::Center)
+                    .with_align_items(AlignItems::Center),
+            )
+            .with_content(Scrollable::new(content, HOME_SCROLLABLE_ID))
     }
 }

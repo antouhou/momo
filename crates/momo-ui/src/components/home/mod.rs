@@ -7,15 +7,15 @@ mod time;
 use crate::components::home::app_grid::AppGrid;
 use crate::components::home::clock_chip::clock_chip;
 use crate::components::home::model::{
-    HOME_CLOCK_STATE_ID, HOME_CLOCK_THREAD_ID, HOME_STATUS_STATE_ID, SCREEN_PADDING, SECTION_GAP,
+    HOME_CLOCK_STATE_ID, HOME_CLOCK_THREAD_ID, SCREEN_PADDING, SECTION_GAP,
 };
 use crate::components::home::time::{read_system_time, spawn_clock_thread};
 use daiko::component::{Component, ComponentContext};
-use daiko::layout::FlexDirection;
+use daiko::layout::{FlexDirection, JustifyContent};
 use daiko::style::{Color, Style};
 use daiko::widgets::container::{Container, Fit};
 use daiko::widgets::heading::{Heading, HeadingLevel};
-use daiko::widgets::text::{HorizontalTextAlignment, Text, TextStyle, VerticalTextAlignment};
+use daiko::widgets::text::VerticalTextAlignment;
 use daiko::{Element, Id};
 
 #[derive(Clone, Copy)]
@@ -42,50 +42,32 @@ impl Default for Home {
 
 impl Component for Home {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        ctx.app_context.set_fullscreen(true);
+        // ctx.app_context.set_fullscreen(true);
 
         let clock_text = ctx.use_global_state(Id::new(HOME_CLOCK_STATE_ID), read_system_time);
         let clock_thread_started = ctx.use_global_state(Id::new(HOME_CLOCK_THREAD_ID), || false);
-        let last_opened =
-            ctx.use_global_state(Id::new(HOME_STATUS_STATE_ID), || "Ready".to_string());
 
         if self.live_clock && !*clock_thread_started.read() {
             *clock_thread_started.write_silent() = true;
             spawn_clock_thread(clock_text.clone());
         }
 
-        let top_bar = Container::horizontal()
+        let header = Container::horizontal()
+            .with_style(Style::new().with_justify_content(JustifyContent::SpaceBetween))
             .with_fit(Fit::new().exact_content_height())
             .align_items_center()
-            .justify_content_end()
-            .build()
-            .with_tag("home-top-bar")
-            .with_content(clock_chip(clock_text.read().clone()));
-
-        let section_header = Container::vertical()
-            .with_style(Style::new().with_direction(FlexDirection::Column))
-            .with_fit(Fit::new().exact_content_size())
-            .with_spacing((8.0, 8.0))
             .build()
             .with_tag("apps-header")
             .with_content(
-                Heading::new("Apps", HeadingLevel::H4)
+                Heading::new("Apps", HeadingLevel::H1)
                     .with_vertical_text_alignment(VerticalTextAlignment::Center),
             )
-            .with_content(
-                Text::new(last_opened.read().clone()).with_style(
-                    TextStyle::default()
-                        .with_font_size(14.0)
-                        .with_font_color(Color::from_rgb(132, 149, 179))
-                        .with_horizontal_alignment(HorizontalTextAlignment::Start),
-                ),
-            );
+            .with_content(clock_chip(clock_text.read().clone()));
 
         Element::new()
             .with_tag("home-root")
             .with_style(home_style())
-            .with_content(top_bar)
-            .with_content(section_header)
+            .with_content(header)
             .with_content(AppGrid)
     }
 }
@@ -190,5 +172,19 @@ mod tests {
 
         let (_position, size) = runner.get_element_bounds("apps-header");
         assert!(size.y > 20.0, "apps header should have visible height");
+    }
+
+    #[test]
+    fn hovering_tile_moves_focus_to_the_hovered_app() {
+        let mut runner = TestRunner::new(HomeTestApp);
+        runner.set_viewport_size(1280.0, 720.0);
+        runner.run_frame();
+
+        let tile_center = runner.get_element_center("movies");
+        runner.move_pointer_to(tile_center);
+        runner.run_frame();
+        runner.run_frame();
+
+        runner.assert_focused("movies");
     }
 }

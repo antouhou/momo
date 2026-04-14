@@ -1,14 +1,17 @@
+use daiko::Vec2;
 use daiko::style::Color;
 
 pub(super) const HOME_SCROLLABLE_ID: &str = "momo_home_apps_scrollable";
 pub(super) const HOME_CLOCK_THREAD_ID: &str = "momo_home_clock_thread_started";
 pub(super) const HOME_CLOCK_STATE_ID: &str = "momo_home_clock_text";
+pub(super) const HOME_LAUNCH_CHANNEL_ID: &str = "momo_home_launch_channel";
 
 pub(super) const SCREEN_PADDING: f32 = 40.0;
 pub(super) const SECTION_GAP: f32 = 24.0;
 pub(super) const GRID_GAP: f32 = 18.0;
 pub(super) const TILE_WIDTH: f32 = 248.0;
 pub(super) const TILE_HEIGHT: f32 = 176.0;
+pub(super) const TILE_BORDER_RADIUS: f32 = 18.0;
 
 #[derive(Clone, Copy)]
 pub(super) struct MockApp {
@@ -17,6 +20,13 @@ pub(super) struct MockApp {
     pub subtitle: &'static str,
     pub badge: &'static str,
     pub accent: [u8; 3],
+}
+
+#[derive(Clone, Copy)]
+pub(super) struct LaunchRequest {
+    pub app: MockApp,
+    pub position: Vec2,
+    pub size: Vec2,
 }
 
 pub(super) const MOCK_APPS: [MockApp; 28] = [

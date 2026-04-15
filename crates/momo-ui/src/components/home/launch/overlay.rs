@@ -1,12 +1,13 @@
 use crate::components::home::launch::{
-    AnimatedRect, HOME_HERO_ICON_SIZE, HOME_LAUNCH_BACKDROP_TAG, HOME_LAUNCH_SURFACE_RADIUS,
-    HOME_LAUNCH_SURFACE_TAG, HOME_SHARED_CONTENT_HEIGHT, HOME_SHARED_CONTENT_WIDTH,
-    HOME_TILE_BORDER_WIDTH, HOME_TILE_ICON_OFFSET, HOME_TILE_ICON_SIZE, LaunchPhase,
+    AnimatedRect, HOME_HERO_ICON_SIZE, HOME_LAUNCH_ANIMATION_ID, HOME_LAUNCH_BACKDROP_TAG,
+    HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID, HOME_LAUNCH_SURFACE_RADIUS, HOME_LAUNCH_SURFACE_TAG,
+    HOME_SHARED_CONTENT_HEIGHT, HOME_SHARED_CONTENT_WIDTH, HOME_TILE_BORDER_WIDTH,
+    HOME_TILE_ICON_OFFSET, HOME_TILE_ICON_SIZE, LaunchOverlayEvent, LaunchPhase,
     LaunchTransitionState,
 };
 use crate::components::home::model::{LaunchRequest, TILE_BORDER_RADIUS, color};
-use daiko::animation::Interpolable;
 use daiko::animation::easing::{Easing, EasingFunction};
+use daiko::animation::{AnimationParameters, Interpolable};
 use daiko::component::{Component, ComponentContext};
 use daiko::effects::Opacity;
 use daiko::layout::FlexDirection;
@@ -14,9 +15,98 @@ use daiko::style::{Border, BorderRadius, Color, Stroke, Style};
 use daiko::widgets::container::{Container, Fit};
 use daiko::widgets::overlay::Overlay;
 use daiko::widgets::text::{Text, TextStyle};
-use daiko::{Element, Vec2};
+use daiko::{Element, Id, Vec2};
+use std::time::Duration;
 
-pub(in crate::components::home) fn render_launch_overlay(
+#[derive(Clone, Copy)]
+pub(in crate::components::home) struct LaunchOverlay {
+    pub launch: LaunchTransitionState,
+}
+
+#[derive(Clone, Copy, Default)]
+struct LaunchOverlayAnimationState {
+    current_app_id: Option<&'static str>,
+    current_phase: Option<LaunchPhase>,
+    expanded_event_sent: bool,
+    contracted_event_sent: bool,
+}
+
+impl Component for LaunchOverlay {
+    fn to_element(&self, ctx: &mut ComponentContext) -> Element {
+        let animation_progress = update_launch_animation(ctx, self.launch);
+        render_launch_overlay(ctx, self.launch, animation_progress)
+    }
+}
+
+fn update_launch_animation(ctx: &mut ComponentContext, launch: LaunchTransitionState) -> f32 {
+    let overlay_event_channel = ctx.use_channel_with_id(HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID);
+    let animation_state_handle = ctx.use_local_state(LaunchOverlayAnimationState::default);
+    let mut animation_state = *animation_state_handle.read();
+    let launch_animation = ctx.animation_with_id(
+        Id::new(HOME_LAUNCH_ANIMATION_ID),
+        AnimationParameters::default()
+            .with_duration(Duration::from_millis(360))
+            .with_easing(EasingFunction::EaseInOut),
+    );
+
+    if animation_state.current_app_id != Some(launch.request.app.id) {
+        animation_state = LaunchOverlayAnimationState {
+            current_app_id: Some(launch.request.app.id),
+            current_phase: Some(launch.phase),
+            expanded_event_sent: false,
+            contracted_event_sent: false,
+        };
+        launch_animation.set_progress(0.0);
+        launch_animation.play_forward();
+    } else if animation_state.current_phase != Some(launch.phase) {
+        animation_state.current_phase = Some(launch.phase);
+        match launch.phase {
+            LaunchPhase::Expanding => {
+                animation_state.expanded_event_sent = false;
+                animation_state.contracted_event_sent = false;
+                launch_animation.set_progress(0.0);
+                launch_animation.play_forward();
+            }
+            LaunchPhase::WaitingForSurface => {
+                launch_animation.set_progress(1.0);
+            }
+            LaunchPhase::Contracting => {
+                animation_state.contracted_event_sent = false;
+                launch_animation.play_backward();
+            }
+        }
+    }
+
+    let animation_progress = launch_animation.progress_linear();
+
+    if launch.phase == LaunchPhase::Expanding
+        && !launch_animation.is_running()
+        && animation_progress >= 1.0
+        && !animation_state.expanded_event_sent
+    {
+        let _ = overlay_event_channel.send(LaunchOverlayEvent::Expanded {
+            app_id: launch.request.app.id,
+        });
+        animation_state.expanded_event_sent = true;
+    }
+
+    if launch.phase == LaunchPhase::Contracting
+        && !launch_animation.is_running()
+        && animation_progress <= 0.0
+        && !animation_state.contracted_event_sent
+    {
+        let _ = overlay_event_channel.send(LaunchOverlayEvent::Contracted {
+            app_id: launch.request.app.id,
+        });
+        animation_state.contracted_event_sent = true;
+    }
+
+    *animation_state_handle.write_silent() = animation_state;
+
+    animation_progress
+}
+
+fn render_launch_overlay(
     ctx: &mut ComponentContext,
     launch: LaunchTransitionState,
     animation_progress: f32,

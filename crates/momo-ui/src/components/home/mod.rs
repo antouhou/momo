@@ -11,7 +11,7 @@ mod time;
 use crate::components::home::app_grid::AppGrid;
 use crate::components::home::header::HomeHeader;
 use crate::components::home::launch::controller::use_launch_controller;
-use crate::components::home::launch::overlay::render_launch_overlay;
+use crate::components::home::launch::overlay::LaunchOverlay;
 use crate::components::home::model::{
     HOME_CLOCK_STATE_ID, HOME_CLOCK_THREAD_ID, SCREEN_PADDING, SECTION_GAP,
 };
@@ -45,7 +45,7 @@ impl Default for Home {
 
 impl Component for Home {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        ctx.app_context.set_fullscreen(true);
+        ctx.app_context.set_fullscreen(false);
 
         if self.live_clock {
             let clock_thread_started =
@@ -72,11 +72,9 @@ impl Component for Home {
             });
 
         if let Some(active_launch) = launch.active_launch {
-            root.add_content(render_launch_overlay(
-                ctx,
-                active_launch,
-                launch.launch_progress,
-            ));
+            root.add_content(LaunchOverlay {
+                launch: active_launch,
+            });
         }
 
         root

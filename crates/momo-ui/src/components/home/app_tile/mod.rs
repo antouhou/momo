@@ -152,8 +152,6 @@ impl Component for AppTile {
                 ),
             );
 
-        
-
         // TODO: better focus ring
         // if is_focus_visible
         //     && let Some(focus_ring) = adorners::focus_outline(

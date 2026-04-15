@@ -5,6 +5,8 @@ use crate::components::home::model::LaunchRequest;
 use daiko::Vec2;
 
 pub(super) const HOME_LAUNCH_ANIMATION_ID: &str = "momo_home_launch_animation";
+pub(super) const HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID: &str =
+    "momo_home_launch_overlay_event_channel";
 pub(super) const HOME_LAUNCH_BACKDROP_TAG: &str = "launch-overlay";
 pub(super) const HOME_LAUNCH_SURFACE_TAG: &str = "launch-overlay-surface";
 pub(super) const HOME_LAUNCH_SURFACE_RADIUS: f32 = 0.0;
@@ -28,6 +30,12 @@ pub(super) enum LaunchPhase {
 pub(super) struct LaunchTransitionState {
     request: LaunchRequest,
     phase: LaunchPhase,
+}
+
+#[derive(Clone, Copy)]
+pub(super) enum LaunchOverlayEvent {
+    Expanded { app_id: &'static str },
+    Contracted { app_id: &'static str },
 }
 
 #[derive(Clone, Copy)]

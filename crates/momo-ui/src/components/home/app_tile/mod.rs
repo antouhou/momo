@@ -5,7 +5,7 @@ use crate::components::home::model::{
 use daiko::Element;
 use daiko::animation::{AnimationParameters, transition};
 use daiko::component::{Component, ComponentContext};
-use daiko::navigation::{FocusKey, FocusOrigin};
+use daiko::navigation::{FocusKey, FocusOrigin, NavigationDirection};
 use daiko::style::{Border, BorderRadius, Color, Stroke, Style};
 use daiko::widgets::container::{Container, Fit};
 use daiko::widgets::text::{Text, TextStyle, TextWrap};
@@ -17,6 +17,8 @@ pub(super) struct AppTile {
     pub preferred_focus: bool,
     pub interactions_disabled: bool,
     pub is_hidden_for_launch: bool,
+    pub focus_left_app_id: Option<&'static str>,
+    pub focus_right_app_id: Option<&'static str>,
 }
 
 impl Component for AppTile {
@@ -31,10 +33,14 @@ impl Component for AppTile {
         focusable.set_navigation_enabled(!self.interactions_disabled);
         focusable.set_focus_key(FocusKey::new(self.app.id));
         focusable.set_preferred_focus(self.preferred_focus);
-
-        if !self.interactions_disabled && pointer.just_entered() {
-            focusable.request_focus(FocusOrigin::Pointer);
-        }
+        focusable.set_focus_directional_override(
+            NavigationDirection::Left,
+            self.focus_left_app_id.map(FocusKey::new),
+        );
+        focusable.set_focus_directional_override(
+            NavigationDirection::Right,
+            self.focus_right_app_id.map(FocusKey::new),
+        );
 
         let pointer_activated = !self.interactions_disabled && pointer.just_pressed();
         let focus_activated = !self.interactions_disabled && focusable.just_activated();

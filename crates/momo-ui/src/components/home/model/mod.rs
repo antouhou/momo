@@ -1,7 +1,11 @@
 use daiko::Vec2;
 use daiko::style::Color;
 
-pub(super) const HOME_SCROLLABLE_ID: &str = "momo_home_apps_scrollable";
+pub(super) const HOME_APP_GRID_PAGE_STATE_ID: &str = "momo_home_app_grid_page_state";
+pub(super) const HOME_APP_GRID_FOCUSED_KEY_ID: &str = "momo_home_app_grid_focused_key";
+pub(super) const HOME_APP_GRID_SCROLL_ACCUMULATOR_ID: &str =
+    "momo_home_app_grid_scroll_accumulator";
+pub(super) const HOME_APP_GRID_SMOOTH_OFFSET_ID: &str = "momo_home_app_grid_smooth_offset";
 pub(super) const HOME_CLOCK_THREAD_ID: &str = "momo_home_clock_thread_started";
 pub(super) const HOME_CLOCK_STATE_ID: &str = "momo_home_clock_text";
 pub(super) const HOME_LAUNCH_CHANNEL_ID: &str = "momo_home_launch_channel";
@@ -231,6 +235,11 @@ pub(super) const MOCK_APPS: [MockApp; 28] = [
 pub(super) fn columns_for_width(width: f32) -> usize {
     let slot = TILE_WIDTH + GRID_GAP;
     ((width + GRID_GAP) / slot).floor().max(1.0) as usize
+}
+
+pub(super) fn rows_for_height(height: f32) -> usize {
+    let slot = TILE_HEIGHT + GRID_GAP;
+    ((height + GRID_GAP) / slot).floor().max(1.0) as usize
 }
 
 pub(super) fn color(rgb: [u8; 3]) -> Color {

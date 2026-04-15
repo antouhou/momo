@@ -12,9 +12,7 @@ use crate::components::home::app_grid::AppGrid;
 use crate::components::home::header::HomeHeader;
 use crate::components::home::launch::controller::use_launch_controller;
 use crate::components::home::launch::overlay::LaunchOverlay;
-use crate::components::home::model::{
-    HOME_CLOCK_STATE_ID, HOME_CLOCK_THREAD_ID, SCREEN_PADDING, SECTION_GAP,
-};
+use crate::components::home::model::{HOME_CLOCK_STATE_ID, HOME_CLOCK_THREAD_ID, SECTION_GAP};
 use crate::components::home::time::{read_system_time, spawn_clock_thread};
 use daiko::component::{Component, ComponentContext};
 use daiko::layout::FlexDirection;
@@ -45,7 +43,7 @@ impl Default for Home {
 
 impl Component for Home {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        ctx.app_context.set_fullscreen(false);
+        ctx.app_context.set_fullscreen(true);
 
         if self.live_clock {
             let clock_thread_started =
@@ -90,6 +88,5 @@ fn home_style() -> Style {
                 .stop(Color::from_rgb(54, 47, 28)),
         )
         .with_direction(FlexDirection::Column)
-        .with_padding(SCREEN_PADDING)
         .with_spacing((SECTION_GAP, SECTION_GAP))
 }

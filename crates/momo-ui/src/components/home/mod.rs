@@ -9,7 +9,7 @@ mod tests;
 mod time;
 
 use crate::components::home::app_grid::AppGrid;
-use crate::components::home::header::build_home_header;
+    use crate::components::home::header::HomeHeader;
 use crate::components::home::launch::controller::use_launch_controller;
 use crate::components::home::launch::overlay::render_launch_overlay;
 use crate::components::home::model::{
@@ -47,21 +47,23 @@ impl Component for Home {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         ctx.app_context.set_fullscreen(true);
 
-        let clock_text = ctx.use_global_state(Id::new(HOME_CLOCK_STATE_ID), read_system_time);
-        let clock_thread_started = ctx.use_global_state(Id::new(HOME_CLOCK_THREAD_ID), || false);
+        if self.live_clock {
+            let clock_thread_started =
+                ctx.peek_global_state(Id::new(HOME_CLOCK_THREAD_ID), || false);
 
-        if self.live_clock && !*clock_thread_started.read() {
-            *clock_thread_started.write_silent() = true;
-            spawn_clock_thread(clock_text.clone());
+            if !*clock_thread_started.read() {
+                let clock_text = ctx.peek_global_state(Id::new(HOME_CLOCK_STATE_ID), read_system_time);
+                *clock_thread_started.write_silent() = true;
+                spawn_clock_thread(clock_text.clone());
+            }
         }
 
         let launch = use_launch_controller(ctx);
-        let header = build_home_header(clock_text.read().clone());
 
         let mut root = Element::new()
             .with_tag("home-root")
             .with_style(home_style())
-            .with_content(header)
+            .with_content(HomeHeader)
             .with_content(AppGrid {
                 interactions_disabled: launch.active_launch.is_some(),
                 hidden_app_id: launch.launched_app_id,

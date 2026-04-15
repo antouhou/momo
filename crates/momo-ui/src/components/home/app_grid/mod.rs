@@ -9,30 +9,14 @@ use daiko::style::Style;
 use daiko::widgets::container::{Container, Fit};
 use daiko::widgets::scrollable::Scrollable;
 
-#[derive(Clone, Copy)]
-pub(super) struct AppGrid;
-
-impl Component for AppGrid {
-    fn to_element(&self, _ctx: &mut ComponentContext) -> Element {
-        let content = ScrollableContents;
-
-        Element::new()
-            .with_tag("apps-grid")
-            .with_style(
-                Style::new()
-                    .with_direction(daiko::layout::FlexDirection::Column)
-                    .with_justify_content(JustifyContent::Center)
-                    .with_align_items(AlignItems::Center),
-            )
-            .with_content(
-                Scrollable::new(content, HOME_SCROLLABLE_ID),
-            )
-    }
+#[derive(Clone)]
+pub(super) struct AppGrid {
+    pub interactions_disabled: bool,
+    pub hidden_app_id: Option<&'static str>,
+    pub preferred_focus_app_id: Option<&'static str>,
 }
 
-struct ScrollableContents;
-
-impl Component for ScrollableContents {
+impl Component for AppGrid {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         let available_width = ctx
             .layout()
@@ -57,13 +41,24 @@ impl Component for ScrollableContents {
             for (index, app) in row.iter().enumerate() {
                 row_container.add_content(AppTile {
                     app: *app,
-                    preferred_focus: row_index == 0 && index == 0,
+                    preferred_focus: self.preferred_focus_app_id == Some(app.id)
+                        || (self.preferred_focus_app_id.is_none() && row_index == 0 && index == 0),
+                    interactions_disabled: self.interactions_disabled,
+                    is_hidden_for_launch: self.hidden_app_id == Some(app.id),
                 });
             }
 
             content.add_content(row_container);
         }
 
-        content
+        Element::new()
+            .with_tag("apps-grid")
+            .with_style(
+                Style::new()
+                    .with_direction(daiko::layout::FlexDirection::Column)
+                    .with_justify_content(JustifyContent::Center)
+                    .with_align_items(AlignItems::Center),
+            )
+            .with_content(Scrollable::new(content, HOME_SCROLLABLE_ID))
     }
 }

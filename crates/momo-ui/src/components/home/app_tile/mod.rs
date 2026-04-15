@@ -1,54 +1,87 @@
 use crate::components::home::model::{
-    HOME_STATUS_STATE_ID, MockApp, TILE_HEIGHT, TILE_WIDTH, color,
+    HOME_LAUNCH_CHANNEL_ID, LaunchRequest, MockApp, TILE_BORDER_RADIUS, TILE_HEIGHT, TILE_WIDTH,
+    color,
 };
-use daiko::animation::{AnimationParameters, TransitionOptions, transition};
+use daiko::Element;
+use daiko::animation::{AnimationParameters, transition};
 use daiko::component::{Component, ComponentContext};
 use daiko::navigation::{FocusKey, FocusOrigin};
-use daiko::style::{Border, BorderRadius, Color, Stroke, Style, StyleProperty};
-use daiko::widgets::adorners;
+use daiko::style::{Border, BorderRadius, Color, Stroke, Style};
 use daiko::widgets::container::{Container, Fit};
 use daiko::widgets::text::{Text, TextStyle, TextWrap};
-use daiko::{Element, Id};
 use std::time::Duration;
 
 #[derive(Clone)]
 pub(super) struct AppTile {
     pub app: MockApp,
     pub preferred_focus: bool,
+    pub interactions_disabled: bool,
+    pub is_hidden_for_launch: bool,
 }
 
 impl Component for AppTile {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         let mut pointer = ctx.pointer();
         let focusable = ctx.focusable();
+        let layout = ctx
+            .peek_element_layout(&ctx.element_id())
+            .copied()
+            .or_else(|| ctx.layout());
 
+        focusable.set_navigation_enabled(!self.interactions_disabled);
         focusable.set_focus_key(FocusKey::new(self.app.id));
         focusable.set_preferred_focus(self.preferred_focus);
 
-        let is_activated = focusable.just_activated() || pointer.just_pressed();
-
-        if pointer.just_pressed() {
+        if !self.interactions_disabled && pointer.just_entered() {
             focusable.request_focus(FocusOrigin::Pointer);
         }
 
-        if is_activated {
-            *ctx.use_global_state(Id::new(HOME_STATUS_STATE_ID), String::new)
-                .write() = format!("Launching {} (mock)", self.app.name);
+        let pointer_activated = !self.interactions_disabled && pointer.just_pressed();
+        let focus_activated = !self.interactions_disabled && focusable.just_activated();
+        let just_activated = pointer_activated || focus_activated;
+
+        if pointer_activated {
+            focusable.request_focus(FocusOrigin::Pointer);
         }
 
-        let is_pressed = pointer.is_pressed();
+        if just_activated {
+            if let Some(layout) = layout {
+                let launch_channel = ctx.use_channel_with_id(HOME_LAUNCH_CHANNEL_ID);
+                let _ = launch_channel.send(LaunchRequest {
+                    app: self.app,
+                    position: layout.position_absolute,
+                    size: layout.size,
+                });
+            }
+            println!("Activated app: {}", self.app.name);
+        }
+
+        if self.is_hidden_for_launch {
+            return Element::new().with_tag(self.app.id).with_style(
+                Style::new()
+                    .with_fixed_size(TILE_WIDTH, TILE_HEIGHT)
+                    .with_background_color(Color::TRANSPARENT),
+            );
+        }
+
+        let _is_pressed = !self.interactions_disabled && pointer.is_pressed();
         let is_focus_visible = focusable.is_focus_visible();
         let accent = color(self.app.accent);
         let icon_background = accent.gamma_multiply(0.2);
         let icon_text_color = accent.gamma_multiply(1.1);
 
-        let background = if is_pressed {
-            Color::from_rgb(38, 47, 68)
-        } else if is_focus_visible {
+        let background = if is_focus_visible {
             Color::from_rgb(30, 41, 60)
         } else {
             Color::from_rgb(20, 26, 38)
         };
+        // let background = if is_pressed {
+        //     Color::from_rgb(38, 47, 68)
+        // } else if is_focus_visible {
+        //     Color::from_rgb(30, 41, 60)
+        // } else {
+        //     Color::from_rgb(20, 26, 38)
+        // };
 
         let border_color = if is_focus_visible {
             accent
@@ -56,34 +89,30 @@ impl Component for AppTile {
             Color::from_rgb(52, 65, 89)
         };
 
-        let style = transition(
-            Style::new()
-                .with_fixed_size(TILE_WIDTH, TILE_HEIGHT)
-                .with_direction(daiko::layout::FlexDirection::Column)
-                .with_align_items(daiko::layout::AlignItems::FlexStart)
-                .with_padding(16.0)
-                .with_spacing((12.0, 12.0))
-                .with_background_color(background)
-                .with_border(Border::uniform(Stroke::new(2.0, border_color)))
-                .with_border_radius(BorderRadius::all(18.0)),
-            Some([
-                TransitionOptions {
-                    property: StyleProperty::Background,
-                    animation_parameters: AnimationParameters {
-                        duration: Duration::from_millis(180),
-                        ..AnimationParameters::default()
-                    },
-                },
-                TransitionOptions {
-                    property: StyleProperty::Border,
-                    animation_parameters: AnimationParameters {
-                        duration: Duration::from_millis(180),
-                        ..AnimationParameters::default()
-                    },
-                },
-            ]),
-            ctx,
-        );
+        let style = Style::new()
+            .with_fixed_size(TILE_WIDTH, TILE_HEIGHT)
+            .with_direction(daiko::layout::FlexDirection::Column)
+            .with_align_items(daiko::layout::AlignItems::FlexStart)
+            .with_padding(16.0)
+            .with_spacing((12.0, 12.0))
+            .with_background_color(transition(
+                background,
+                AnimationParameters::default()
+                    .with_duration(Duration::from_millis(180))
+                    .to_transition_options(),
+                ctx,
+            ))
+            .with_border(Border::uniform(Stroke::new(
+                2.0,
+                transition(
+                    border_color,
+                    AnimationParameters::default()
+                        .with_duration(Duration::from_millis(180))
+                        .to_transition_options(),
+                    ctx,
+                ),
+            )))
+            .with_border_radius(BorderRadius::all(TILE_BORDER_RADIUS));
 
         let icon = Element::new()
             .with_style(
@@ -123,12 +152,6 @@ impl Component for AppTile {
                 ),
             );
 
-        let mut tile = Element::new()
-            .with_tag(self.app.id)
-            .with_style(style)
-            .with_content(icon)
-            .with_content(meta);
-
         // TODO: better focus ring
         // if is_focus_visible
         //     && let Some(focus_ring) = adorners::focus_outline(
@@ -140,6 +163,10 @@ impl Component for AppTile {
         //     tile.add_content(focus_ring);
         // }
 
-        tile
+        Element::new()
+            .with_tag(self.app.id)
+            .with_style(style)
+            .with_content(icon)
+            .with_content(meta)
     }
 }

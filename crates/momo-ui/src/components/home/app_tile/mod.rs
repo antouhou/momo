@@ -64,7 +64,7 @@ impl Component for AppTile {
             );
         }
 
-        let is_pressed = !self.interactions_disabled && pointer.is_pressed();
+        let _is_pressed = !self.interactions_disabled && pointer.is_pressed();
         let is_focus_visible = focusable.is_focus_visible();
         let accent = color(self.app.accent);
         let icon_background = accent.gamma_multiply(0.2);
@@ -152,11 +152,7 @@ impl Component for AppTile {
                 ),
             );
 
-        let tile = Element::new()
-            .with_tag(self.app.id)
-            .with_style(style)
-            .with_content(icon)
-            .with_content(meta);
+        
 
         // TODO: better focus ring
         // if is_focus_visible
@@ -169,6 +165,10 @@ impl Component for AppTile {
         //     tile.add_content(focus_ring);
         // }
 
-        tile
+        Element::new()
+            .with_tag(self.app.id)
+            .with_style(style)
+            .with_content(icon)
+            .with_content(meta)
     }
 }

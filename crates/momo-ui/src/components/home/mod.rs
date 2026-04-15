@@ -9,7 +9,7 @@ mod tests;
 mod time;
 
 use crate::components::home::app_grid::AppGrid;
-    use crate::components::home::header::HomeHeader;
+use crate::components::home::header::HomeHeader;
 use crate::components::home::launch::controller::use_launch_controller;
 use crate::components::home::launch::overlay::render_launch_overlay;
 use crate::components::home::model::{
@@ -52,7 +52,8 @@ impl Component for Home {
                 ctx.peek_global_state(Id::new(HOME_CLOCK_THREAD_ID), || false);
 
             if !*clock_thread_started.read() {
-                let clock_text = ctx.peek_global_state(Id::new(HOME_CLOCK_STATE_ID), read_system_time);
+                let clock_text =
+                    ctx.peek_global_state(Id::new(HOME_CLOCK_STATE_ID), read_system_time);
                 *clock_thread_started.write_silent() = true;
                 spawn_clock_thread(clock_text.clone());
             }

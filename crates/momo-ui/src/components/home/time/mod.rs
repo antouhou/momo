@@ -14,7 +14,6 @@ pub(super) fn read_system_time() -> String {
         .unwrap_or_else(|| "--:--".to_string())
 }
 
-
 pub(super) fn spawn_clock_thread(clock_text: StateHandle<String>) {
     thread::spawn(move || {
         loop {

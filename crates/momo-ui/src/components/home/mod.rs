@@ -63,7 +63,6 @@ impl Component for Home {
             .with_style(home_style())
             .with_content(header)
             .with_content(AppGrid {
-                launch_channel: launch.launch_channel,
                 interactions_disabled: launch.active_launch.is_some(),
                 hidden_app_id: launch.launched_app_id,
                 preferred_focus_app_id: launch.preferred_focus_app_id,

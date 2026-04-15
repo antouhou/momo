@@ -1,10 +1,8 @@
 use crate::components::home::app_tile::AppTile;
 use crate::components::home::model::{
-    GRID_GAP, HOME_SCROLLABLE_ID, LaunchRequest, MOCK_APPS, TILE_HEIGHT, TILE_WIDTH,
-    columns_for_width,
+    GRID_GAP, HOME_SCROLLABLE_ID, MOCK_APPS, TILE_HEIGHT, TILE_WIDTH, columns_for_width,
 };
 use daiko::Element;
-use daiko::channel::Channel;
 use daiko::component::{Component, ComponentContext};
 use daiko::layout::{AlignItems, JustifyContent};
 use daiko::style::Style;
@@ -13,7 +11,6 @@ use daiko::widgets::scrollable::Scrollable;
 
 #[derive(Clone)]
 pub(super) struct AppGrid {
-    pub launch_channel: Channel<LaunchRequest>,
     pub interactions_disabled: bool,
     pub hidden_app_id: Option<&'static str>,
     pub preferred_focus_app_id: Option<&'static str>,
@@ -46,7 +43,6 @@ impl Component for AppGrid {
                     app: *app,
                     preferred_focus: self.preferred_focus_app_id == Some(app.id)
                         || (self.preferred_focus_app_id.is_none() && row_index == 0 && index == 0),
-                    launch_channel: self.launch_channel.clone(),
                     interactions_disabled: self.interactions_disabled,
                     is_hidden_for_launch: self.hidden_app_id == Some(app.id),
                 });

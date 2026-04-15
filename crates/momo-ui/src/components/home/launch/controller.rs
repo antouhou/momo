@@ -1,17 +1,15 @@
 use crate::components::home::launch::{
     HOME_LAUNCH_ANIMATION_ID, LaunchPhase, LaunchTransitionState,
 };
-use crate::components::home::model::{HOME_LAUNCH_CHANNEL_ID, LaunchRequest};
+use crate::components::home::model::HOME_LAUNCH_CHANNEL_ID;
 use daiko::Id;
 use daiko::animation::AnimationParameters;
 use daiko::animation::easing::EasingFunction;
-use daiko::channel::Channel;
 use daiko::component::ComponentContext;
 use daiko::navigation::{FocusOrigin, NavigationInputAction};
 use std::time::Duration;
 
 pub(in crate::components::home) struct LaunchControllerOutput {
-    pub launch_channel: Channel<LaunchRequest>,
     pub active_launch: Option<LaunchTransitionState>,
     pub launch_progress: f32,
     pub preferred_focus_app_id: Option<&'static str>,
@@ -21,7 +19,7 @@ pub(in crate::components::home) struct LaunchControllerOutput {
 pub(in crate::components::home) fn use_launch_controller(
     ctx: &mut ComponentContext,
 ) -> LaunchControllerOutput {
-    let launch_channel = ctx.create_channel_with_id(Id::new(HOME_LAUNCH_CHANNEL_ID));
+    let launch_channel = ctx.use_channel_with_id(HOME_LAUNCH_CHANNEL_ID);
     let launch_state = ctx.use_local_state(|| None::<LaunchTransitionState>);
     let restore_focus_app_id = ctx.use_local_state(|| None::<&'static str>);
     let home_scope = ctx.focus_scope();
@@ -114,7 +112,6 @@ pub(in crate::components::home) fn use_launch_controller(
 
     LaunchControllerOutput {
         launched_app_id: launch.map(|active| active.request.app.id),
-        launch_channel,
         launch_progress: launch_animation.progress_linear(),
         preferred_focus_app_id: *restore_focus_app_id.read(),
         active_launch: launch,

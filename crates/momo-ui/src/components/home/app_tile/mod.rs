@@ -1,21 +1,20 @@
 use crate::components::home::model::{
-    LaunchRequest, MockApp, TILE_BORDER_RADIUS, TILE_HEIGHT, TILE_WIDTH, color,
+    HOME_LAUNCH_CHANNEL_ID, LaunchRequest, MockApp, TILE_BORDER_RADIUS, TILE_HEIGHT, TILE_WIDTH,
+    color,
 };
-use daiko::Element;
 use daiko::animation::{AnimationParameters, transition};
-use daiko::channel::Channel;
 use daiko::component::{Component, ComponentContext};
 use daiko::navigation::{FocusKey, FocusOrigin};
 use daiko::style::{Border, BorderRadius, Color, Stroke, Style};
 use daiko::widgets::container::{Container, Fit};
 use daiko::widgets::text::{Text, TextStyle, TextWrap};
+use daiko::{Element, Id};
 use std::time::Duration;
 
 #[derive(Clone)]
 pub(super) struct AppTile {
     pub app: MockApp,
     pub preferred_focus: bool,
-    pub launch_channel: Channel<LaunchRequest>,
     pub interactions_disabled: bool,
     pub is_hidden_for_launch: bool,
 }
@@ -47,7 +46,8 @@ impl Component for AppTile {
 
         if just_activated {
             if let Some(layout) = layout {
-                let _ = self.launch_channel.send(LaunchRequest {
+                let launch_channel = ctx.use_channel_with_id(HOME_LAUNCH_CHANNEL_ID);
+                let _ = launch_channel.send(LaunchRequest {
                     app: self.app,
                     position: layout.position_absolute,
                     size: layout.size,

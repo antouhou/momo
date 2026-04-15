@@ -18,7 +18,7 @@ use crate::components::home::model::{
 use crate::components::home::time::{read_system_time, spawn_clock_thread};
 use daiko::component::{Component, ComponentContext};
 use daiko::layout::FlexDirection;
-use daiko::style::{Color, Style};
+use daiko::style::{Color, LinearGradient, LinearSideOrCorner, Style};
 use daiko::{Element, Id};
 
 #[derive(Clone, Copy)]
@@ -83,7 +83,12 @@ impl Component for Home {
 
 fn home_style() -> Style {
     Style::new()
-        .with_background_color(Color::from_rgb(9, 12, 19))
+        .with_background(
+            LinearGradient::to(LinearSideOrCorner::TopRight)
+                .stop(Color::from_rgb(6, 13, 16))
+                .stop(Color::from_rgb(10, 32, 38))
+                .stop(Color::from_rgb(54, 47, 28)),
+        )
         .with_direction(FlexDirection::Column)
         .with_padding(SCREEN_PADDING)
         .with_spacing((SECTION_GAP, SECTION_GAP))

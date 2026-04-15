@@ -8,18 +8,12 @@ pub(super) fn clock_chip(time: String) -> Element {
         .with_style(
             Style::new()
                 .with_padding(Indent::from((18.0, 12.0)))
-                .with_background_color(Color::from_rgb(20, 26, 38))
-                .with_border(Border::uniform(Stroke::new(
-                    1.0,
-                    Color::from_rgb(52, 65, 89),
-                )))
-                .with_border_radius(BorderRadius::all(999.0))
                 .with_size_constraint(daiko::layout::SizeConstraint::exact_content_size()),
         )
         .with_content(
             Text::new(time).with_style(
                 TextStyle::default()
-                    .with_font_size(18.0)
+                    .with_font_size(24.0)
                     .with_font_color(Color::from_rgb(232, 238, 250))
                     .with_wrap(TextWrap::NoWrap),
             ),

@@ -5,14 +5,15 @@ use std::time::Duration;
 
 pub(super) fn read_system_time() -> String {
     Command::new("date")
-        .arg("+%H:%M:%S")
+        .arg("+%H:%M")
         .output()
         .ok()
         .and_then(|output| String::from_utf8(output.stdout).ok())
         .map(|time| time.trim().to_string())
         .filter(|time| !time.is_empty())
-        .unwrap_or_else(|| "--:--:--".to_string())
+        .unwrap_or_else(|| "--:--".to_string())
 }
+
 
 pub(super) fn spawn_clock_thread(clock_text: StateHandle<String>) {
     thread::spawn(move || {

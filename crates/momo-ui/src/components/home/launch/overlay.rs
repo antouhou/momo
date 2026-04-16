@@ -439,14 +439,14 @@ fn interpolate_rect(from: AnimatedRect, to: AnimatedRect, t: f32) -> AnimatedRec
     }
 }
 
-fn scale_rect(rect: AnimatedRect, scale: f32) -> AnimatedRect {
-    let scaled_size = rect.size * scale;
-    let offset = (rect.size - scaled_size) / 2.0;
-    AnimatedRect {
-        position: rect.position + offset,
-        size: scaled_size,
-    }
-}
+// fn scale_rect(rect: AnimatedRect, scale: f32) -> AnimatedRect {
+//     let scaled_size = rect.size * scale;
+//     let offset = (rect.size - scaled_size) / 2.0;
+//     AnimatedRect {
+//         position: rect.position + offset,
+//         size: scaled_size,
+//     }
+// }
 
 fn interval(value: f32, start: f32, end: f32) -> f32 {
     if end <= start {

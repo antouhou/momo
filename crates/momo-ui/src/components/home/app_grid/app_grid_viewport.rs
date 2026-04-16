@@ -1,15 +1,20 @@
-use std::time::{Duration, Instant};
-use daiko::component::{Component, ComponentContext};
-use daiko::{Element, Id, Vec2};
+use crate::components::home::app_grid::metrics::AppGridMetrics;
+use crate::components::home::app_grid::{
+    AppGrid, PAGE_SCROLL_REARM_DURATION, PAGE_SCROLL_THRESHOLD, page_dot_focus_key,
+};
+use crate::components::home::app_tile::AppTile;
+use crate::components::home::model::{
+    GRID_GAP, HOME_APP_GRID_FOCUSED_KEY_ID, HOME_APP_GRID_PAGE_STATE_ID,
+    HOME_APP_GRID_SCROLL_ACCUMULATOR_ID, HOME_APP_GRID_SMOOTH_OFFSET_ID, MOCK_APPS, TILE_HEIGHT,
+};
 use daiko::animation::SmoothFollowConfig;
+use daiko::component::{Component, ComponentContext};
 use daiko::layout::{AlignItems, FlexDirection, JustifyContent, Layout};
-use daiko::navigation::FocusKey;
+use daiko::navigation::{FocusEntryPolicy, FocusKey, TraversalPolicy};
 use daiko::style::{Overflow, Style};
 use daiko::widgets::container::{Container, Fit};
-use crate::components::home::app_grid::{AppGrid, PAGE_SCROLL_REARM_DURATION, PAGE_SCROLL_THRESHOLD};
-use crate::components::home::app_grid::metrics::AppGridMetrics;
-use crate::components::home::app_tile::AppTile;
-use crate::components::home::model::{GRID_GAP, HOME_APP_GRID_FOCUSED_KEY_ID, HOME_APP_GRID_PAGE_STATE_ID, HOME_APP_GRID_SCROLL_ACCUMULATOR_ID, HOME_APP_GRID_SMOOTH_OFFSET_ID, MOCK_APPS, TILE_HEIGHT};
+use daiko::{Element, Id, Vec2};
+use std::time::{Duration, Instant};
 
 #[derive(Clone)]
 pub(in crate::components::home::app_grid) struct AppGridViewport {
@@ -21,6 +26,9 @@ pub(in crate::components::home::app_grid) struct AppGridViewport {
 impl Component for AppGridViewport {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         let focus_scope = ctx.focus_scope();
+        focus_scope.set_entry_policy(FocusEntryPolicy::Spatial(
+            TraversalPolicy::NavigationDirectionDistance,
+        ));
         let last_focused_key =
             ctx.use_local_state_with_id(Id::new(HOME_APP_GRID_FOCUSED_KEY_ID), || None::<FocusKey>);
         let viewport_layout = ctx.layout();
@@ -135,10 +143,11 @@ fn pointer_is_inside_layout(ctx: &mut ComponentContext, viewport_layout: Option<
 }
 
 fn page_delta_for_scroll(accumulated_delta: f32) -> Option<isize> {
+    // Scroll down to get to the next page, scroll up to get to the previous one
     if accumulated_delta <= -PAGE_SCROLL_THRESHOLD {
-        Some(1)
-    } else if accumulated_delta >= PAGE_SCROLL_THRESHOLD {
         Some(-1)
+    } else if accumulated_delta >= PAGE_SCROLL_THRESHOLD {
+        Some(1)
     } else {
         None
     }
@@ -167,13 +176,17 @@ fn build_page_strip(grid: &AppGrid, metrics: AppGridMetrics, rendered_offset: f3
     );
 
     for page_index in 0..metrics.page_count {
-        page_strip.add_content(build_page(grid, metrics, page_index));
+        page_strip.add_content(build_page_contents(grid, metrics, page_index));
     }
 
     page_strip
 }
 
-fn build_page(grid: &AppGrid, metrics: AppGridMetrics, page_index: usize) -> Element {
+pub(in crate::components::home::app_grid) fn build_page_contents(
+    grid: &AppGrid,
+    metrics: AppGridMetrics,
+    page_index: usize,
+) -> Element {
     let first_app_index = page_index * metrics.tiles_per_page;
     let page_app_count = MOCK_APPS
         .len()
@@ -213,6 +226,8 @@ fn build_page(grid: &AppGrid, metrics: AppGridMetrics, page_index: usize) -> Ele
                 is_hidden_for_launch: grid.hidden_app_id == Some(app.id),
                 focus_left_app_id: page_edge_focus_target(metrics, app_index, -1),
                 focus_right_app_id: page_edge_focus_target(metrics, app_index, 1),
+                focus_down_key: (row_index + 1 == page_apps.chunks(metrics.columns).len())
+                    .then_some(page_dot_focus_key(page_index)),
             });
         }
 

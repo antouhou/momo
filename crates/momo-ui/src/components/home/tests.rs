@@ -380,6 +380,84 @@ fn focused_page_dot_keeps_active_page_visual_distinct() {
 }
 
 #[test]
+fn focused_page_dot_shows_focus_ring_on_the_target() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+    runner.run_frame();
+
+    runner.focus_element_by_key(
+        FocusKey::new("apps-grid-page-dot-1"),
+        FocusOrigin::Navigation,
+    );
+    runner.run_frame();
+
+    let (ring_position, ring_size) = runner.get_element_bounds("apps-grid-page-dot-focus-ring");
+    let (target_position, target_size) = runner.get_element_bounds("apps-grid-page-dot-1");
+
+    assert!(
+        (ring_position.x - target_position.x).abs() < 0.5,
+        "focus ring should align with the focused dot target"
+    );
+    assert!(
+        (ring_size.x - target_size.x).abs() < 0.5,
+        "focus ring should match the focused dot target width"
+    );
+}
+
+#[test]
+fn focused_page_dot_focus_ring_animates_between_dots() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+    runner.run_frame();
+
+    runner.focus_element_by_key(
+        FocusKey::new("apps-grid-page-dot-0"),
+        FocusOrigin::Navigation,
+    );
+    runner.run_frame();
+
+    let (start_position, start_size) = runner.get_element_bounds("apps-grid-page-dot-focus-ring");
+    let (target_position, target_size) = runner.get_element_bounds("apps-grid-page-dot-1");
+
+    runner.focus_element_by_key(
+        FocusKey::new("apps-grid-page-dot-1"),
+        FocusOrigin::Navigation,
+    );
+    runner.run_frame();
+    thread::sleep(Duration::from_millis(40));
+    runner.run_frame();
+
+    let (mid_position, mid_size) = runner.get_element_bounds("apps-grid-page-dot-focus-ring");
+    assert!(
+        mid_position.x > start_position.x + 0.5,
+        "focus ring should move away from the previous dot instead of staying in place"
+    );
+    assert!(
+        mid_position.x < target_position.x - 0.5,
+        "focus ring should be in flight toward the next dot rather than teleporting"
+    );
+    assert!(
+        mid_size.x < start_size.x - 0.5 && mid_size.x > target_size.x + 0.5,
+        "focus ring width should animate between the active and inactive dot widths"
+    );
+
+    thread::sleep(Duration::from_millis(220));
+    runner.run_frame();
+
+    let (final_position, final_size) = runner.get_element_bounds("apps-grid-page-dot-focus-ring");
+    assert!(
+        (final_position.x - target_position.x).abs() < 0.5,
+        "focus ring should settle on the next dot target"
+    );
+    assert!(
+        (final_size.x - target_size.x).abs() < 0.5,
+        "focus ring should settle to the next dot target width"
+    );
+}
+
+#[test]
 fn inactive_page_dot_target_keeps_compact_width() {
     let mut runner = TestRunner::new(HomeTestApp);
     runner.set_viewport_size(1280.0, 720.0);

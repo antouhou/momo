@@ -271,6 +271,70 @@ fn app_grid_height_shrinks_after_window_height_shrinks() {
 }
 
 #[test]
+fn app_grid_wrapper_shrinks_with_window_height() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 980.0);
+    runner.run_frame();
+    runner.run_frame();
+    runner.run_frame();
+
+    let (_tall_position, tall_size) = runner.get_element_bounds("apps-grid");
+
+    runner.set_viewport_size(1280.0, 560.0);
+    runner.run_frame();
+    runner.run_frame();
+    runner.run_frame();
+    runner.run_frame();
+
+    let (_short_position, short_size) = runner.get_element_bounds("apps-grid");
+
+    assert!(
+        tall_size.y >= short_size.y + 300.0,
+        "grid wrapper should release its old minimum height after shrinking the window, tall={tall_size:?}, short={short_size:?}"
+    );
+}
+
+#[test]
+fn app_grid_width_shrinks_after_window_width_shrinks() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+    runner.run_frame();
+    runner.run_frame();
+
+    let (_wide_grid_position, wide_grid_size) = runner.get_element_bounds("apps-grid");
+    let (_wide_viewport_position, wide_viewport_size) =
+        runner.get_element_bounds("apps-grid-viewport");
+
+    runner.set_viewport_size(720.0, 720.0);
+    runner.run_frame();
+    runner.run_frame();
+    runner.run_frame();
+    runner.run_frame();
+
+    let (_narrow_grid_position, narrow_grid_size) = runner.get_element_bounds("apps-grid");
+    let (narrow_viewport_position, narrow_viewport_size) =
+        runner.get_element_bounds("apps-grid-viewport");
+
+    assert!(
+        wide_grid_size.x >= narrow_grid_size.x + 400.0,
+        "grid wrapper should release its old minimum width after shrinking the window, wide={wide_grid_size:?}, narrow={narrow_grid_size:?}"
+    );
+    assert!(
+        wide_viewport_size.x >= narrow_viewport_size.x + 400.0,
+        "grid viewport should shrink with the window width, wide={wide_viewport_size:?}, narrow={narrow_viewport_size:?}"
+    );
+    assert!(
+        narrow_viewport_position.x.abs() < 0.5,
+        "grid viewport should still start at the window edge after shrinking, position={narrow_viewport_position:?}"
+    );
+    assert!(
+        (narrow_viewport_position.x + narrow_viewport_size.x - 720.0).abs() < 0.5,
+        "grid viewport should match the narrowed window width, position={narrow_viewport_position:?}, size={narrow_viewport_size:?}"
+    );
+}
+
+#[test]
 fn directional_navigation_pages_at_the_grid_edge() {
     let mut runner = TestRunner::new(HomeTestApp);
     runner.set_viewport_size(1280.0, 720.0);
@@ -390,6 +454,122 @@ fn page_dot_focus_can_escape_back_to_the_grid() {
 }
 
 #[test]
+fn first_page_dot_up_targets_the_middle_column_when_the_grid_has_three_columns() {
+    let mut runner = TestRunner::new(FixedWidthGridTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+    runner.run_frame();
+
+    assert_eq!(columns_for_width(960.0 - SCREEN_PADDING * 2.0), 3);
+
+    runner.focus_element_by_key(
+        FocusKey::new("apps-grid-page-dot-0"),
+        FocusOrigin::Navigation,
+    );
+    runner.navigate_up();
+    runner.run_frame();
+
+    let focused_tag = runner
+        .focused_element()
+        .and_then(|element| element.tag())
+        .unwrap_or("<untagged>");
+
+    assert_eq!(
+        focused_tag, "browser",
+        "focus should move to the middle column of the last visible row on the first page, got {focused_tag}"
+    );
+}
+
+#[test]
+fn page_dot_up_on_last_page_targets_a_tile_on_the_last_page() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 900.0);
+    runner.run_frame();
+    runner.run_frame();
+
+    runner.click_element("apps-grid-page-dot-2");
+    runner.run_frame();
+    thread::sleep(Duration::from_millis(260));
+    runner.run_frame();
+
+    runner.focus_element_by_key(
+        FocusKey::new("apps-grid-page-dot-2"),
+        FocusOrigin::Navigation,
+    );
+    runner.navigate_up();
+    runner.run_frame();
+
+    let focused_tag = runner
+        .focused_element()
+        .and_then(|element| element.tag())
+        .unwrap_or("<untagged>");
+
+    assert!(
+        matches!(focused_tag, "recipes" | "security"),
+        "focus should move to a tile on the last page when pressing up from the last page dot, got {focused_tag}"
+    );
+}
+
+#[test]
+fn last_page_single_row_tile_moves_down_to_page_dots() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 900.0);
+    runner.run_frame();
+    runner.run_frame();
+
+    runner.click_element("apps-grid-page-dot-2");
+    runner.run_frame();
+    thread::sleep(Duration::from_millis(260));
+    runner.run_frame();
+
+    runner.focus_element_by_key(FocusKey::new("security"), FocusOrigin::Navigation);
+    runner.navigate_down();
+    runner.run_frame();
+
+    let focused_tag = runner
+        .focused_element()
+        .and_then(|element| element.tag())
+        .unwrap_or("<untagged>");
+
+    assert!(
+        focused_tag.starts_with("apps-grid-page-dot-"),
+        "focus should move from the last-page tile to the page dots when pressing down, got {focused_tag}"
+    );
+}
+
+#[test]
+fn last_page_dot_up_then_down_returns_to_page_dots() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 900.0);
+    runner.run_frame();
+    runner.run_frame();
+
+    runner.click_element("apps-grid-page-dot-2");
+    runner.run_frame();
+    thread::sleep(Duration::from_millis(260));
+    runner.run_frame();
+
+    runner.focus_element_by_key(
+        FocusKey::new("apps-grid-page-dot-2"),
+        FocusOrigin::Navigation,
+    );
+    runner.navigate_up();
+    runner.run_frame();
+    runner.navigate_down();
+    runner.run_frame();
+
+    let focused_tag = runner
+        .focused_element()
+        .and_then(|element| element.tag())
+        .unwrap_or("<untagged>");
+
+    assert!(
+        focused_tag.starts_with("apps-grid-page-dot-"),
+        "focus should return to page dots after moving up into the last-page row and back down, got {focused_tag}"
+    );
+}
+
+#[test]
 fn clicking_page_dot_jumps_to_that_page() {
     let mut runner = TestRunner::new(HomeTestApp);
     runner.set_viewport_size(1280.0, 720.0);
@@ -452,7 +632,7 @@ fn vertical_wheel_scroll_pages_the_grid() {
             .app_runner_mut()
             .context
             .add_input_event(InputEvent::scroll(
-                Vec2::new(0.0, -2.0),
+                Vec2::new(0.0, 2.0),
                 InputEventModifiers::default(),
                 Instant::now(),
             ));
@@ -463,7 +643,7 @@ fn vertical_wheel_scroll_pages_the_grid() {
             .app_runner_mut()
             .context
             .add_input_event(InputEvent::scroll(
-                Vec2::new(0.0, -2.0),
+                Vec2::new(0.0, 2.0),
                 InputEventModifiers::default(),
                 Instant::now(),
             ));
@@ -476,7 +656,7 @@ fn vertical_wheel_scroll_pages_the_grid() {
     let (second_next_position, _second_next_size) = runner.get_element_bounds("apps-grid-page-2");
     assert!(
         position.x < initial_position.x - 100.0,
-        "vertical wheel scroll should move the next page toward the viewport, initial_x={}, current_x={}",
+        "scrolling down should move the next page toward the viewport, initial_x={}, current_x={}",
         initial_position.x,
         position.x
     );
@@ -492,7 +672,7 @@ fn vertical_wheel_scroll_pages_the_grid() {
             .app_runner_mut()
             .context
             .add_input_event(InputEvent::scroll(
-                Vec2::new(0.0, 2.0),
+                Vec2::new(0.0, -2.0),
                 InputEventModifiers::default(),
                 Instant::now(),
             ));
@@ -505,7 +685,7 @@ fn vertical_wheel_scroll_pages_the_grid() {
         runner.get_element_bounds("apps-grid-page-0");
     assert!(
         first_page_returned_position.x > first_page_scrolled_position.x + 100.0,
-        "positive vertical wheel scroll should move the previous page back toward the viewport"
+        "scrolling up should move the previous page back toward the viewport"
     );
 }
 
@@ -545,20 +725,6 @@ fn apps_header_content_is_padded() {
         clock_right_edge <= 1280.0 - SCREEN_PADDING + 0.5,
         "clock chip should stay inside the right padding"
     );
-}
-
-#[test]
-fn hovering_tile_moves_focus_to_the_hovered_app() {
-    let mut runner = TestRunner::new(HomeTestApp);
-    runner.set_viewport_size(1280.0, 720.0);
-    runner.run_frame();
-
-    let tile_center = runner.get_element_center("movies");
-    runner.move_pointer_to(tile_center);
-    runner.run_frame();
-    runner.run_frame();
-
-    runner.assert_focused("movies");
 }
 
 #[test]

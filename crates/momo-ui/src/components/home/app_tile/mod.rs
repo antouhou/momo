@@ -6,7 +6,7 @@ use daiko::Element;
 use daiko::animation::{AnimationParameters, transition};
 use daiko::component::{Component, ComponentContext};
 use daiko::navigation::{FocusKey, FocusOrigin, NavigationDirection};
-use daiko::style::{Border, BorderRadius, Color, Stroke, Style};
+use daiko::style::{Border, BorderRadius, Color, CursorIcon, Stroke, Style};
 use daiko::widgets::container::{Container, Fit};
 use daiko::widgets::text::{Text, TextStyle, TextWrap};
 use std::time::Duration;
@@ -19,6 +19,7 @@ pub(super) struct AppTile {
     pub is_hidden_for_launch: bool,
     pub focus_left_app_id: Option<&'static str>,
     pub focus_right_app_id: Option<&'static str>,
+    pub focus_down_key: Option<FocusKey>,
 }
 
 impl Component for AppTile {
@@ -41,6 +42,7 @@ impl Component for AppTile {
             NavigationDirection::Right,
             self.focus_right_app_id.map(FocusKey::new),
         );
+        focusable.set_focus_directional_override(NavigationDirection::Down, self.focus_down_key);
 
         let pointer_activated = !self.interactions_disabled && pointer.just_pressed();
         let focus_activated = !self.interactions_disabled && focusable.just_activated();
@@ -70,13 +72,14 @@ impl Component for AppTile {
             );
         }
 
+        let is_hovering = !self.interactions_disabled && pointer.is_hovering();
         let _is_pressed = !self.interactions_disabled && pointer.is_pressed();
-        let is_focus_visible = focusable.is_focus_visible();
+        let paint_decorations = focusable.is_focus_visible() || is_hovering;
         let accent = color(self.app.accent);
         let icon_background = accent.gamma_multiply(0.2);
         let icon_text_color = accent.gamma_multiply(1.1);
 
-        let background = if is_focus_visible {
+        let background = if paint_decorations {
             Color::from_rgb(30, 41, 60)
         } else {
             Color::from_rgb(20, 26, 38)
@@ -89,13 +92,13 @@ impl Component for AppTile {
         //     Color::from_rgb(20, 26, 38)
         // };
 
-        let border_color = if is_focus_visible {
+        let border_color = if paint_decorations {
             accent
         } else {
             Color::from_rgb(52, 65, 89)
         };
 
-        let style = Style::new()
+        let mut style = Style::new()
             .with_fixed_size(TILE_WIDTH, TILE_HEIGHT)
             .with_direction(daiko::layout::FlexDirection::Column)
             .with_align_items(daiko::layout::AlignItems::FlexStart)
@@ -119,6 +122,10 @@ impl Component for AppTile {
                 ),
             )))
             .with_border_radius(BorderRadius::all(TILE_BORDER_RADIUS));
+
+        if is_hovering {
+            style.set_cursor(CursorIcon::PointingHand)
+        }
 
         let icon = Element::new()
             .with_style(

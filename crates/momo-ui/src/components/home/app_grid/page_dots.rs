@@ -1,11 +1,14 @@
+use crate::components::home::app_grid::{
+    ACTIVE_PAGE_DOT_WIDTH, PAGE_DOT_FOCUS_BORDER_WIDTH, PAGE_DOT_FOCUS_PADDING, PAGE_DOT_SIZE,
+    PAGE_DOTS_GAP, page_dot_focus_key,
+};
+use crate::components::home::model::HOME_APP_GRID_PAGE_STATE_ID;
 use daiko::component::{Component, ComponentContext};
-use daiko::{Element, Id};
 use daiko::layout::{AlignItems, FlexDirection, JustifyContent};
 use daiko::navigation::{FocusBoundary, FocusOrigin};
-use daiko::style::{Border, BorderRadius, Color, Stroke, Style};
+use daiko::style::{Border, BorderRadius, Color, CursorIcon, Stroke, Style};
 use daiko::widgets::container::{Container, Fit};
-use crate::components::home::app_grid::{page_dot_focus_key, ACTIVE_PAGE_DOT_WIDTH, PAGE_DOTS_GAP, PAGE_DOT_FOCUS_BORDER_WIDTH, PAGE_DOT_FOCUS_PADDING, PAGE_DOT_SIZE};
-use crate::components::home::model::HOME_APP_GRID_PAGE_STATE_ID;
+use daiko::{Element, Id};
 
 #[derive(Clone, Copy)]
 pub(in crate::components::home::app_grid) struct PageDots {
@@ -21,7 +24,6 @@ impl Component for PageDots {
         focus_scope.set_default_focus(page_dot_focus_key(self.active_page));
 
         let mut dots = Container::horizontal()
-            .with_style(Style::new().with_background(Color::RED))
             .with_fit(Fit::new().exact_content_height())
             .align_items_center()
             .justify_content_center()
@@ -66,23 +68,26 @@ impl Component for PageDot {
                 .write() = self.page_index;
         }
 
+        let is_hovering = !self.interactions_disabled && pointer.is_hovering();
+
         page_dot(
             self.page_index,
             self.is_active,
-            focusable.is_focus_visible() || pointer.is_hovering(),
+            focusable.is_focus_visible() || is_hovering,
+            is_hovering,
         )
     }
 }
 
-fn page_dot(page_index: usize, is_active: bool, show_border: bool) -> Element {
+fn page_dot(page_index: usize, is_active: bool, show_border: bool, is_hovered: bool) -> Element {
     let dot_width = page_dot_visual_width(is_active);
     Element::new()
         .with_tag(format!("apps-grid-page-dot-{page_index}"))
-        .with_style(page_dot_target_style(show_border, dot_width))
+        .with_style(page_dot_target_style(show_border, dot_width, is_hovered))
         .with_content(page_dot_visual(page_index, is_active))
 }
 
-fn page_dot_target_style(show_border: bool, dot_width: f32) -> Style {
+fn page_dot_target_style(show_border: bool, dot_width: f32, is_hovered: bool) -> Style {
     let border_color = if show_border {
         Color::from_rgb(236, 246, 255)
     } else {
@@ -90,7 +95,7 @@ fn page_dot_target_style(show_border: bool, dot_width: f32) -> Style {
     };
     let target_outset = (PAGE_DOT_FOCUS_PADDING + PAGE_DOT_FOCUS_BORDER_WIDTH) * 2.0;
 
-    Style::new()
+    let mut style = Style::new()
         .with_direction(FlexDirection::Row)
         .with_justify_content(JustifyContent::Center)
         .with_align_items(AlignItems::Center)
@@ -100,7 +105,13 @@ fn page_dot_target_style(show_border: bool, dot_width: f32) -> Style {
             PAGE_DOT_FOCUS_BORDER_WIDTH,
             border_color,
         )))
-        .with_border_radius(BorderRadius::all((PAGE_DOT_SIZE + target_outset) / 2.0))
+        .with_border_radius(BorderRadius::all((PAGE_DOT_SIZE + target_outset) / 2.0));
+
+    if is_hovered {
+        style.set_cursor(CursorIcon::PointingHand);
+    }
+
+    style
 }
 
 fn page_dot_visual(page_index: usize, is_active: bool) -> Element {

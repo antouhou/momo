@@ -1,16 +1,18 @@
+mod app_grid_viewport;
 mod metrics;
 mod page_dots;
-mod app_grid_viewport;
+use crate::components::home::app_grid::app_grid_viewport::AppGridViewport;
 use crate::components::home::app_grid::metrics::AppGridMetrics;
-use crate::components::home::model::{HOME_APP_GRID_PAGE_STATE_ID, SCREEN_PADDING, TILE_HEIGHT, TILE_WIDTH};
+use crate::components::home::app_grid::page_dots::PageDots;
+use crate::components::home::model::{
+    HOME_APP_GRID_PAGE_STATE_ID, SCREEN_PADDING, TILE_HEIGHT, TILE_WIDTH,
+};
 use daiko::component::{Component, ComponentContext};
 use daiko::layout::{AlignItems, FlexDirection, ItemSize, JustifyContent};
-use daiko::navigation::{FocusKey};
+use daiko::navigation::FocusKey;
 use daiko::style::{Overflow, Style};
 use daiko::{Element, Id, Vec2};
-use std::time::{Duration};
-use crate::components::home::app_grid::app_grid_viewport::AppGridViewport;
-use crate::components::home::app_grid::page_dots::PageDots;
+use std::time::Duration;
 
 const PAGE_DOTS_HEIGHT: f32 = 10.0;
 const PAGE_DOTS_GAP: f32 = 8.0;
@@ -22,7 +24,7 @@ const ACTIVE_PAGE_DOT_WIDTH: f32 = 22.0;
 const PAGE_SCROLL_THRESHOLD: f32 = 8.0;
 const PAGE_SCROLL_REARM_DURATION: Duration = Duration::from_millis(220);
 
-fn page_dot_focus_key(page_index: usize) -> FocusKey {
+pub(in crate::components::home::app_grid) fn page_dot_focus_key(page_index: usize) -> FocusKey {
     FocusKey::new(format!("apps-grid-page-dot-{page_index}"))
 }
 
@@ -39,6 +41,8 @@ fn app_grid_wrapper_style() -> Style {
         .with_justify_content(JustifyContent::Center)
         .with_align_items(AlignItems::Center)
         .with_grow(1.0)
+        .with_fixed_width(ItemSize::Percent(1.0))
+        .with_min_height(ItemSize::Points(0.0))
         .with_overflow(Overflow::Visible)
 }
 

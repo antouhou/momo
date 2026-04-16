@@ -1,6 +1,9 @@
-use daiko::Vec2;
 use crate::components::home::app_grid::{PAGE_DOTS_HEIGHT, PAGE_DOTS_TOP_GAP};
-use crate::components::home::model::{columns_for_width, rows_for_height, GRID_GAP, MOCK_APPS, SCREEN_PADDING, TILE_HEIGHT, TILE_WIDTH};
+use crate::components::home::model::{
+    GRID_GAP, MOCK_APPS, SCREEN_PADDING, TILE_HEIGHT, TILE_WIDTH, columns_for_width,
+    rows_for_height,
+};
+use daiko::Vec2;
 
 fn grid_axis_size(item_count: usize, item_size: f32) -> f32 {
     item_count as f32 * item_size + item_count.saturating_sub(1) as f32 * GRID_GAP

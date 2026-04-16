@@ -43,7 +43,7 @@ impl Default for Home {
 
 impl Component for Home {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        ctx.app_context.set_fullscreen(true);
+        ctx.app_context.set_fullscreen(false);
 
         if self.live_clock {
             let clock_thread_started =

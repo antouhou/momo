@@ -2,7 +2,7 @@ use crate::components::home::clock_chip::ClockChip;
 use crate::components::home::model::SCREEN_PADDING;
 use daiko::Element;
 use daiko::component::{Component, ComponentContext};
-use daiko::layout::{AlignItems, FlexDirection, ItemSize, JustifyContent, SizeConstraint};
+use daiko::layout::{AlignItems, FlexDirection, JustifyContent, SizeConstraint};
 use daiko::style::{Indent, Style};
 use daiko::widgets::container::{Container, Fit};
 use daiko::widgets::heading::{Heading, HeadingLevel};
@@ -42,7 +42,12 @@ fn header_style() -> Style {
     Style::new()
         .with_direction(FlexDirection::Column)
         .with_size_constraint(SizeConstraint::exact_content_height())
-        .with_padding(Indent::new(SCREEN_PADDING, SCREEN_PADDING, SCREEN_PADDING, 0.0))
+        .with_padding(Indent::new(
+            SCREEN_PADDING,
+            SCREEN_PADDING,
+            SCREEN_PADDING,
+            0.0,
+        ))
 }
 
 fn header_row_style() -> Style {

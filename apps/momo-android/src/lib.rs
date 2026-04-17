@@ -1,9 +1,11 @@
 #[cfg(target_os = "android")]
+use momo_app::{ShellApp, ShellConfiguration, ShellMode};
+#[cfg(target_os = "android")]
 use momo_ui::MomoUi;
 #[cfg(target_os = "android")]
-use winit::platform::android::activity::AndroidApp;
-use momo_app::{ShellApp, ShellConfiguration, ShellMode};
 use momo_wayfire::WayfireBackend;
+#[cfg(target_os = "android")]
+use winit::platform::android::activity::AndroidApp;
 
 #[cfg(target_os = "android")]
 #[unsafe(no_mangle)]

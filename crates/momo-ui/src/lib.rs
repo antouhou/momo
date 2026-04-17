@@ -1,10 +1,10 @@
 mod components;
 
-use std::sync::Once;
 use crate::components::home::Home;
 use daiko::{App, AppContext};
-use tracing_subscriber::EnvFilter;
 use momo_app::ShellViewModel;
+use std::sync::Once;
+use tracing_subscriber::EnvFilter;
 
 static INIT: Once = Once::new();
 
@@ -31,7 +31,6 @@ pub fn init_tracing() {
             .init();
     });
 }
-
 
 pub struct MomoUi {
     view_model: ShellViewModel,

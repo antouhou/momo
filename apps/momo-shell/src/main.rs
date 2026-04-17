@@ -1,5 +1,5 @@
 use momo_app::{ShellApp, ShellConfiguration, ShellMode};
-use momo_ui::{MomoUi};
+use momo_ui::MomoUi;
 use momo_wayfire::WayfireBackend;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

@@ -96,6 +96,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc7eb209b1518d6bb87b283c20095f5228ecda460da70b44f0802523dea6da04"
 
 [[package]]
+name = "android_log-sys"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "85965b6739a430150bdd138e2374a98af0c3ee0d030b3bb7fc3bddff58d0102e"
+
+[[package]]
 name = "android_system_properties"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -363,6 +369,12 @@ dependencies = [
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "byteorder"
+version = "1.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1fd0f2584146f6f2ef48085050886acf353beff7305ebd1ae69500e27c67f64b"
 
 [[package]]
 name = "byteorder-lite"
@@ -645,8 +657,10 @@ dependencies = [
  "protextinator",
  "rayon",
  "resvg",
+ "serde",
  "smallvec",
  "smol_str 0.2.2",
+ "tauri-icns",
  "thiserror 1.0.69",
  "toml",
  "tracing",
@@ -756,6 +770,9 @@ name = "ecolor"
 version = "0.27.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "20930a432bbd57a6d55e07976089708d4893f3d556cf42a0d79e9e321fa73b10"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "either"
@@ -812,6 +829,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f1a05365e3b1c6d1650318537c7460c6923f1abdd272ad6842baa2b509957a06"
 dependencies = [
  "num-traits",
+ "serde",
 ]
 
 [[package]]
@@ -1709,6 +1727,7 @@ dependencies = [
  "arrayvec",
  "euclid",
  "num-traits",
+ "serde",
 ]
 
 [[package]]
@@ -1719,6 +1738,7 @@ checksum = "5c463f9c428b7fc5ec885dcd39ce4aa61e29111d0e33483f6f98c74e89d8621e"
 dependencies = [
  "lyon_geom",
  "num-traits",
+ "serde",
 ]
 
 [[package]]
@@ -1730,6 +1750,7 @@ dependencies = [
  "float_next_after",
  "lyon_path",
  "num-traits",
+ "serde",
 ]
 
 [[package]]
@@ -1849,6 +1870,9 @@ version = "0.1.0"
 dependencies = [
  "daiko",
  "momo-app",
+ "tracing",
+ "tracing-android",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -1856,6 +1880,17 @@ name = "momo-wayfire"
 version = "0.1.0"
 dependencies = [
  "momo-compositor",
+]
+
+[[package]]
+name = "momo_android"
+version = "0.1.0"
+dependencies = [
+ "daiko",
+ "momo-app",
+ "momo-ui",
+ "momo-wayfire",
+ "winit",
 ]
 
 [[package]]
@@ -2601,6 +2636,7 @@ checksum = "27d0f02e322d06bdb4a4204155456f54c7fbfd17d7f7646083cd8e63c0c9b8cb"
 dependencies = [
  "ahash",
  "cosmic-text",
+ "serde",
  "smol_str 0.3.6",
 ]
 
@@ -3146,6 +3182,9 @@ name = "smallvec"
 version = "1.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "smithay-client-toolkit"
@@ -3323,6 +3362,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8eab9a99a024a169fe8a903cf9d4a3b3601109bcc13bd9e3c6fff259138626c4"
 dependencies = [
  "libc",
+]
+
+[[package]]
+name = "tauri-icns"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "03b7eb4d0d43724ba9ba6a6717420ee68aee377816a3edbb45db8c18862b1431"
+dependencies = [
+ "byteorder",
+ "png 0.17.16",
 ]
 
 [[package]]
@@ -3558,6 +3607,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "tracing-android"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "12612be8f868a09c0ceae7113ff26afe79d81a24473a393cb9120ece162e86c0"
+dependencies = [
+ "android_log-sys",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "tracing-attributes"
 version = "0.1.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3614,6 +3674,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "335280384e94ef8fefc7f4ad7e4e15dcfed9056c7416da547e56436c4a00de30"
 dependencies = [
  "euclid",
+ "serde",
 ]
 
 [[package]]

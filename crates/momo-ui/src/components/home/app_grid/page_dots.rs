@@ -5,14 +5,17 @@ use crate::components::home::app_grid::{
 use crate::components::home::model::HOME_APP_GRID_PAGE_STATE_ID;
 use daiko::animation::{AnimationParameters, SmoothFollowConfig, transition};
 use daiko::component::{Component, ComponentContext};
-use daiko::layout::{AlignItems, FlexDirection, JustifyContent};
+use daiko::layout::{AlignItems, FlexDirection, JustifyContent, Layout};
 use daiko::navigation::{FocusBoundary, FocusKey, FocusOrigin};
 use daiko::style::{Border, BorderRadius, Color, CursorIcon, Overflow, Stroke, Style};
 use daiko::widgets::container::{Container, Fit};
-use daiko::{Element, Id, Vec2};
+use daiko::{Element, Id, Pos2, Vec2};
 use std::time::Duration;
 
 const PAGE_DOT_HOVERED_STATE_ID: &str = "momo_home_app_grid_page_dot_hovered";
+const PAGE_DOT_ACTIVE_VISUAL_TARGET_ID: &str = "momo_home_app_grid_page_dot_active_visual_target";
+const PAGE_DOT_ACTIVE_VISUAL_X_ID: &str = "momo_home_app_grid_page_dot_active_visual_x";
+const PAGE_DOT_ACTIVE_VISUAL_WIDTH_ID: &str = "momo_home_app_grid_page_dot_active_visual_width";
 const PAGE_DOT_FOCUS_RING_TARGET_ID: &str = "momo_home_app_grid_page_dot_focus_ring_target";
 const PAGE_DOT_FOCUS_RING_X_ID: &str = "momo_home_app_grid_page_dot_focus_ring_x";
 const PAGE_DOT_FOCUS_RING_WIDTH_ID: &str = "momo_home_app_grid_page_dot_focus_ring_width";
@@ -21,6 +24,11 @@ const PAGE_DOT_FOCUS_RING_DURATION_MS: u64 = 140;
 #[derive(Clone, Copy, Default)]
 struct PageDotFocusRingState {
     last_target_page: Option<usize>,
+}
+
+#[derive(Clone, Copy, Default)]
+struct PageDotActiveVisualState {
+    last_active_page: Option<usize>,
 }
 
 #[derive(Clone, Copy)]
@@ -32,9 +40,22 @@ pub(in crate::components::home::app_grid) struct PageDots {
 
 impl Component for PageDots {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
+        let mut pointer = ctx.pointer();
         let focus_scope = ctx.focus_scope();
         focus_scope.set_boundary(FocusBoundary::Escape);
         focus_scope.set_default_focus(page_dot_focus_key(self.active_page));
+
+        if !self.interactions_disabled
+            && pointer.just_pressed_anywhere()
+            && let Some(clicked_page) = clicked_page_index(
+                ctx.app_context.input_state().pointer.interact_position(),
+                ctx.layout(),
+                self.page_count,
+            )
+        {
+            *ctx.use_shared_state(Id::new(HOME_APP_GRID_PAGE_STATE_ID), || 0)
+                .write() = clicked_page;
+        }
 
         let hovered_page = *ctx
             .use_shared_state(Id::new(PAGE_DOT_HOVERED_STATE_ID), || None::<usize>)
@@ -45,13 +66,14 @@ impl Component for PageDots {
         } else {
             hovered_page.or(focused_page)
         };
+        let compact_track_width = page_dots_compact_track_width(self.page_count);
         let track_width = page_dots_track_width(self.page_count, self.active_page);
         let track_height = page_dot_target_height();
 
         let mut dots = Container::horizontal()
             .with_fit(
                 Fit::new()
-                    .exact_width(track_width)
+                    .exact_width(compact_track_width)
                     .exact_height(track_height),
             )
             .align_items_center()
@@ -62,7 +84,6 @@ impl Component for PageDots {
         for page_index in 0..self.page_count {
             dots.add_content(PageDot {
                 page_index,
-                is_active: page_index == self.active_page,
                 interactions_disabled: self.interactions_disabled,
             });
         }
@@ -76,13 +97,20 @@ impl Component for PageDots {
                 .with_overflow(Overflow::Visible),
         );
 
+        root.add_content(dots);
+        root.add_content(page_dot_active_visual(
+            ctx,
+            self.page_count,
+            self.active_page,
+            self.interactions_disabled,
+        ));
         root.add_content(page_dot_focus_ring(
             ctx,
             self.page_count,
             self.active_page,
             focus_ring_page,
+            self.interactions_disabled,
         ));
-        root.add_content(dots);
         root
     }
 }
@@ -90,7 +118,6 @@ impl Component for PageDots {
 #[derive(Clone, Copy)]
 struct PageDot {
     page_index: usize,
-    is_active: bool,
     interactions_disabled: bool,
 }
 
@@ -121,29 +148,26 @@ impl Component for PageDot {
                 .write() = self.page_index;
         }
 
-        page_dot(self.page_index, self.is_active, is_hovering, ctx)
+        page_dot(self.page_index, is_hovering, ctx)
     }
 }
 
-fn page_dot(
-    page_index: usize,
-    is_active: bool,
-    is_hovered: bool,
-    ctx: &mut ComponentContext,
-) -> Element {
-    let dot_width = page_dot_visual_width(is_active);
+fn page_dot(page_index: usize, is_hovered: bool, ctx: &mut ComponentContext) -> Element {
     Element::new()
         .with_tag(format!("apps-grid-page-dot-{page_index}"))
-        .with_style(page_dot_target_style(dot_width, is_hovered))
-        .with_content(page_dot_visual(page_index, is_active, ctx))
+        .with_style(page_dot_target_style(is_hovered))
+        .with_content(page_dot_visual(page_index, ctx))
 }
 
-fn page_dot_target_style(dot_width: f32, is_hovered: bool) -> Style {
+fn page_dot_target_style(is_hovered: bool) -> Style {
     let mut style = Style::new()
         .with_direction(FlexDirection::Row)
         .with_justify_content(JustifyContent::Center)
         .with_align_items(AlignItems::Center)
-        .with_fixed_size(page_dot_target_width(dot_width), page_dot_target_height())
+        .with_fixed_size(
+            page_dot_target_width(PAGE_DOT_SIZE),
+            page_dot_target_height(),
+        )
         .with_padding(PAGE_DOT_FOCUS_PADDING + PAGE_DOT_FOCUS_BORDER_WIDTH)
         .with_border_radius(BorderRadius::all(page_dot_target_height() / 2.0));
 
@@ -154,21 +178,14 @@ fn page_dot_target_style(dot_width: f32, is_hovered: bool) -> Style {
     style
 }
 
-fn page_dot_visual(page_index: usize, is_active: bool, ctx: &mut ComponentContext) -> Element {
-    let width = page_dot_visual_width(is_active);
-    let color = if is_active {
-        Color::from_rgb(236, 246, 255)
-    } else {
-        Color::from_rgb(88, 105, 124)
-    };
-
+fn page_dot_visual(page_index: usize, ctx: &mut ComponentContext) -> Element {
     Element::new()
         .with_tag(format!("apps-grid-page-dot-visual-{page_index}"))
         .with_style(
             Style::new()
-                .with_fixed_size(width, PAGE_DOT_SIZE)
+                .with_fixed_size(PAGE_DOT_SIZE, PAGE_DOT_SIZE)
                 .with_background_color(transition(
-                    color,
+                    Color::from_rgb(88, 105, 124),
                     AnimationParameters::default()
                         .with_duration(Duration::from_millis(PAGE_DOT_FOCUS_RING_DURATION_MS))
                         .to_transition_options(),
@@ -178,12 +195,82 @@ fn page_dot_visual(page_index: usize, is_active: bool, ctx: &mut ComponentContex
         )
 }
 
+fn page_dot_active_visual(
+    ctx: &mut ComponentContext,
+    _page_count: usize,
+    active_page: usize,
+    interactions_disabled: bool,
+) -> Element {
+    let mut pointer = ctx.pointer();
+    let active_visual_state = ctx.use_local_state_with_id(
+        Id::new(PAGE_DOT_ACTIVE_VISUAL_TARGET_ID),
+        PageDotActiveVisualState::default,
+    );
+    if !interactions_disabled && pointer.just_pressed() {
+        *ctx.use_shared_state(Id::new(HOME_APP_GRID_PAGE_STATE_ID), || 0)
+            .write() = active_page;
+    }
+    let previous_active_page = active_visual_state.read().last_active_page;
+    let target_x = page_dot_visual_left(active_page);
+    let target_width = ACTIVE_PAGE_DOT_WIDTH;
+    let should_reset_visual = previous_active_page.is_none();
+    let rendered_x = {
+        let mut x_follow = ctx.smooth_follow_with_id::<f32>(
+            Id::new(PAGE_DOT_ACTIVE_VISUAL_X_ID),
+            SmoothFollowConfig::new(Duration::from_millis(180), 0.24, 0.3),
+        );
+        if should_reset_visual {
+            x_follow.reset_to(target_x);
+            target_x
+        } else {
+            x_follow.follow(target_x)
+        }
+    };
+    let rendered_width = {
+        let mut width_follow = ctx.smooth_follow_with_id::<f32>(
+            Id::new(PAGE_DOT_ACTIVE_VISUAL_WIDTH_ID),
+            SmoothFollowConfig::new(Duration::from_millis(180), 0.24, 0.3),
+        );
+        if should_reset_visual {
+            width_follow.reset_to(target_width);
+            target_width
+        } else {
+            width_follow.follow(target_width)
+        }
+    };
+
+    *active_visual_state.write_silent() = PageDotActiveVisualState {
+        last_active_page: Some(active_page),
+    };
+
+    let color = transition(
+        Color::from_rgb(236, 246, 255),
+        AnimationParameters::default()
+            .with_duration(Duration::from_millis(PAGE_DOT_FOCUS_RING_DURATION_MS))
+            .to_transition_options(),
+        ctx,
+    );
+
+    Element::new()
+        .with_tag("apps-grid-page-dot-active-visual")
+        .with_style(
+            Style::new()
+                .with_absolute_position(Vec2::new(rendered_x, page_dot_visual_top()))
+                .with_fixed_size(rendered_width, PAGE_DOT_SIZE)
+                .with_background_color(color)
+                .with_border_radius(BorderRadius::all(PAGE_DOT_SIZE / 2.0))
+                .with_order(1),
+        )
+}
+
 fn page_dot_focus_ring(
     ctx: &mut ComponentContext,
     page_count: usize,
     active_page: usize,
     focus_ring_page: Option<usize>,
+    interactions_disabled: bool,
 ) -> Element {
+    let mut pointer = ctx.pointer();
     let ring_state = ctx.use_local_state_with_id(
         Id::new(PAGE_DOT_FOCUS_RING_TARGET_ID),
         PageDotFocusRingState::default,
@@ -193,8 +280,12 @@ fn page_dot_focus_ring(
     let layout_page = focus_ring_page
         .or(previous_target_page)
         .unwrap_or(active_page.min(page_count.saturating_sub(1)));
-    let target_x = page_dot_target_left(layout_page, active_page);
-    let target_width = page_dot_target_width(page_dot_visual_width(layout_page == active_page));
+    if !interactions_disabled && pointer.just_pressed() {
+        *ctx.use_shared_state(Id::new(HOME_APP_GRID_PAGE_STATE_ID), || 0)
+            .write() = layout_page;
+    }
+    let target_x = page_dot_focus_ring_left(layout_page, active_page);
+    let target_width = page_dot_focus_ring_width(layout_page, active_page);
     let should_reset_ring = focus_ring_page.is_some() && previous_target_page.is_none();
     let rendered_x = {
         let mut x_follow = ctx.smooth_follow_with_id::<f32>(
@@ -255,7 +346,8 @@ fn page_dot_focus_ring(
                     PAGE_DOT_FOCUS_BORDER_WIDTH,
                     border_color,
                 )))
-                .with_border_radius(BorderRadius::all(page_dot_target_height() / 2.0)),
+                .with_border_radius(BorderRadius::all(page_dot_target_height() / 2.0))
+                .with_order(2),
         )
 }
 
@@ -264,18 +356,74 @@ fn focused_page_index(focused_key: Option<FocusKey>, page_count: usize) -> Optio
     (0..page_count).find(|page_index| page_dot_focus_key(*page_index) == focused_key)
 }
 
-fn page_dots_track_width(page_count: usize, active_page: usize) -> f32 {
-    (0..page_count)
-        .map(|page_index| page_dot_target_width(page_dot_visual_width(page_index == active_page)))
-        .sum::<f32>()
+fn page_dots_track_width(page_count: usize, _active_page: usize) -> f32 {
+    page_dots_compact_track_width(page_count) + page_dot_track_side_inset() * 2.0
+}
+
+fn page_dot_target_left(page_index: usize) -> f32 {
+    page_dot_track_side_inset()
+        + page_index as f32 * (page_dot_target_width(PAGE_DOT_SIZE) + PAGE_DOTS_GAP)
+}
+
+fn page_dot_visual_left(page_index: usize) -> f32 {
+    page_dot_target_left(page_index) + page_dot_target_width(PAGE_DOT_SIZE) / 2.0
+        - ACTIVE_PAGE_DOT_WIDTH / 2.0
+}
+
+fn page_dot_focus_ring_left(page_index: usize, active_page: usize) -> f32 {
+    let target_width = page_dot_focus_ring_width(page_index, active_page);
+    page_dot_target_left(page_index) + page_dot_target_width(PAGE_DOT_SIZE) / 2.0
+        - target_width / 2.0
+}
+
+fn page_dot_focus_ring_width(page_index: usize, active_page: usize) -> f32 {
+    if page_index == active_page {
+        page_dot_target_width(ACTIVE_PAGE_DOT_WIDTH)
+    } else {
+        page_dot_target_width(PAGE_DOT_SIZE)
+    }
+}
+
+fn page_dot_visual_top() -> f32 {
+    page_dot_target_height() / 2.0 - PAGE_DOT_SIZE / 2.0
+}
+
+fn page_dots_compact_track_width(page_count: usize) -> f32 {
+    page_count as f32 * page_dot_target_width(PAGE_DOT_SIZE)
         + page_count.saturating_sub(1) as f32 * PAGE_DOTS_GAP
 }
 
-fn page_dot_target_left(page_index: usize, active_page: usize) -> f32 {
-    (0..page_index)
-        .map(|candidate| page_dot_target_width(page_dot_visual_width(candidate == active_page)))
-        .sum::<f32>()
-        + page_index as f32 * PAGE_DOTS_GAP
+fn page_dot_track_side_inset() -> f32 {
+    (page_dot_target_width(ACTIVE_PAGE_DOT_WIDTH) - page_dot_target_width(PAGE_DOT_SIZE)) / 2.0
+}
+
+fn clicked_page_index(
+    pointer_position: Option<Pos2>,
+    layout: Option<Layout>,
+    page_count: usize,
+) -> Option<usize> {
+    let pointer_position = pointer_position?;
+    let layout = layout?;
+    let visible_area = layout.visible_area;
+    if pointer_position.x < visible_area.min.x
+        || pointer_position.x > visible_area.max.x
+        || pointer_position.y < visible_area.min.y
+        || pointer_position.y > visible_area.max.y
+    {
+        return None;
+    }
+
+    (0..page_count).min_by(|left, right| {
+        let left_distance =
+            (page_dot_center_x(*left) - (pointer_position.x - visible_area.min.x)).abs();
+        let right_distance =
+            (page_dot_center_x(*right) - (pointer_position.x - visible_area.min.x)).abs();
+        left_distance.total_cmp(&right_distance)
+    })
+}
+
+fn page_dot_center_x(page_index: usize) -> f32 {
+    page_dot_target_left(page_index) + page_dot_target_width(PAGE_DOT_SIZE) / 2.0
 }
 
 fn page_dot_target_width(dot_width: f32) -> f32 {
@@ -288,12 +436,4 @@ fn page_dot_target_height() -> f32 {
 
 fn page_dot_target_outset() -> f32 {
     (PAGE_DOT_FOCUS_PADDING + PAGE_DOT_FOCUS_BORDER_WIDTH) * 2.0
-}
-
-fn page_dot_visual_width(is_active: bool) -> f32 {
-    if is_active {
-        ACTIVE_PAGE_DOT_WIDTH
-    } else {
-        PAGE_DOT_SIZE
-    }
 }

@@ -1,17 +1,10 @@
 use momo_app::{ShellApp, ShellConfiguration, ShellMode};
-use momo_ui::MomoUi;
+use momo_ui::{MomoUi};
 use momo_wayfire::WayfireBackend;
-use tracing_subscriber::EnvFilter;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Set up basic logging
-    {
-        let filter = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
-        tracing_subscriber::fmt()
-            .with_env_filter(EnvFilter::new(filter))
-            .with_writer(std::io::stdout)
-            .init();
-    }
+    momo_ui::init_tracing();
 
     // Set a panic hook that exits the process with if any of the threads panic
     let original_hook = std::panic::take_hook();

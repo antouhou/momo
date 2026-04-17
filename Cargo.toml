@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "apps/momo-shell",
+    "apps/momo-android",
     "crates/momo-app",
     "crates/momo-compositor",
     "crates/momo-ui",

@@ -1,0 +1,41 @@
+[package]
+name = "momo_android"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "main"
+crate-type = ["cdylib"]
+
+[dependencies]
+daiko = { workspace = true }
+momo-app = { path = "../../crates/momo-app" }
+momo-ui = { path = "../../crates/momo-ui" }
+momo-wayfire = { path = "../../crates/momo-wayfire" }
+# Winit is required for the android's equivalent of the main() function
+winit = { version = "0.30.7", features = ["android-native-activity"] }
+
+[package.metadata.android]
+package = "com.momo.android"
+build_targets = [
+    # Modern Android devices
+    "aarch64-linux-android",
+    # Older Android devices and some smart TVs. Fun fact: some modern Android TV boxes that use 64-bit processors
+    # still run 32-bit Android, so this target is more widely used than you might think.
+    "armv7-linux-androideabi",
+]
+apk_name = "momo-shell"
+
+[package.metadata.android.sdk]
+min_sdk_version = 26
+target_sdk_version = 32
+
+[package.metadata.android.application]
+label = "Momo Shell"
+theme = "@android:style/Theme.DeviceDefault.NoActionBar.Fullscreen"
+
+[package.metadata.android.application.activity]
+config_changes = "orientation|keyboardHidden|screenSize|uiMode"
+launch_mode = "singleTop"
+exported = true

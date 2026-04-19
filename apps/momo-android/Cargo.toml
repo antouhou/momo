@@ -9,7 +9,7 @@ name = "main"
 crate-type = ["cdylib"]
 
 [dependencies]
-daiko = { workspace = true, features = ["icns", "serialization", "performance_metrics", "performance_measurement", "profiling"] }
+daiko = { workspace = true }
 momo-app = { path = "../../crates/momo-app" }
 momo-ui = { path = "../../crates/momo-ui" }
 momo-wayfire = { path = "../../crates/momo-wayfire" }

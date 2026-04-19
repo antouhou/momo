@@ -9,7 +9,6 @@ use crate::components::home::model::{LaunchRequest, TILE_BORDER_RADIUS, color};
 use daiko::animation::easing::{Easing, EasingFunction};
 use daiko::animation::{AnimationParameters, Interpolable};
 use daiko::component::{Component, ComponentContext};
-use daiko::effects::Opacity;
 use daiko::layout::FlexDirection;
 use daiko::style::{Border, BorderRadius, Color, Stroke, Style};
 use daiko::widgets::container::{Container, Fit};
@@ -36,6 +35,11 @@ impl Component for LaunchOverlay {
         let animation_progress = update_launch_animation(ctx, self.launch);
         render_launch_overlay(ctx, self.launch, animation_progress)
     }
+}
+
+fn with_opacity(color: Color, opacity: f32) -> Color {
+    let alpha = ((color.a() as f32) * opacity.clamp(0.0, 1.0)).round() as u8;
+    Color::from_rgba_premultiplied(color.r(), color.g(), color.b(), alpha)
 }
 
 fn update_launch_animation(ctx: &mut ComponentContext, launch: LaunchTransitionState) -> f32 {
@@ -124,12 +128,6 @@ fn render_launch_overlay(
     let accent = color(launch.request.app.accent);
     let surface_background = Color::from_rgb(14, 18, 27);
     let border_color = accent.gamma_multiply(0.9);
-    let shell_opacity = 1.0;
-    // let shell_opacity = if launch.phase == LaunchPhase::WaitingForSurface {
-    //     1.0
-    // } else {
-    //     interval(animation_progress, 0.0, 0.45)
-    // };
     let backdrop_opacity = if launch.phase == LaunchPhase::WaitingForSurface {
         0.78
     } else {
@@ -199,10 +197,14 @@ fn render_launch_overlay(
             Style::new()
                 .with_fixed_position(Vec2::zero())
                 .with_fixed_size(viewport_size.x, viewport_size.y)
-                .with_background_color(Color::from_rgba_premultiplied(0, 0, 0, 255))
+                .with_background_color(Color::from_rgba_premultiplied(
+                    0,
+                    0,
+                    0,
+                    (255.0 * backdrop_opacity).round() as u8,
+                ))
                 .with_order(10),
-        )
-        .with_effect(Opacity::new(backdrop_opacity));
+        );
 
     let tile_content = build_launch_tile_content(launch.request, false);
     let shared_app_content = build_launch_destination_shared_content(
@@ -230,7 +232,6 @@ fn render_launch_overlay(
                 .with_border_radius(BorderRadius::all(border_radius))
                 .with_order(11),
         )
-        .with_effect(Opacity::new(shell_opacity))
         .with_content(tile_content);
 
     Overlay::new_fullscreen(
@@ -340,15 +341,14 @@ fn build_launch_destination_shared_content(
                 .with_absolute_position(Vec2::new(local_icon_x, local_icon_y))
                 .with_fixed_size(current_icon_size, current_icon_size)
                 .with_centered_content()
-                .with_background_color(accent.gamma_multiply(0.25))
+                .with_background_color(with_opacity(accent.gamma_multiply(0.25), icon_opacity))
                 .with_border_radius(BorderRadius::all(icon_radius)),
         )
-        .with_effect(Opacity::new(icon_opacity))
         .with_content(
             Text::new(request.app.badge).with_style(
                 TextStyle::default()
                     .with_font_size(badge_font_size)
-                    .with_font_color(accent.gamma_multiply(1.15))
+                    .with_font_color(with_opacity(accent.gamma_multiply(1.15), icon_opacity))
                     .with_center_alignment(),
             ),
         );
@@ -366,7 +366,7 @@ fn build_launch_destination_shared_content(
             Text::new(request.app.name).with_style(
                 TextStyle::default()
                     .with_font_size(34.0)
-                    .with_font_color(Color::from_rgb(247, 250, 255))
+                    .with_font_color(with_opacity(Color::from_rgb(247, 250, 255), labels_opacity))
                     .with_center_alignment(),
             ),
         )
@@ -374,7 +374,7 @@ fn build_launch_destination_shared_content(
             Text::new("Opening app").with_style(
                 TextStyle::default()
                     .with_font_size(16.0)
-                    .with_font_color(Color::from_rgb(154, 171, 196))
+                    .with_font_color(with_opacity(Color::from_rgb(154, 171, 196), labels_opacity))
                     .with_center_alignment(),
             ),
         );
@@ -396,7 +396,6 @@ fn build_launch_destination_shared_content(
                 .with_style(
                     Style::new().with_absolute_position(Vec2::new(0.0, current_icon_size + 18.0)),
                 )
-                .with_effect(Opacity::new(labels_opacity))
                 .with_content(labels),
         )
 }

@@ -1,5 +1,8 @@
 use daiko::Vec2;
-use daiko::style::Color;
+use daiko::animation::{AnimationParameters, transition};
+use daiko::component::ComponentContext;
+use daiko::style::{Color, Transform};
+use std::time::Duration;
 
 pub(super) const HOME_APP_GRID_PAGE_STATE_ID: &str = "momo_home_app_grid_page_state";
 pub(super) const HOME_APP_GRID_FOCUSED_KEY_ID: &str = "momo_home_app_grid_focused_key";
@@ -16,6 +19,10 @@ pub(super) const GRID_GAP: f32 = 18.0;
 pub(super) const TILE_WIDTH: f32 = 248.0;
 pub(super) const TILE_HEIGHT: f32 = 176.0;
 pub(super) const TILE_BORDER_RADIUS: f32 = 18.0;
+pub(super) const TILE_FOCUS_SCALE: f32 = 1.05;
+pub(super) const TILE_FOCUS_ANIMATION_DURATION_MS: u64 = 120;
+pub(super) const TILE_ICON_OFFSET: f32 = 18.0;
+pub(super) const TILE_ICON_SIZE: f32 = 72.0;
 
 #[derive(Clone, Copy)]
 pub(super) struct MockApp {
@@ -31,6 +38,8 @@ pub(super) struct LaunchRequest {
     pub app: MockApp,
     pub position: Vec2,
     pub size: Vec2,
+    pub icon_position: Vec2,
+    pub icon_size: Vec2,
 }
 
 pub(super) const MOCK_APPS: [MockApp; 28] = [
@@ -244,4 +253,75 @@ pub(super) fn rows_for_height(height: f32) -> usize {
 
 pub(super) fn color(rgb: [u8; 3]) -> Color {
     Color::from_rgb(rgb[0], rgb[1], rgb[2])
+}
+
+pub(super) fn tile_focus_transform(
+    size: Vec2,
+    paint_decorations: bool,
+    ctx: &mut ComponentContext,
+) -> Transform {
+    Transform::new()
+        .with_origin(size.x * 0.5, size.y * 0.5)
+        .then_scale(
+            transition(
+                if paint_decorations {
+                    TILE_FOCUS_SCALE
+                } else {
+                    1.0
+                },
+                AnimationParameters::default()
+                    .with_duration(Duration::from_millis(TILE_FOCUS_ANIMATION_DURATION_MS))
+                    .to_transition_options(),
+                ctx,
+            ),
+            transition(
+                if paint_decorations {
+                    TILE_FOCUS_SCALE
+                } else {
+                    1.0
+                },
+                AnimationParameters::default()
+                    .with_duration(Duration::from_millis(TILE_FOCUS_ANIMATION_DURATION_MS))
+                    .to_transition_options(),
+                ctx,
+            ),
+        )
+}
+
+pub(super) fn transformed_local_rect(
+    position: Vec2,
+    transform: &Transform,
+    local_position: Vec2,
+    size: Vec2,
+) -> (Vec2, Vec2) {
+    let effective_transform = transform
+        .clone()
+        .with_position_relative_to_parent(position.x, position.y)
+        .compose_2(&Transform::new());
+    let corners = [
+        effective_transform.transform_local_point2d_to_world(local_position.x, local_position.y),
+        effective_transform
+            .transform_local_point2d_to_world(local_position.x + size.x, local_position.y),
+        effective_transform
+            .transform_local_point2d_to_world(local_position.x, local_position.y + size.y),
+        effective_transform
+            .transform_local_point2d_to_world(local_position.x + size.x, local_position.y + size.y),
+    ];
+    let (min_x, max_x) = corners
+        .iter()
+        .map(|(x, _)| *x)
+        .fold((f32::INFINITY, f32::NEG_INFINITY), |(min_x, max_x), x| {
+            (min_x.min(x), max_x.max(x))
+        });
+    let (min_y, max_y) = corners
+        .iter()
+        .map(|(_, y)| *y)
+        .fold((f32::INFINITY, f32::NEG_INFINITY), |(min_y, max_y), y| {
+            (min_y.min(y), max_y.max(y))
+        });
+
+    (
+        Vec2::new(min_x, min_y),
+        Vec2::new(max_x - min_x, max_y - min_y),
+    )
 }

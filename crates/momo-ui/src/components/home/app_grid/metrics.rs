@@ -6,7 +6,7 @@ use crate::components::home::model::{
 use daiko::Vec2;
 
 fn grid_axis_size(item_count: usize, item_size: f32) -> f32 {
-    item_count as f32 * item_size + item_count.saturating_sub(1) as f32 * GRID_GAP
+    item_count as f32 * item_size + item_count as f32 * GRID_GAP
 }
 
 #[derive(Clone, Copy)]

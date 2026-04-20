@@ -1,11 +1,10 @@
 use crate::components::home::launch::{
     AnimatedRect, HOME_HERO_ICON_SIZE, HOME_LAUNCH_ANIMATION_ID, HOME_LAUNCH_BACKDROP_TAG,
     HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID, HOME_LAUNCH_SURFACE_RADIUS, HOME_LAUNCH_SURFACE_TAG,
-    HOME_SHARED_CONTENT_HEIGHT, HOME_SHARED_CONTENT_WIDTH, HOME_TILE_BORDER_WIDTH,
-    HOME_TILE_ICON_OFFSET, HOME_TILE_ICON_SIZE, LaunchOverlayEvent, LaunchPhase,
+    HOME_SHARED_CONTENT_HEIGHT, HOME_SHARED_CONTENT_WIDTH, LaunchOverlayEvent, LaunchPhase,
     LaunchTransitionState,
 };
-use crate::components::home::model::{LaunchRequest, TILE_BORDER_RADIUS, color};
+use crate::components::home::model::{LaunchRequest, TILE_BORDER_RADIUS, TILE_ICON_SIZE, color};
 use daiko::animation::easing::{Easing, EasingFunction};
 use daiko::animation::{AnimationParameters, Interpolable};
 use daiko::component::{Component, ComponentContext};
@@ -147,6 +146,7 @@ fn render_launch_overlay(
     let final_icon_center = Vec2::new(viewport_size.x / 2.0, viewport_size.y / 2.0);
     let source_surface_center = launch.request.position + launch.request.size / 2.0;
     let current_surface_center = surface_rect.position + surface_rect.size / 2.0;
+    let source_icon_center = launch.request.icon_position + launch.request.icon_size / 2.0;
     let icon_progress_x = if launch.phase == LaunchPhase::WaitingForSurface {
         1.0
     } else {
@@ -209,12 +209,9 @@ fn render_launch_overlay(
     let tile_content = build_launch_tile_content(launch.request, false);
     let shared_app_content = build_launch_destination_shared_content(
         launch.request,
-        launch.request.position
-            + Vec2::new(
-                HOME_TILE_BORDER_WIDTH + HOME_TILE_ICON_OFFSET,
-                HOME_TILE_BORDER_WIDTH + HOME_TILE_ICON_OFFSET,
-            ),
-        final_icon_center - Vec2::new(HOME_HERO_ICON_SIZE / 2.0, HOME_HERO_ICON_SIZE / 2.0),
+        source_icon_center,
+        launch.request.icon_size.x,
+        final_icon_center,
         destination_icon_opacity,
         destination_labels_opacity,
         Vec2::new(icon_progress_x, icon_progress_y),
@@ -269,8 +266,7 @@ fn build_launch_tile_content(request: LaunchRequest, show_icon: bool) -> Element
     let icon_slot = if show_icon {
         icon
     } else {
-        Element::new()
-            .with_style(Style::new().with_fixed_size(HOME_TILE_ICON_SIZE, HOME_TILE_ICON_SIZE))
+        Element::new().with_style(Style::new().with_fixed_size(TILE_ICON_SIZE, TILE_ICON_SIZE))
     };
 
     let meta = Container::vertical()
@@ -311,24 +307,27 @@ fn build_launch_tile_content(request: LaunchRequest, show_icon: bool) -> Element
 
 fn build_launch_destination_shared_content(
     request: LaunchRequest,
-    source_icon_top_left: Vec2,
-    final_icon_top_left: Vec2,
+    source_icon_center: Vec2,
+    source_icon_size: f32,
+    final_icon_center: Vec2,
     icon_opacity: f32,
     labels_opacity: f32,
     motion_progress: Vec2,
     scale_progress: f32,
 ) -> Element {
     let accent = color(request.app.accent);
-    let current_icon_top_left = Vec2::new(
-        source_icon_top_left.x
-            + (final_icon_top_left.x - source_icon_top_left.x) * motion_progress.x,
-        source_icon_top_left.y
-            + (final_icon_top_left.y - source_icon_top_left.y) * motion_progress.y,
+    let current_icon_center = Vec2::new(
+        source_icon_center.x + (final_icon_center.x - source_icon_center.x) * motion_progress.x,
+        source_icon_center.y + (final_icon_center.y - source_icon_center.y) * motion_progress.y,
     );
     let current_icon_size =
-        HOME_TILE_ICON_SIZE + (HOME_HERO_ICON_SIZE - HOME_TILE_ICON_SIZE) * scale_progress;
-    let icon_radius = 14.0 + (24.0 - 14.0) * scale_progress;
-    let badge_font_size = 28.0 + (42.0 - 28.0) * scale_progress;
+        source_icon_size + (HOME_HERO_ICON_SIZE - source_icon_size) * scale_progress;
+    let source_icon_scale = source_icon_size / TILE_ICON_SIZE;
+    let icon_radius = 14.0 * source_icon_scale + (24.0 - 14.0 * source_icon_scale) * scale_progress;
+    let badge_font_size =
+        28.0 * source_icon_scale + (42.0 - 28.0 * source_icon_scale) * scale_progress;
+    let current_icon_top_left =
+        current_icon_center - Vec2::new(current_icon_size / 2.0, current_icon_size / 2.0);
     let local_icon_x = (HOME_SHARED_CONTENT_WIDTH - current_icon_size) / 2.0;
     let local_icon_y = 0.0;
     let current_shared_content_top_left = Vec2::new(

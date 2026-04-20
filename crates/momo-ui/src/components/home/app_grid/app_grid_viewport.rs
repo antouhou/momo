@@ -201,16 +201,16 @@ pub(in crate::components::home::app_grid) fn build_page_contents(
                 .exact_height(metrics.page_height),
         )
         .align_items_center()
-        .with_spacing((GRID_GAP, GRID_GAP))
         .build()
         .with_tag(format!("apps-grid-page-{page_index}"));
 
     for (row_index, row) in page_apps.chunks(metrics.columns).enumerate() {
         let mut row_container = Container::horizontal()
+            .with_padding(GRID_GAP / 2.0)
             .with_fit(
                 Fit::new()
                     .exact_width(metrics.row_width)
-                    .exact_height(TILE_HEIGHT),
+                    .exact_content_height(),
             )
             .align_items_start()
             .with_spacing((GRID_GAP, GRID_GAP))

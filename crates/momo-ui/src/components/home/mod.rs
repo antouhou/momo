@@ -80,13 +80,13 @@ impl Component for Home {
 }
 
 fn home_style() -> Style {
+    let gradient = LinearGradient::to(LinearSideOrCorner::TopRight)
+        .stop(Color::from_rgb(6, 13, 16))
+        .stop(Color::from_rgb(10, 32, 38))
+        .stop(Color::from_rgb(54, 47, 28));
+
     Style::new()
-        .with_background(
-            LinearGradient::to(LinearSideOrCorner::TopRight)
-                .stop(Color::from_rgb(6, 13, 16))
-                .stop(Color::from_rgb(10, 32, 38))
-                .stop(Color::from_rgb(54, 47, 28)),
-        )
+        .with_background(gradient)
         .with_direction(FlexDirection::Column)
         .with_spacing((SECTION_GAP, SECTION_GAP))
 }

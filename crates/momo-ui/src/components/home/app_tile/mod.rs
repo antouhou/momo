@@ -1,8 +1,4 @@
-use crate::components::home::model::{
-    HOME_LAUNCH_CHANNEL_ID, LaunchRequest, MockApp, TILE_BORDER_RADIUS, TILE_HEIGHT,
-    TILE_ICON_OFFSET, TILE_ICON_SIZE, TILE_WIDTH, color, tile_focus_transform,
-    transformed_local_rect,
-};
+use crate::components::home::model::{HOME_LAUNCH_CHANNEL_ID, LaunchRequest, MockApp, TILE_BORDER_RADIUS, TILE_HEIGHT, TILE_ICON_OFFSET, TILE_ICON_SIZE, TILE_WIDTH, color, tile_focus_transform, transformed_local_rect, TILE_FOCUS_ANIMATION_DURATION_MS};
 use daiko::Element;
 use daiko::Vec2;
 use daiko::animation::{AnimationParameters, transition};
@@ -99,7 +95,7 @@ impl Component for AppTile {
             .with_background_color(transition(
                 background,
                 AnimationParameters::default()
-                    .with_duration(Duration::from_millis(180))
+                    .with_duration(Duration::from_millis(TILE_FOCUS_ANIMATION_DURATION_MS))
                     .to_transition_options(),
                 ctx,
             ))
@@ -108,7 +104,7 @@ impl Component for AppTile {
                 transition(
                     border_color,
                     AnimationParameters::default()
-                        .with_duration(Duration::from_millis(180))
+                        .with_duration(Duration::from_millis(TILE_FOCUS_ANIMATION_DURATION_MS))
                         .to_transition_options(),
                     ctx,
                 ),
@@ -195,10 +191,30 @@ impl Component for AppTile {
         //     tile.add_content(focus_ring);
         // }
 
-        Element::new()
+        let mut element = Element::new()
             .with_tag(self.app.id)
             .with_style(style)
             .with_content(icon)
-            .with_content(meta)
+            .with_content(meta);
+
+        if paint_decorations {
+            // let color = transition(
+            //     border_color,
+            //     AnimationParameters::default()
+            //         .with_duration(Duration::from_millis(TILE_FOCUS_ANIMATION_DURATION_MS))
+            //         .to_transition_options(),
+            //     ctx,
+            // );
+
+            // element.set_effect(
+            //     BoxShadow::new()
+            //         .with_offset([0.0, 0.0])
+            //         .with_color(Color::BLACK)
+            //         .with_blur_radius(10.0)
+            //         .with_corner_radius(18.0),
+            // )
+        }
+
+        element
     }
 }

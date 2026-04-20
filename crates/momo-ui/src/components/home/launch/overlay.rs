@@ -387,7 +387,7 @@ fn build_launch_destination_shared_content(
                 .with_order(12)
                 .with_direction(FlexDirection::Column)
                 .with_align_items(daiko::layout::AlignItems::FlexStart)
-                .with_overflow(daiko::style::Overflow::Visible),
+                .with_overflow(daiko::style::Overflow::Hidden),
         )
         .with_content(icon)
         .with_content(

@@ -1,8 +1,6 @@
-use crate::components::home::model::{
-    HOME_LAUNCH_CHANNEL_ID, LaunchRequest, MockApp, TILE_BORDER_RADIUS, TILE_HEIGHT, TILE_WIDTH,
-    color,
-};
+use crate::components::home::model::{HOME_LAUNCH_CHANNEL_ID, LaunchRequest, MockApp, TILE_BORDER_RADIUS, TILE_HEIGHT, TILE_ICON_OFFSET, TILE_ICON_SIZE, TILE_WIDTH, color, tile_focus_transform, transformed_local_rect, TILE_FOCUS_ANIMATION_DURATION_MS};
 use daiko::Element;
+use daiko::Vec2;
 use daiko::animation::{AnimationParameters, transition};
 use daiko::component::{Component, ComponentContext};
 use daiko::navigation::{FocusKey, FocusOrigin, NavigationDirection};
@@ -52,18 +50,6 @@ impl Component for AppTile {
             focusable.request_focus(FocusOrigin::Pointer);
         }
 
-        if just_activated {
-            if let Some(layout) = layout {
-                let launch_channel = ctx.use_channel_with_id(HOME_LAUNCH_CHANNEL_ID);
-                let _ = launch_channel.send(LaunchRequest {
-                    app: self.app,
-                    position: layout.position_absolute,
-                    size: layout.size,
-                });
-            }
-            println!("Activated app: {}", self.app.name);
-        }
-
         if self.is_hidden_for_launch {
             return Element::new().with_tag(self.app.id).with_style(
                 Style::new()
@@ -97,6 +83,8 @@ impl Component for AppTile {
         } else {
             Color::from_rgb(52, 65, 89)
         };
+        let tile_transform =
+            tile_focus_transform(Vec2::new(TILE_WIDTH, TILE_HEIGHT), paint_decorations, ctx);
 
         let mut style = Style::new()
             .with_fixed_size(TILE_WIDTH, TILE_HEIGHT)
@@ -107,7 +95,7 @@ impl Component for AppTile {
             .with_background_color(transition(
                 background,
                 AnimationParameters::default()
-                    .with_duration(Duration::from_millis(180))
+                    .with_duration(Duration::from_millis(TILE_FOCUS_ANIMATION_DURATION_MS))
                     .to_transition_options(),
                 ctx,
             ))
@@ -116,12 +104,39 @@ impl Component for AppTile {
                 transition(
                     border_color,
                     AnimationParameters::default()
-                        .with_duration(Duration::from_millis(180))
+                        .with_duration(Duration::from_millis(TILE_FOCUS_ANIMATION_DURATION_MS))
                         .to_transition_options(),
                     ctx,
                 ),
             )))
-            .with_border_radius(BorderRadius::all(TILE_BORDER_RADIUS));
+            .with_border_radius(BorderRadius::all(TILE_BORDER_RADIUS))
+            .with_transform(Some(tile_transform.clone()));
+
+        if just_activated {
+            if let Some(layout) = layout {
+                let (surface_position, surface_size) = transformed_local_rect(
+                    layout.position_absolute,
+                    &tile_transform,
+                    Vec2::zero(),
+                    layout.size,
+                );
+                let (icon_position, icon_size) = transformed_local_rect(
+                    layout.position_absolute,
+                    &tile_transform,
+                    Vec2::new(TILE_ICON_OFFSET, TILE_ICON_OFFSET),
+                    Vec2::new(TILE_ICON_SIZE, TILE_ICON_SIZE),
+                );
+                let launch_channel = ctx.use_channel_with_id(HOME_LAUNCH_CHANNEL_ID);
+                let _ = launch_channel.send(LaunchRequest {
+                    app: self.app,
+                    position: surface_position,
+                    size: surface_size,
+                    icon_position,
+                    icon_size,
+                });
+            }
+            println!("Activated app: {}", self.app.name);
+        }
 
         if is_hovering {
             style.set_cursor(CursorIcon::PointingHand)
@@ -176,10 +191,30 @@ impl Component for AppTile {
         //     tile.add_content(focus_ring);
         // }
 
-        Element::new()
+        let mut element = Element::new()
             .with_tag(self.app.id)
             .with_style(style)
             .with_content(icon)
-            .with_content(meta)
+            .with_content(meta);
+
+        if paint_decorations {
+            // let color = transition(
+            //     border_color,
+            //     AnimationParameters::default()
+            //         .with_duration(Duration::from_millis(TILE_FOCUS_ANIMATION_DURATION_MS))
+            //         .to_transition_options(),
+            //     ctx,
+            // );
+
+            // element.set_effect(
+            //     BoxShadow::new()
+            //         .with_offset([0.0, 0.0])
+            //         .with_color(Color::BLACK)
+            //         .with_blur_radius(10.0)
+            //         .with_corner_radius(18.0),
+            // )
+        }
+
+        element
     }
 }

@@ -72,7 +72,7 @@ impl Component for AppGridViewport {
             .with_style(
                 Style::new()
                     .with_fixed_size(self.metrics.page_width, self.metrics.page_height)
-                    .with_overflow(Overflow::Hidden),
+                    .with_overflow(Overflow::Visible),
             )
             .with_content(build_page_strip(&self.grid, self.metrics, rendered_offset))
     }
@@ -201,20 +201,24 @@ pub(in crate::components::home::app_grid) fn build_page_contents(
                 .exact_height(metrics.page_height),
         )
         .align_items_center()
-        .with_spacing((GRID_GAP, GRID_GAP))
         .build()
         .with_tag(format!("apps-grid-page-{page_index}"));
 
+    page.style_mut().set_overflow(Overflow::Visible);
+
     for (row_index, row) in page_apps.chunks(metrics.columns).enumerate() {
         let mut row_container = Container::horizontal()
+            .with_padding(GRID_GAP / 2.0)
             .with_fit(
                 Fit::new()
                     .exact_width(metrics.row_width)
-                    .exact_height(TILE_HEIGHT),
+                    .exact_content_height(),
             )
             .align_items_start()
             .with_spacing((GRID_GAP, GRID_GAP))
             .build();
+
+        row_container.style_mut().set_overflow(Overflow::Visible);
 
         for (column_index, app) in row.iter().enumerate() {
             let app_index = first_app_index + row_index * metrics.columns + column_index;

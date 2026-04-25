@@ -625,6 +625,7 @@ name = "daiko"
 version = "0.0.2"
 dependencies = [
  "arboard",
+ "bytemuck",
  "crossbeam-channel",
  "daikore",
  "futures",
@@ -817,6 +818,7 @@ version = "0.22.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f1a05365e3b1c6d1650318537c7460c6923f1abdd272ad6842baa2b509957a06"
 dependencies = [
+ "bytemuck",
  "num-traits",
 ]
 
@@ -3615,10 +3617,11 @@ dependencies = [
 
 [[package]]
 name = "transformator"
-version = "0.1.1"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "335280384e94ef8fefc7f4ad7e4e15dcfed9056c7416da547e56436c4a00de30"
+checksum = "6204d1b658cbe52f1dc4a9e057580d86e9b1afce10430ec1b108767caf00842d"
 dependencies = [
+ "bytemuck",
  "euclid",
 ]
 

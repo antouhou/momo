@@ -4,6 +4,7 @@ mod clock_chip;
 mod header;
 mod launch;
 mod model;
+mod settings_menu;
 #[cfg(test)]
 mod tests;
 mod time;
@@ -13,11 +14,13 @@ use crate::components::home::header::HomeHeader;
 use crate::components::home::launch::controller::use_launch_controller;
 use crate::components::home::launch::overlay::LaunchOverlay;
 use crate::components::home::model::{HOME_CLOCK_STATE_ID, HOME_CLOCK_THREAD_ID, SECTION_GAP};
+use crate::components::home::settings_menu::{settings_menu_is_open, SettingsMenuPanel};
 use crate::components::home::time::{read_system_time, spawn_clock_thread};
 use daiko::component::{Component, ComponentContext};
 use daiko::layout::FlexDirection;
 use daiko::style::{Color, LinearGradient, LinearSideOrCorner, Style};
-use daiko::{Element, Id};
+use daiko::{Element, Id, Vec2};
+use daiko::widgets::overlay::{Overlay, OverlayPositioning, OverlayRelativePosition};
 
 #[derive(Clone, Copy)]
 pub struct Home {
@@ -59,6 +62,8 @@ impl Component for Home {
 
         let launch = use_launch_controller(ctx);
 
+        let settings_menu_open = settings_menu_is_open(ctx);
+
         let mut root = Element::new()
             .with_tag("home-root")
             .with_style(home_style())
@@ -68,6 +73,14 @@ impl Component for Home {
                 hidden_app_id: launch.launched_app_id,
                 preferred_focus_app_id: launch.preferred_focus_app_id,
             });
+
+        if settings_menu_open {
+            root
+                .add_content(Overlay::new_content_sized(SettingsMenuPanel)
+                .with_positioning(OverlayPositioning::RelativeToTopRightWindowCorner)
+                .add_offset(Vec2::new(-12.0, 12.0))
+            );
+        }
 
         if let Some(active_launch) = launch.active_launch {
             root.add_content(LaunchOverlay {

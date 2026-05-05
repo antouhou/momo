@@ -1,4 +1,8 @@
-use crate::components::home::model::{HOME_LAUNCH_CHANNEL_ID, LaunchRequest, MockApp, TILE_BORDER_RADIUS, TILE_HEIGHT, TILE_ICON_OFFSET, TILE_ICON_SIZE, TILE_WIDTH, color, tile_focus_transform, transformed_local_rect, TILE_FOCUS_ANIMATION_DURATION_MS};
+use crate::components::home::model::{
+    HOME_LAUNCH_CHANNEL_ID, LaunchRequest, MockApp, TILE_BORDER_RADIUS,
+    TILE_FOCUS_ANIMATION_DURATION_MS, TILE_HEIGHT, TILE_ICON_OFFSET, TILE_ICON_SIZE, TILE_WIDTH,
+    color, tile_focus_transform, transformed_local_rect,
+};
 use daiko::Element;
 use daiko::Vec2;
 use daiko::animation::{AnimationParameters, transition};
@@ -191,7 +195,7 @@ impl Component for AppTile {
         //     tile.add_content(focus_ring);
         // }
 
-        let mut element = Element::new()
+        let element = Element::new()
             .with_tag(self.app.id)
             .with_style(style)
             .with_content(icon)

@@ -5,7 +5,7 @@ use crate::components::home::app_grid::{
 use crate::components::home::app_tile::AppTile;
 use crate::components::home::model::{
     GRID_GAP, HOME_APP_GRID_FOCUSED_KEY_ID, HOME_APP_GRID_PAGE_STATE_ID,
-    HOME_APP_GRID_SCROLL_ACCUMULATOR_ID, HOME_APP_GRID_SMOOTH_OFFSET_ID, MOCK_APPS, TILE_HEIGHT,
+    HOME_APP_GRID_SCROLL_ACCUMULATOR_ID, HOME_APP_GRID_SMOOTH_OFFSET_ID, MOCK_APPS,
 };
 use daiko::animation::SmoothFollowConfig;
 use daiko::component::{Component, ComponentContext};

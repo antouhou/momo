@@ -26,7 +26,7 @@ pub(super) const TILE_FOCUS_ANIMATION_DURATION_MS: u64 = 120;
 pub(super) const TILE_ICON_OFFSET: f32 = 18.0;
 pub(super) const TILE_ICON_SIZE: f32 = 72.0;
 
-pub(in crate::components::home) fn home_top_row_settings_focus_key() -> FocusKey {
+pub fn home_top_row_settings_focus_key() -> FocusKey {
     FocusKey::new(HOME_TOP_ROW_SETTINGS_FOCUS_KEY_ID)
 }
 

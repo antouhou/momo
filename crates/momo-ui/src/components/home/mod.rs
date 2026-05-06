@@ -3,8 +3,8 @@ mod app_tile;
 mod clock_chip;
 mod header;
 mod launch;
-mod model;
-mod settings_menu;
+pub(crate) mod model;
+pub(crate) mod settings_menu;
 #[cfg(test)]
 mod tests;
 mod time;
@@ -14,13 +14,13 @@ use crate::components::home::header::HomeHeader;
 use crate::components::home::launch::controller::use_launch_controller;
 use crate::components::home::launch::overlay::LaunchOverlay;
 use crate::components::home::model::{HOME_CLOCK_STATE_ID, HOME_CLOCK_THREAD_ID, SECTION_GAP};
-use crate::components::home::settings_menu::{settings_menu_is_open, SettingsMenuPanel};
 use crate::components::home::time::{read_system_time, spawn_clock_thread};
 use daiko::component::{Component, ComponentContext};
 use daiko::layout::FlexDirection;
 use daiko::style::{Color, LinearGradient, LinearSideOrCorner, Style};
 use daiko::{Element, Id, Vec2};
 use daiko::widgets::overlay::{Overlay, OverlayPositioning, OverlayRelativePosition};
+use crate::components::quick_settings::{is_settings_menu_open, SettingsMenuPanel};
 
 #[derive(Clone, Copy)]
 pub struct Home {
@@ -62,7 +62,7 @@ impl Component for Home {
 
         let launch = use_launch_controller(ctx);
 
-        let settings_menu_open = settings_menu_is_open(ctx);
+        let settings_menu_open = is_settings_menu_open(ctx);
 
         let mut root = Element::new()
             .with_tag("home-root")

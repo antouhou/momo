@@ -2,6 +2,7 @@ use daiko::component::ComponentContext;
 use daiko::style::{Border, BorderRadius, Color, Indent, Stroke, Style};
 use daiko::widgets::text::{Text, TextStyle, TextWrap};
 
+pub const SETTINGS_MENU_OFFSET: f32 = 12.0;
 const SETTINGS_MENU_WIDTH: f32 = 220.0;
 
 pub fn settings_exit_button_style(

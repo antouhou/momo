@@ -1,15 +1,12 @@
-use crate::components::home::model::{home_top_row_settings_focus_key};
+use crate::components::home::model::home_top_row_settings_focus_key;
+use crate::components::quick_settings::SETTINGS_MENU_STATE_ID;
+use crate::components::quick_settings::state::SettingsMenuState;
 use daiko::Element;
 use daiko::Id;
 use daiko::component::{Component, ComponentContext};
-use daiko::navigation::{FocusOrigin};
+use daiko::navigation::FocusOrigin;
 use daiko::style::{Border, BorderRadius, Color, Indent, Stroke, Style};
 use daiko::widgets::image::{Image, ImageParams, ImageSource, ImageType};
-use crate::components::quick_settings::SETTINGS_MENU_STATE_ID;
-use crate::components::quick_settings::state::SettingsMenuState;
-
-const SETTINGS_MENU_OFFSET_Y: f32 = 12.0;
-const SETTINGS_MENU_TOP_ROW_HEIGHT: f32 = 52.0;
 
 #[derive(Clone, Copy)]
 pub(super) struct HeaderSettingsTrigger;

@@ -2,12 +2,13 @@ pub mod state;
 mod style;
 
 use daiko::component::{Component, ComponentContext};
-use daiko::{Element, Id};
 use daiko::navigation::{FocusBoundary, FocusOrigin, NavigationInputAction};
 use daiko::widgets::button::Button;
 use daiko::widgets::container::{Container, Fit};
-pub(crate) use state::{SettingsMenuState, SETTINGS_MENU_STATE_ID, is_settings_menu_open};
-use style::{menu_heading, settings_exit_button_style, settings_menu_style};
+use daiko::widgets::overlay::{Overlay, OverlayPositioning};
+use daiko::{Element, Id, Vec2};
+pub(crate) use state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, is_settings_menu_open};
+use style::{SETTINGS_MENU_OFFSET, menu_heading, settings_exit_button_style, settings_menu_style};
 
 #[derive(Clone, Copy)]
 pub struct SettingsMenuPanel;
@@ -74,7 +75,7 @@ impl Component for SettingsMenuPanel {
             .with_content(
                 Container::vertical()
                     .with_fit(Fit::new().at_least_parent_width().at_least_content_height())
-                    .with_spacing((12.0, 12.0))
+                    .with_spacing((SETTINGS_MENU_OFFSET, SETTINGS_MENU_OFFSET))
                     .build()
                     .with_content(menu_heading())
                     .with_content(
@@ -84,4 +85,10 @@ impl Component for SettingsMenuPanel {
                     ),
             )
     }
+}
+
+pub fn settings_overlay() -> Overlay {
+    Overlay::new_content_sized(SettingsMenuPanel)
+        .with_positioning(OverlayPositioning::RelativeToTopRightWindowCorner)
+        .add_offset(Vec2::new(-SETTINGS_MENU_OFFSET, SETTINGS_MENU_OFFSET))
 }

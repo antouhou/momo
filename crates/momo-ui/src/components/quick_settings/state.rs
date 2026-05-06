@@ -1,5 +1,5 @@
-use daiko::component::ComponentContext;
 use daiko::Id;
+use daiko::component::ComponentContext;
 
 #[derive(Clone, Copy, Default)]
 pub struct SettingsMenuState {

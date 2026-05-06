@@ -15,12 +15,11 @@ use crate::components::home::launch::controller::use_launch_controller;
 use crate::components::home::launch::overlay::LaunchOverlay;
 use crate::components::home::model::{HOME_CLOCK_STATE_ID, HOME_CLOCK_THREAD_ID, SECTION_GAP};
 use crate::components::home::time::{read_system_time, spawn_clock_thread};
+use crate::components::quick_settings::{is_settings_menu_open, settings_overlay};
 use daiko::component::{Component, ComponentContext};
 use daiko::layout::FlexDirection;
 use daiko::style::{Color, LinearGradient, LinearSideOrCorner, Style};
-use daiko::{Element, Id, Vec2};
-use daiko::widgets::overlay::{Overlay, OverlayPositioning, OverlayRelativePosition};
-use crate::components::quick_settings::{is_settings_menu_open, SettingsMenuPanel};
+use daiko::{Element, Id};
 
 #[derive(Clone, Copy)]
 pub struct Home {
@@ -75,11 +74,7 @@ impl Component for Home {
             });
 
         if settings_menu_open {
-            root
-                .add_content(Overlay::new_content_sized(SettingsMenuPanel)
-                .with_positioning(OverlayPositioning::RelativeToTopRightWindowCorner)
-                .add_offset(Vec2::new(-12.0, 12.0))
-            );
+            root.add_content(settings_overlay());
         }
 
         if let Some(active_launch) = launch.active_launch {

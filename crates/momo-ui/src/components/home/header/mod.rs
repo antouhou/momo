@@ -1,8 +1,10 @@
 use crate::components::home::clock_chip::ClockChip;
 use crate::components::home::model::SCREEN_PADDING;
+use crate::components::home::settings_menu::HeaderSettingsTrigger;
 use daiko::Element;
 use daiko::component::{Component, ComponentContext};
 use daiko::layout::{AlignItems, FlexDirection, JustifyContent, SizeConstraint};
+use daiko::navigation::FocusEntryPolicy;
 use daiko::style::{Indent, Style};
 use daiko::widgets::container::{Container, Fit};
 use daiko::widgets::heading::{Heading, HeadingLevel};
@@ -12,7 +14,10 @@ use daiko::widgets::text::VerticalTextAlignment;
 pub(super) struct HomeHeader;
 
 impl Component for HomeHeader {
-    fn to_element(&self, _ctx: &mut ComponentContext) -> Element {
+    fn to_element(&self, ctx: &mut ComponentContext) -> Element {
+        let focus_scope = ctx.focus_scope();
+        focus_scope.set_entry_policy(FocusEntryPolicy::Remembered);
+
         Element::new()
             .with_tag("apps-header")
             .with_style(header_style())
@@ -35,7 +40,16 @@ fn header_row() -> Element {
                         .with_vertical_text_alignment(VerticalTextAlignment::Center),
                 ),
         )
-        .with_content(ClockChip)
+        .with_content(
+            Container::horizontal()
+                .with_fit(Fit::new().exact_content_size())
+                .align_items_center()
+                .with_spacing((12.0, 12.0))
+                .build()
+                .with_tag("apps-header-actions")
+                .with_content(ClockChip)
+                .with_content(HeaderSettingsTrigger),
+        )
 }
 
 fn header_style() -> Style {

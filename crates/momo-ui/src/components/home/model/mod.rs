@@ -1,6 +1,7 @@
 use daiko::Vec2;
 use daiko::animation::{AnimationParameters, transition};
 use daiko::component::ComponentContext;
+use daiko::navigation::FocusKey;
 use daiko::style::{Color, Transform};
 use std::time::Duration;
 
@@ -12,6 +13,7 @@ pub(super) const HOME_APP_GRID_SMOOTH_OFFSET_ID: &str = "momo_home_app_grid_smoo
 pub(super) const HOME_CLOCK_THREAD_ID: &str = "momo_home_clock_thread_started";
 pub(super) const HOME_CLOCK_STATE_ID: &str = "momo_home_clock_text";
 pub(super) const HOME_LAUNCH_CHANNEL_ID: &str = "momo_home_launch_channel";
+pub(super) const HOME_TOP_ROW_SETTINGS_FOCUS_KEY_ID: &str = "momo_home_top_row_settings";
 
 pub(super) const SCREEN_PADDING: f32 = 40.0;
 pub(super) const SECTION_GAP: f32 = 24.0;
@@ -23,6 +25,10 @@ pub(super) const TILE_FOCUS_SCALE: f32 = 1.05;
 pub(super) const TILE_FOCUS_ANIMATION_DURATION_MS: u64 = 120;
 pub(super) const TILE_ICON_OFFSET: f32 = 18.0;
 pub(super) const TILE_ICON_SIZE: f32 = 72.0;
+
+pub fn home_top_row_settings_focus_key() -> FocusKey {
+    FocusKey::new(HOME_TOP_ROW_SETTINGS_FOCUS_KEY_ID)
+}
 
 #[derive(Clone, Copy)]
 pub(super) struct MockApp {

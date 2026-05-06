@@ -3,7 +3,8 @@ mod app_tile;
 mod clock_chip;
 mod header;
 mod launch;
-mod model;
+pub(crate) mod model;
+pub(crate) mod settings_menu;
 #[cfg(test)]
 mod tests;
 mod time;
@@ -14,6 +15,7 @@ use crate::components::home::launch::controller::use_launch_controller;
 use crate::components::home::launch::overlay::LaunchOverlay;
 use crate::components::home::model::{HOME_CLOCK_STATE_ID, HOME_CLOCK_THREAD_ID, SECTION_GAP};
 use crate::components::home::time::{read_system_time, spawn_clock_thread};
+use crate::components::quick_settings::{is_settings_menu_open, settings_overlay};
 use daiko::component::{Component, ComponentContext};
 use daiko::layout::FlexDirection;
 use daiko::style::{Color, LinearGradient, LinearSideOrCorner, Style};
@@ -59,6 +61,8 @@ impl Component for Home {
 
         let launch = use_launch_controller(ctx);
 
+        let settings_menu_open = is_settings_menu_open(ctx);
+
         let mut root = Element::new()
             .with_tag("home-root")
             .with_style(home_style())
@@ -68,6 +72,10 @@ impl Component for Home {
                 hidden_app_id: launch.launched_app_id,
                 preferred_focus_app_id: launch.preferred_focus_app_id,
             });
+
+        if settings_menu_open {
+            root.add_content(settings_overlay());
+        }
 
         if let Some(active_launch) = launch.active_launch {
             root.add_content(LaunchOverlay {

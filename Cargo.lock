@@ -1241,9 +1241,9 @@ dependencies = [
 
 [[package]]
 name = "grafo"
-version = "0.16.0"
+version = "0.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "48b5082d479aac276aa6f4863f57bb5674768ad8573837f313eefee803fd72c0"
+checksum = "00f018371173e52baee6ff7b88d56a3eedda2e6d906a81c155db09a019431f2d"
 dependencies = [
  "ahash",
  "bytemuck",
@@ -1836,6 +1836,7 @@ name = "momo-shell"
 version = "0.1.0"
 dependencies = [
  "daiko",
+ "log",
  "momo-app",
  "momo-ui",
  "momo-wayfire",

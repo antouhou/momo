@@ -1,3 +1,6 @@
+mod style;
+
+use crate::components::home::app_tile::style::tile_style;
 use crate::components::home::model::{
     HOME_LAUNCH_CHANNEL_ID, LaunchRequest, MockApp, TILE_BORDER_RADIUS,
     TILE_FOCUS_ANIMATION_DURATION_MS, TILE_HEIGHT, TILE_ICON_OFFSET, TILE_ICON_SIZE, TILE_WIDTH,
@@ -12,6 +15,7 @@ use daiko::style::{Border, BorderRadius, Color, CursorIcon, Stroke, Style};
 use daiko::widgets::container::{Container, Fit};
 use daiko::widgets::text::{Text, TextStyle, TextWrap};
 use std::time::Duration;
+use tracing::info;
 
 #[derive(Clone)]
 pub(super) struct AppTile {
@@ -69,52 +73,10 @@ impl Component for AppTile {
         let icon_background = accent.gamma_multiply(0.2);
         let icon_text_color = accent.gamma_multiply(1.1);
 
-        let background = if paint_decorations {
-            Color::from_rgb(30, 41, 60)
-        } else {
-            Color::from_rgb(20, 26, 38)
-        };
-        // let background = if is_pressed {
-        //     Color::from_rgb(38, 47, 68)
-        // } else if is_focus_visible {
-        //     Color::from_rgb(30, 41, 60)
-        // } else {
-        //     Color::from_rgb(20, 26, 38)
-        // };
-
-        let border_color = if paint_decorations {
-            accent
-        } else {
-            Color::from_rgb(52, 65, 89)
-        };
         let tile_transform =
             tile_focus_transform(Vec2::new(TILE_WIDTH, TILE_HEIGHT), paint_decorations, ctx);
 
-        let mut style = Style::new()
-            .with_fixed_size(TILE_WIDTH, TILE_HEIGHT)
-            .with_direction(daiko::layout::FlexDirection::Column)
-            .with_align_items(daiko::layout::AlignItems::FlexStart)
-            .with_padding(16.0)
-            .with_spacing((12.0, 12.0))
-            .with_background_color(transition(
-                background,
-                AnimationParameters::default()
-                    .with_duration(Duration::from_millis(TILE_FOCUS_ANIMATION_DURATION_MS))
-                    .to_transition_options(),
-                ctx,
-            ))
-            .with_border(Border::uniform(Stroke::new(
-                2.0,
-                transition(
-                    border_color,
-                    AnimationParameters::default()
-                        .with_duration(Duration::from_millis(TILE_FOCUS_ANIMATION_DURATION_MS))
-                        .to_transition_options(),
-                    ctx,
-                ),
-            )))
-            .with_border_radius(BorderRadius::all(TILE_BORDER_RADIUS))
-            .with_transform(Some(tile_transform.clone()));
+        let mut style = tile_style(ctx, accent, &tile_transform, paint_decorations);
 
         if just_activated {
             if let Some(layout) = layout {
@@ -172,14 +134,6 @@ impl Component for AppTile {
                     TextStyle::default()
                         .with_font_size(18.0)
                         .with_font_color(Color::from_rgb(240, 245, 255))
-                        .with_wrap(TextWrap::NoWrap),
-                ),
-            )
-            .with_content(
-                Text::new(self.app.subtitle).with_style(
-                    TextStyle::default()
-                        .with_font_size(13.0)
-                        .with_font_color(Color::from_rgb(132, 149, 179))
                         .with_wrap(TextWrap::NoWrap),
                 ),
             );

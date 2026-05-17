@@ -9,3 +9,4 @@ momo-ui = { path = "../../crates/momo-ui" }
 momo-wayfire = { path = "../../crates/momo-wayfire" }
 daiko = { workspace = true }
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+log = "0.4.29"

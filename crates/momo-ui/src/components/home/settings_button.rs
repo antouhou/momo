@@ -79,6 +79,7 @@ fn settings_trigger_button_style(trigger_state: &HeaderSettingsTriggerState) -> 
     };
 
     Style::new()
+        .with_size_constraint(daiko::layout::SizeConstraint::exact_content_size())
         .with_direction(daiko::layout::FlexDirection::Row)
         .with_align_items(daiko::layout::AlignItems::Center)
         .with_justify_content(daiko::layout::JustifyContent::Center)

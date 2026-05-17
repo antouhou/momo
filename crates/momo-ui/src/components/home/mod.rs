@@ -4,7 +4,7 @@ mod clock_chip;
 mod header;
 mod launch;
 pub(crate) mod model;
-pub(crate) mod settings_menu;
+pub(crate) mod settings_button;
 #[cfg(test)]
 mod tests;
 mod time;
@@ -92,6 +92,12 @@ fn home_style() -> Style {
         .stop(Color::from_rgb(6, 13, 16))
         .stop(Color::from_rgb(10, 32, 38))
         .stop(Color::from_rgb(54, 47, 28));
+    let blue_gradient = LinearGradient::to(LinearSideOrCorner::Top)
+        .stop(Color::from_hex("#3EBFDC").unwrap())
+        .stop(Color::from_hex("#006EB7").unwrap());
+    // .stop(Color::from_hex("#0756B8").unwrap());
+    // .stop(Color::from_hex("#002858").unwrap());
+    // .stop(Color::from_hex("#0D0058").unwrap());
 
     Style::new()
         .with_background(gradient)

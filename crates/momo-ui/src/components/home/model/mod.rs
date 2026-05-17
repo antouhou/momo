@@ -22,7 +22,7 @@ pub(super) const TILE_WIDTH: f32 = 248.0;
 pub(super) const TILE_HEIGHT: f32 = 176.0;
 pub(super) const TILE_BORDER_RADIUS: f32 = 18.0;
 pub(super) const TILE_FOCUS_SCALE: f32 = 1.05;
-pub(super) const TILE_FOCUS_ANIMATION_DURATION_MS: u64 = 120;
+pub(super) const TILE_FOCUS_ANIMATION_DURATION_MS: u64 = 100;
 pub(super) const TILE_ICON_OFFSET: f32 = 18.0;
 pub(super) const TILE_ICON_SIZE: f32 = 72.0;
 

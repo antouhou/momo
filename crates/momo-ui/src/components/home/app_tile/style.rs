@@ -1,11 +1,11 @@
 use crate::components::home::model::{
     TILE_BORDER_RADIUS, TILE_FOCUS_ANIMATION_DURATION_MS, TILE_HEIGHT, TILE_WIDTH,
 };
+use daiko::animation::easing::EasingFunction;
 use daiko::animation::{AnimationParameters, transition};
 use daiko::component::ComponentContext;
 use daiko::style::{Border, BorderRadius, Color, Stroke, Style, Transform};
 use std::time::Duration;
-use daiko::animation::easing::EasingFunction;
 
 pub fn tile_style(
     ctx: &mut ComponentContext,
@@ -33,8 +33,6 @@ pub fn tile_style(
         Color::from_rgb(52, 65, 89);
         Color::from_rgba_unmultiplied(79, 195, 247, 76)
     };
-
-    let hehe = if paint_decorations { 0 } else { TILE_FOCUS_ANIMATION_DURATION_MS };
 
     Style::new()
         .with_fixed_size(TILE_WIDTH, TILE_HEIGHT)

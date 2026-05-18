@@ -122,7 +122,6 @@ fn header_style() -> Style {
     Style::new()
         .with_overflow(daiko::style::Overflow::Visible)
         .with_direction(FlexDirection::Column)
-        .with_fixed_width(ItemSize::Percent(1.0))
         .with_size_constraint(SizeConstraint::exact_content_height())
         .with_padding(Indent::new(
             SCREEN_PADDING,
@@ -135,7 +134,6 @@ fn header_style() -> Style {
 fn header_row_style() -> Style {
     Style::new()
         .with_overflow(daiko::style::Overflow::Visible)
-        .with_fixed_width(ItemSize::Percent(1.0))
         .with_fixed_height(ItemSize::Points(HEADER_MENU_HEIGHT))
         .with_direction(FlexDirection::Row)
         .with_justify_content(JustifyContent::SpaceBetween)

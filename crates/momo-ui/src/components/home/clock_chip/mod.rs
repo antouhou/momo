@@ -2,7 +2,7 @@ use crate::components::home::header::{
     HEADER_BUTTON_HEIGHT, HEADER_BUTTON_RADIUS, HEADER_CLOCK_WIDTH, HeaderButtonMetrics,
     HeaderButtonState, header_button_style,
 };
-use crate::components::home::model::{HOME_CLOCK_STATE_ID, home_top_row_clock_focus_key};
+use crate::components::home::model::HOME_CLOCK_STATE_ID;
 use crate::components::home::time::read_system_time;
 use daiko::component::{Component, ComponentContext};
 use daiko::navigation::FocusOrigin;
@@ -35,7 +35,9 @@ impl Component for ClockChip {
             Color::from_rgb(232, 238, 250)
         };
 
-        let element = Element::new()
+        
+
+        Element::new()
             .with_tag("clock-chip")
             .with_style(clock_button_style(ctx, state))
             .with_content(
@@ -46,9 +48,7 @@ impl Component for ClockChip {
                         .with_font_color(text_color)
                         .with_wrap(TextWrap::NoWrap),
                 ),
-            );
-
-        element
+            )
     }
 }
 

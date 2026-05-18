@@ -2,20 +2,16 @@ mod style;
 
 use crate::components::home::app_tile::style::tile_style;
 use crate::components::home::model::{
-    HOME_LAUNCH_CHANNEL_ID, LaunchRequest, MockApp, TILE_BORDER_RADIUS,
-    TILE_FOCUS_ANIMATION_DURATION_MS, TILE_HEIGHT, TILE_ICON_OFFSET, TILE_ICON_SIZE, TILE_WIDTH,
+    HOME_LAUNCH_CHANNEL_ID, LaunchRequest, MockApp, TILE_HEIGHT, TILE_ICON_OFFSET, TILE_ICON_SIZE, TILE_WIDTH,
     color, tile_focus_transform, transformed_local_rect,
 };
 use daiko::Element;
 use daiko::Vec2;
-use daiko::animation::{AnimationParameters, transition};
 use daiko::component::{Component, ComponentContext};
 use daiko::navigation::{FocusKey, FocusOrigin, NavigationDirection};
-use daiko::style::{Border, BorderRadius, Color, CursorIcon, Stroke, Style};
+use daiko::style::{BorderRadius, Color, CursorIcon, Style};
 use daiko::widgets::container::{Container, Fit};
 use daiko::widgets::text::{Text, TextStyle, TextWrap};
-use std::time::Duration;
-use tracing::info;
 
 #[derive(Clone)]
 pub(super) struct AppTile {

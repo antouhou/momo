@@ -92,7 +92,7 @@ fn home_style() -> Style {
         .stop(Color::from_rgb(6, 13, 16))
         .stop(Color::from_rgb(10, 32, 38))
         .stop(Color::from_rgb(54, 47, 28));
-    let blue_gradient = LinearGradient::to(LinearSideOrCorner::Top)
+    let _blue_gradient = LinearGradient::to(LinearSideOrCorner::Top)
         .stop(Color::from_hex("#3EBFDC").unwrap())
         .stop(Color::from_hex("#006EB7").unwrap());
     // .stop(Color::from_hex("#0756B8").unwrap());

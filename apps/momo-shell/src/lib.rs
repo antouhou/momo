@@ -1,8 +1,7 @@
-use daiko::hot_reloading::{DynApp, HotReloadApp};
+use daiko::hot_reloading::DynApp;
 use momo_app::{ShellApp, ShellConfiguration, ShellMode};
 use momo_ui::MomoUi;
 use momo_wayfire::WayfireBackend;
-use std::path::PathBuf;
 use std::sync::Once;
 use tracing_subscriber::EnvFilter;
 

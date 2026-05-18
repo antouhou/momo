@@ -1,8 +1,4 @@
 use daiko::hot_reloading::HotReloadApp;
-use log::info;
-use momo_app::{ShellApp, ShellConfiguration, ShellMode};
-use momo_ui::MomoUi;
-use momo_wayfire::WayfireBackend;
 use std::path::PathBuf;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

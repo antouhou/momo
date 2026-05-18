@@ -35,8 +35,6 @@ impl Component for ClockChip {
             Color::from_rgb(232, 238, 250)
         };
 
-        
-
         Element::new()
             .with_tag("clock-chip")
             .with_style(clock_button_style(ctx, state))

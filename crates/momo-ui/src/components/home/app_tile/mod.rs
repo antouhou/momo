@@ -2,8 +2,8 @@ mod style;
 
 use crate::components::home::app_tile::style::tile_style;
 use crate::components::home::model::{
-    HOME_LAUNCH_CHANNEL_ID, LaunchRequest, MockApp, TILE_HEIGHT, TILE_ICON_OFFSET, TILE_ICON_SIZE, TILE_WIDTH,
-    color, tile_focus_transform, transformed_local_rect,
+    HOME_LAUNCH_CHANNEL_ID, LaunchRequest, MockApp, TILE_HEIGHT, TILE_ICON_OFFSET, TILE_ICON_SIZE,
+    TILE_WIDTH, color, tile_focus_transform, transformed_local_rect,
 };
 use daiko::Element;
 use daiko::Vec2;

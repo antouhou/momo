@@ -27,11 +27,11 @@ pub fn tile_style(
     // };
 
     let border_color = if paint_decorations {
-        accent;
-        Color::from_hex("#4fc3f7").unwrap_or(accent)
+        accent
+        // Color::from_hex("#4fc3f7").unwrap_or(accent)
     } else {
-        Color::from_rgb(52, 65, 89);
-        Color::from_rgba_unmultiplied(79, 195, 247, 76)
+        Color::from_rgb(52, 65, 89)
+        // Color::from_rgba_unmultiplied(79, 195, 247, 76)
     };
 
     Style::new()

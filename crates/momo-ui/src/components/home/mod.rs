@@ -88,16 +88,102 @@ impl Component for Home {
 }
 
 fn home_style() -> Style {
+    // TODO: Some possible gradient to set as the default background selection, move to the settings menu
+    // later
+    // // Minty
+    // let gradient = LinearGradient::to(LinearSideOrCorner::TopRight)
+    //     .stop(Color::from_rgb(3, 10, 8))       // black green
+    //     .stop(Color::from_rgb(5, 48, 36))      // emerald shadow
+    //     .stop(Color::from_rgb(92, 168, 143));  // muted mint highlight
+    // // Dark to light
+    // let gradient = LinearGradient::to(LinearSideOrCorner::BottomRight)
+    //     .stop(Color::from_rgb(2, 4, 10))
+    //     .stop(Color::from_rgb(7, 10, 24))
+    //     .stop(Color::from_rgb(22, 17, 45))
+    //     .stop(Color::from_rgb(64, 47, 82))
+    //     .stop(Color::from_rgb(168, 132, 82));
+    // // Gray-ish
+    // let gradient = LinearGradient::to(LinearSideOrCorner::TopRight)
+    //     .stop(Color::from_rgb(3, 5, 7))
+    //     .stop(Color::from_rgb(12, 17, 22))
+    //     .stop(Color::from_rgb(31, 39, 48))
+    //     .stop(Color::from_rgb(88, 98, 106))
+    //     .stop(Color::from_rgb(190, 176, 145));
+    // // Wine
+    // let gradient = LinearGradient::to(LinearSideOrCorner::Right)
+    //     .stop(Color::from_rgb(8, 4, 6))
+    //     .stop(Color::from_rgb(28, 8, 17))
+    //     .stop(Color::from_rgb(72, 22, 38))
+    //     .stop(Color::from_rgb(128, 67, 66))
+    //     .stop(Color::from_rgb(214, 161, 112));
+    // // Ubuntu-ish
+    // let gradient = LinearGradient::to(LinearSideOrCorner::BottomRight)
+    //     .stop(Color::from_rgb(1, 3, 12))
+    //     .stop(Color::from_rgb(5, 14, 36))
+    //     .stop(Color::from_rgb(20, 24, 67))
+    //     .stop(Color::from_rgb(86, 42, 75))
+    //     .stop(Color::from_rgb(202, 118, 71));
+    // // Emerald/deep sea
+    // let gradient = LinearGradient::to(LinearSideOrCorner::TopLeft)
+    //     .stop(Color::from_rgb(1, 7, 6))
+    //     .stop(Color::from_rgb(4, 22, 18))
+    //     .stop(Color::from_rgb(6, 58, 47))
+    //     .stop(Color::from_rgb(21, 116, 91))
+    //     .stop(Color::from_rgb(176, 209, 176));
+    // // Steel/champaigne
+    // let gradient = LinearGradient::to(LinearSideOrCorner::TopRight)
+    //     .stop_between_percent(0.00, 0.26, Color::from_rgb(3, 5, 7))
+    //     .stop_at_percent(0.46, Color::from_rgb(12, 17, 22))
+    //     .stop_at_percent(0.68, Color::from_rgb(31, 39, 48))
+    //     .stop_between_percent(0.82, 0.92, Color::from_rgb(88, 98, 106))
+    //     .stop_at_percent(1.00, Color::from_rgb(190, 176, 145));
+    // // Graphite
+    // let gradient = LinearGradient::to(LinearSideOrCorner::TopRight)
+    //     .stop_at_percent(0.00, Color::from_rgb(3, 5, 7))
+    //     .stop_at_percent(0.25, Color::from_rgb(8, 10, 13))
+    //     .stop_at_percent(0.48, Color::from_rgb(17, 20, 25))
+    //     .stop_at_percent(0.68, Color::from_rgb(35, 40, 47))
+    //     .stop_at_percent(0.84, Color::from_rgb(68, 70, 70))
+    //     .stop_at_percent(1.00, Color::from_rgb(126, 115, 91));
+    // // Midnight
+    // let gradient = LinearGradient::to(LinearSideOrCorner::BottomRight)
+    //     .stop_at_percent(0.00, Color::from_rgb(5, 5, 13))
+    //     .stop_at_percent(0.28, Color::from_rgb(10, 8, 24))
+    //     .stop_at_percent(0.52, Color::from_rgb(18, 13, 36))
+    //     .stop_at_percent(0.74, Color::from_rgb(35, 25, 58))
+    //     .stop_at_percent(0.90, Color::from_rgb(55, 40, 78))
+    //     .stop_at_percent(1.00, Color::from_rgb(82, 65, 104));
+    // // Emerald
+    // let gradient = LinearGradient::to(LinearSideOrCorner::TopLeft)
+    //     .stop_at_percent(0.00, Color::from_rgb(1, 6, 6))
+    //     .stop_at_percent(0.30, Color::from_rgb(3, 16, 14))
+    //     .stop_at_percent(0.54, Color::from_rgb(5, 33, 28))
+    //     .stop_at_percent(0.74, Color::from_rgb(11, 61, 50))
+    //     .stop_at_percent(0.90, Color::from_rgb(31, 93, 76))
+    //     .stop_at_percent(1.00, Color::from_rgb(83, 125, 106));
+    // // Space/copper
+    // let gradient = LinearGradient::to(LinearSideOrCorner::BottomRight)
+    //     .stop_at_percent(0.00, Color::from_rgb(2, 3, 12))
+    //     .stop_at_percent(0.28, Color::from_rgb(6, 10, 27))
+    //     .stop_at_percent(0.52, Color::from_rgb(18, 19, 49))
+    //     .stop_at_percent(0.72, Color::from_rgb(43, 31, 65))
+    //     .stop_at_percent(0.90, Color::from_rgb(82, 51, 66))
+    //     .stop_at_percent(1.00, Color::from_rgb(126, 75, 58));
+    // // Other emerald/dark forest
+    // let gradient = LinearGradient::to(LinearSideOrCorner::TopLeft)
+    //     .stop_at_percent(0.00, Color::from_rgb(2, 8, 7))
+    //     .stop_at_percent(0.30, Color::from_rgb(4, 18, 15))
+    //     .stop_at_percent(0.54, Color::from_rgb(7, 38, 31))
+    //     .stop_at_percent(0.74, Color::from_rgb(15, 68, 54))
+    //     .stop_at_percent(0.90, Color::from_rgb(43, 100, 82))
+    //     .stop_at_percent(1.00, Color::from_rgb(91, 135, 116));
     let gradient = LinearGradient::to(LinearSideOrCorner::TopRight)
-        .stop(Color::from_rgb(6, 13, 16))
-        .stop(Color::from_rgb(10, 32, 38))
-        .stop(Color::from_rgb(54, 47, 28));
-    let _blue_gradient = LinearGradient::to(LinearSideOrCorner::Top)
-        .stop(Color::from_hex("#3EBFDC").unwrap())
-        .stop(Color::from_hex("#006EB7").unwrap());
-    // .stop(Color::from_hex("#0756B8").unwrap());
-    // .stop(Color::from_hex("#002858").unwrap());
-    // .stop(Color::from_hex("#0D0058").unwrap());
+        .stop_at_percent(0.00, Color::from_rgb(5, 6, 8))
+        .stop_at_percent(0.30, Color::from_rgb(13, 15, 18))
+        .stop_at_percent(0.55, Color::from_rgb(27, 30, 34))
+        .stop_at_percent(0.76, Color::from_rgb(50, 53, 56))
+        .stop_at_percent(0.92, Color::from_rgb(78, 76, 68))
+        .stop_at_percent(1.00, Color::from_rgb(108, 96, 76));
 
     Style::new()
         .with_background(gradient)

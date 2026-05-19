@@ -1241,13 +1241,14 @@ dependencies = [
 
 [[package]]
 name = "grafo"
-version = "0.16.1"
+version = "0.16.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "00f018371173e52baee6ff7b88d56a3eedda2e6d906a81c155db09a019431f2d"
+checksum = "d787cea486f95ccdc9d46c01d26227791a0c85e63683809d7a80b865b7f0d7d2"
 dependencies = [
  "ahash",
  "bytemuck",
  "easy-tree",
+ "half",
  "lru",
  "lyon",
  "regex",

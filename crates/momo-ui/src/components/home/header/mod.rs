@@ -150,7 +150,7 @@ fn header_menu_style() -> Style {
         .with_justify_content(JustifyContent::Center)
         .with_spacing((HEADER_MENU_GAP, HEADER_MENU_GAP))
         .with_padding(Indent::from((HEADER_MENU_PADDING, HEADER_MENU_PADDING)))
-        .with_background_color(Color::from_rgba_unmultiplied(12, 16, 18, 148))
+        .with_background_color(Color::from_rgba_unmultiplied(12, 16, 18, 108))
         .with_border(Border::uniform(Stroke::new(
             HEADER_MENU_BORDER_WIDTH,
             Color::from_rgba_unmultiplied(255, 255, 255, 34),
@@ -309,7 +309,7 @@ impl Component for HeaderAppsButton {
                     TextStyle::default()
                         .with_font_size(20.0)
                         .with_line_height(1.0)
-                        .with_weight(Weight::BLACK)
+                        .with_weight(Weight::NORMAL)
                         .with_font_color(text_color)
                         .with_vertical_alignment(VerticalTextAlignment::Center)
                         .with_wrap(TextWrap::NoWrap),

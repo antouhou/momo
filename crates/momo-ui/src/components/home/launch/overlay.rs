@@ -207,16 +207,17 @@ fn render_launch_overlay(
         );
 
     let tile_content = build_launch_tile_content(launch.request, false);
-    let shared_app_content = build_launch_destination_shared_content(
-        launch.request,
-        source_icon_center,
-        launch.request.icon_size.x,
-        final_icon_center,
-        destination_icon_opacity,
-        destination_labels_opacity,
-        Vec2::new(icon_progress_x, icon_progress_y),
-        icon_scale_progress,
-    );
+    let shared_app_content =
+        build_launch_destination_shared_content(LaunchDestinationSharedContentProps {
+            request: launch.request,
+            source_icon_center,
+            source_icon_size: launch.request.icon_size.x,
+            final_icon_center,
+            icon_opacity: destination_icon_opacity,
+            labels_opacity: destination_labels_opacity,
+            motion_progress: Vec2::new(icon_progress_x, icon_progress_y),
+            scale_progress: icon_scale_progress,
+        });
 
     let surface = Element::new()
         .with_tag(HOME_LAUNCH_SURFACE_TAG)
@@ -305,7 +306,8 @@ fn build_launch_tile_content(request: LaunchRequest, show_icon: bool) -> Element
         .with_content(meta)
 }
 
-fn build_launch_destination_shared_content(
+#[derive(Clone, Copy)]
+struct LaunchDestinationSharedContentProps {
     request: LaunchRequest,
     source_icon_center: Vec2,
     source_icon_size: f32,
@@ -314,18 +316,23 @@ fn build_launch_destination_shared_content(
     labels_opacity: f32,
     motion_progress: Vec2,
     scale_progress: f32,
-) -> Element {
-    let accent = color(request.app.accent);
+}
+
+fn build_launch_destination_shared_content(props: LaunchDestinationSharedContentProps) -> Element {
+    let accent = color(props.request.app.accent);
     let current_icon_center = Vec2::new(
-        source_icon_center.x + (final_icon_center.x - source_icon_center.x) * motion_progress.x,
-        source_icon_center.y + (final_icon_center.y - source_icon_center.y) * motion_progress.y,
+        props.source_icon_center.x
+            + (props.final_icon_center.x - props.source_icon_center.x) * props.motion_progress.x,
+        props.source_icon_center.y
+            + (props.final_icon_center.y - props.source_icon_center.y) * props.motion_progress.y,
     );
-    let current_icon_size =
-        source_icon_size + (HOME_HERO_ICON_SIZE - source_icon_size) * scale_progress;
-    let source_icon_scale = source_icon_size / TILE_ICON_SIZE;
-    let icon_radius = 14.0 * source_icon_scale + (24.0 - 14.0 * source_icon_scale) * scale_progress;
+    let current_icon_size = props.source_icon_size
+        + (HOME_HERO_ICON_SIZE - props.source_icon_size) * props.scale_progress;
+    let source_icon_scale = props.source_icon_size / TILE_ICON_SIZE;
+    let icon_radius =
+        14.0 * source_icon_scale + (24.0 - 14.0 * source_icon_scale) * props.scale_progress;
     let badge_font_size =
-        28.0 * source_icon_scale + (42.0 - 28.0 * source_icon_scale) * scale_progress;
+        28.0 * source_icon_scale + (42.0 - 28.0 * source_icon_scale) * props.scale_progress;
     let current_icon_top_left =
         current_icon_center - Vec2::new(current_icon_size / 2.0, current_icon_size / 2.0);
     let local_icon_x = (HOME_SHARED_CONTENT_WIDTH - current_icon_size) / 2.0;
@@ -340,14 +347,20 @@ fn build_launch_destination_shared_content(
                 .with_absolute_position(Vec2::new(local_icon_x, local_icon_y))
                 .with_fixed_size(current_icon_size, current_icon_size)
                 .with_centered_content()
-                .with_background_color(with_opacity(accent.gamma_multiply(0.25), icon_opacity))
+                .with_background_color(with_opacity(
+                    accent.gamma_multiply(0.25),
+                    props.icon_opacity,
+                ))
                 .with_border_radius(BorderRadius::all(icon_radius)),
         )
         .with_content(
-            Text::new(request.app.badge).with_style(
+            Text::new(props.request.app.badge).with_style(
                 TextStyle::default()
                     .with_font_size(badge_font_size)
-                    .with_font_color(with_opacity(accent.gamma_multiply(1.15), icon_opacity))
+                    .with_font_color(with_opacity(
+                        accent.gamma_multiply(1.15),
+                        props.icon_opacity,
+                    ))
                     .with_center_alignment(),
             ),
         );
@@ -362,10 +375,13 @@ fn build_launch_destination_shared_content(
         .with_spacing((18.0, 18.0))
         .build()
         .with_content(
-            Text::new(request.app.name).with_style(
+            Text::new(props.request.app.name).with_style(
                 TextStyle::default()
                     .with_font_size(34.0)
-                    .with_font_color(with_opacity(Color::from_rgb(247, 250, 255), labels_opacity))
+                    .with_font_color(with_opacity(
+                        Color::from_rgb(247, 250, 255),
+                        props.labels_opacity,
+                    ))
                     .with_center_alignment(),
             ),
         )
@@ -373,13 +389,16 @@ fn build_launch_destination_shared_content(
             Text::new("Opening app").with_style(
                 TextStyle::default()
                     .with_font_size(16.0)
-                    .with_font_color(with_opacity(Color::from_rgb(154, 171, 196), labels_opacity))
+                    .with_font_color(with_opacity(
+                        Color::from_rgb(154, 171, 196),
+                        props.labels_opacity,
+                    ))
                     .with_center_alignment(),
             ),
         );
 
     Element::new()
-        .with_tag(format!("launch-overlay-app-{}", request.app.id))
+        .with_tag(format!("launch-overlay-app-{}", props.request.app.id))
         .with_style(
             Style::new()
                 .with_fixed_position(current_shared_content_top_left)

@@ -119,6 +119,103 @@ fn clock_chip_stays_near_the_right_edge() {
 }
 
 #[test]
+fn settings_button_sits_to_the_right_of_the_clock() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+
+    let (clock_position, clock_size) = runner.get_element_bounds("clock-chip");
+    let (button_position, _button_size) = runner.get_element_bounds("header-settings-button");
+
+    assert!(
+        button_position.x >= clock_position.x + clock_size.x + 8.0,
+        "settings button should sit to the right of the clock"
+    );
+}
+
+#[test]
+fn settings_menu_opens_from_the_header_button() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+
+    runner.click_element("header-settings-button");
+    runner.run_frame();
+
+    assert!(runner.find_element_by_tag("header-settings-menu").is_some());
+}
+
+#[test]
+fn settings_menu_closes_from_the_exit_button() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+
+    runner.click_element("header-settings-button");
+    runner.run_frame();
+    assert!(runner.find_element_by_tag("header-settings-menu").is_some());
+
+    runner.click_element("header-settings-exit-button");
+    runner.run_frame();
+
+    assert!(runner.find_element_by_tag("header-settings-menu").is_none());
+}
+
+#[test]
+fn settings_button_click_closes_the_open_menu_without_reopening_it() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+
+    runner.click_element("header-settings-button");
+    runner.run_frame();
+    runner.run_frame();
+    assert!(runner.find_element_by_tag("header-settings-menu").is_some());
+
+    runner.click_element("header-settings-button");
+    runner.run_frame();
+    runner.run_frame();
+
+    assert!(runner.find_element_by_tag("header-settings-menu").is_none());
+}
+
+#[test]
+fn settings_menu_closes_from_cancel_navigation() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+
+    runner.click_element("header-settings-button");
+    runner.run_frame();
+    runner.run_frame();
+    assert!(runner.find_element_by_tag("header-settings-menu").is_some());
+
+    runner.press_cancel();
+    runner.run_frame();
+    runner.run_frame();
+
+    assert!(runner.find_element_by_tag("header-settings-menu").is_none());
+    runner.assert_focused("header-settings-button");
+}
+
+#[test]
+fn settings_menu_closes_when_focus_leaves_the_overlay() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+
+    runner.click_element("header-settings-button");
+    runner.run_frame();
+    runner.run_frame();
+    assert!(runner.find_element_by_tag("header-settings-menu").is_some());
+
+    runner.focus_element_by_key(FocusKey::new("live-tv"), FocusOrigin::Navigation);
+    runner.run_frame();
+
+    assert!(runner.find_element_by_tag("header-settings-menu").is_none());
+}
+
+#[test]
 fn apps_row_is_centered_in_the_content_area() {
     let mut runner = TestRunner::new(HomeTestApp);
     runner.set_viewport_size(1280.0, 720.0);

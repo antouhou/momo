@@ -49,7 +49,8 @@ impl MomoUi {
 impl App for MomoUi {
     type RootComponent = Home;
 
-    fn create(&mut self, _app_context: &mut AppContext) -> Self::RootComponent {
+    fn create(&mut self, app_context: &mut AppContext) -> Self::RootComponent {
+        app_context.set_vsync_enabled(true);
         Home::new()
     }
 

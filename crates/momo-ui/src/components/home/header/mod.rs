@@ -308,7 +308,6 @@ impl Component for HeaderAppsButton {
                 Text::new("Apps").with_style(
                     TextStyle::default()
                         .with_font_size(20.0)
-                        .with_line_height(1.0)
                         .with_weight(Weight::NORMAL)
                         .with_font_color(text_color)
                         .with_vertical_alignment(VerticalTextAlignment::Center)

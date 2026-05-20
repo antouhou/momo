@@ -22,10 +22,13 @@ pub(super) const GRID_GAP: f32 = 18.0;
 pub(super) const TILE_WIDTH: f32 = 248.0;
 pub(super) const TILE_HEIGHT: f32 = 176.0;
 pub(super) const TILE_BORDER_RADIUS: f32 = 18.0;
+pub(super) const TILE_BORDER_WIDTH: f32 = 2.0;
 pub(super) const TILE_FOCUS_SCALE: f32 = 1.05;
 pub(super) const TILE_FOCUS_ANIMATION_DURATION_MS: u64 = 100;
-pub(super) const TILE_ICON_OFFSET: f32 = 18.0;
-pub(super) const TILE_ICON_SIZE: f32 = 72.0;
+pub(super) const TILE_ICON_SIZE: f32 = 96.0;
+pub(super) const TILE_ICON_GLYPH_SIZE: usize = 64;
+pub(super) const TILE_PADDING: f32 = 16.0;
+pub(super) const TILE_CONTENT_GAP: f32 = 12.0;
 
 pub fn home_top_row_apps_focus_key() -> FocusKey {
     FocusKey::new(HOME_TOP_ROW_APPS_FOCUS_KEY_ID)
@@ -36,10 +39,42 @@ pub fn home_top_row_settings_focus_key() -> FocusKey {
 }
 
 #[derive(Clone, Copy)]
+pub(super) enum MockAppIcon {
+    LiveTv,
+    Movies,
+    Music,
+    Photos,
+    Browser,
+    Settings,
+    Store,
+    Files,
+    Games,
+    News,
+    Weather,
+    Sports,
+    Podcasts,
+    Calendar,
+    Mail,
+    Camera,
+    Terminal,
+    Sleep,
+    Search,
+    Kids,
+    Stream,
+    Radio,
+    Books,
+    Fitness,
+    Calls,
+    Travel,
+    Recipes,
+    Security,
+}
+
+#[derive(Clone, Copy)]
 pub(super) struct MockApp {
     pub id: &'static str,
     pub name: &'static str,
-    pub badge: &'static str,
+    pub icon: MockAppIcon,
     pub accent: [u8; 3],
 }
 
@@ -56,169 +91,169 @@ pub(super) const MOCK_APPS: [MockApp; 28] = [
     MockApp {
         id: "live-tv",
         name: "Live TV",
-        badge: "TV",
+        icon: MockAppIcon::LiveTv,
         accent: [60, 133, 246],
     },
     MockApp {
         id: "movies",
         name: "Movies",
-        badge: "MV",
+        icon: MockAppIcon::Movies,
         accent: [255, 110, 64],
     },
     MockApp {
         id: "music",
         name: "Music",
-        badge: "MU",
+        icon: MockAppIcon::Music,
         accent: [76, 175, 80],
     },
     MockApp {
         id: "photos",
         name: "Photos",
-        badge: "PH",
+        icon: MockAppIcon::Photos,
         accent: [255, 193, 7],
     },
     MockApp {
         id: "browser",
         name: "Browser",
-        badge: "WB",
+        icon: MockAppIcon::Browser,
         accent: [0, 188, 212],
     },
     MockApp {
         id: "settings",
         name: "Settings",
-        badge: "ST",
+        icon: MockAppIcon::Settings,
         accent: [171, 71, 188],
     },
     MockApp {
         id: "store",
         name: "Store",
-        badge: "AP",
+        icon: MockAppIcon::Store,
         accent: [244, 67, 54],
     },
     MockApp {
         id: "files",
         name: "Files",
-        badge: "FL",
+        icon: MockAppIcon::Files,
         accent: [121, 85, 72],
     },
     MockApp {
         id: "games",
         name: "Games",
-        badge: "GM",
+        icon: MockAppIcon::Games,
         accent: [233, 30, 99],
     },
     MockApp {
         id: "news",
         name: "News",
-        badge: "NW",
+        icon: MockAppIcon::News,
         accent: [96, 125, 139],
     },
     MockApp {
         id: "weather",
         name: "Weather",
-        badge: "WX",
+        icon: MockAppIcon::Weather,
         accent: [3, 169, 244],
     },
     MockApp {
         id: "sports",
         name: "Sports",
-        badge: "SP",
+        icon: MockAppIcon::Sports,
         accent: [139, 195, 74],
     },
     MockApp {
         id: "podcasts",
         name: "Podcasts",
-        badge: "PC",
+        icon: MockAppIcon::Podcasts,
         accent: [255, 87, 34],
     },
     MockApp {
         id: "calendar",
         name: "Calendar",
-        badge: "CL",
+        icon: MockAppIcon::Calendar,
         accent: [63, 81, 181],
     },
     MockApp {
         id: "mail",
         name: "Mail",
-        badge: "ML",
+        icon: MockAppIcon::Mail,
         accent: [0, 150, 136],
     },
     MockApp {
         id: "camera",
         name: "Camera",
-        badge: "CM",
+        icon: MockAppIcon::Camera,
         accent: [255, 152, 0],
     },
     MockApp {
         id: "terminal",
         name: "Terminal",
-        badge: "SH",
+        icon: MockAppIcon::Terminal,
         accent: [158, 158, 158],
     },
     MockApp {
         id: "sleep",
         name: "Sleep",
-        badge: "ZZ",
+        icon: MockAppIcon::Sleep,
         accent: [103, 58, 183],
     },
     MockApp {
         id: "search",
         name: "Search",
-        badge: "SR",
+        icon: MockAppIcon::Search,
         accent: [0, 121, 107],
     },
     MockApp {
         id: "kids",
         name: "Kids",
-        badge: "KD",
+        icon: MockAppIcon::Kids,
         accent: [255, 64, 129],
     },
     MockApp {
         id: "stream",
         name: "Stream",
-        badge: "ST",
+        icon: MockAppIcon::Stream,
         accent: [33, 150, 243],
     },
     MockApp {
         id: "radio",
         name: "Radio",
-        badge: "RD",
+        icon: MockAppIcon::Radio,
         accent: [205, 220, 57],
     },
     MockApp {
         id: "books",
         name: "Books",
-        badge: "BK",
+        icon: MockAppIcon::Books,
         accent: [141, 110, 99],
     },
     MockApp {
         id: "fitness",
         name: "Fitness",
-        badge: "FT",
+        icon: MockAppIcon::Fitness,
         accent: [255, 87, 34],
     },
     MockApp {
         id: "calls",
         name: "Calls",
-        badge: "CL",
+        icon: MockAppIcon::Calls,
         accent: [76, 175, 80],
     },
     MockApp {
         id: "travel",
         name: "Travel",
-        badge: "TR",
+        icon: MockAppIcon::Travel,
         accent: [63, 81, 181],
     },
     MockApp {
         id: "recipes",
         name: "Recipes",
-        badge: "RC",
+        icon: MockAppIcon::Recipes,
         accent: [255, 193, 7],
     },
     MockApp {
         id: "security",
         name: "Security",
-        badge: "SC",
+        icon: MockAppIcon::Security,
         accent: [96, 125, 139],
     },
 ];
@@ -235,6 +270,13 @@ pub(super) fn rows_for_height(height: f32) -> usize {
 
 pub(super) fn color(rgb: [u8; 3]) -> Color {
     Color::from_rgb(rgb[0], rgb[1], rgb[2])
+}
+
+pub(super) fn tile_icon_origin() -> Vec2 {
+    Vec2::new(
+        (TILE_WIDTH - TILE_ICON_SIZE) / 2.0,
+        TILE_PADDING + TILE_BORDER_WIDTH,
+    )
 }
 
 pub(super) fn tile_focus_transform(

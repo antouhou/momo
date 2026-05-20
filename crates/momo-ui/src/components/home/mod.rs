@@ -1,4 +1,5 @@
 mod app_grid;
+mod app_icon;
 mod app_tile;
 mod clock_chip;
 mod header;

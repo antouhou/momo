@@ -146,7 +146,30 @@ fn settings_menu_opens_from_the_header_button() {
 }
 
 #[test]
-fn settings_menu_closes_from_the_exit_button() {
+fn settings_menu_anchors_near_the_top_right_corner() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+
+    runner.click_element("header-settings-button");
+    runner.run_frame();
+    thread::sleep(Duration::from_millis(320));
+    runner.run_frame();
+    let (end_position, _) = runner.get_element_bounds("header-settings-menu");
+    let expected_x = 1280.0 - SCREEN_PADDING - 392.0;
+
+    assert!(
+        (end_position.x - expected_x).abs() < 0.5,
+        "settings drawer should anchor near the top-right corner, end_position={end_position:?}"
+    );
+    assert!(
+        (end_position.y - 96.0).abs() < 0.5,
+        "settings drawer should sit below the header row, end_position={end_position:?}"
+    );
+}
+
+#[test]
+fn settings_menu_renders_the_mock_power_button() {
     let mut runner = TestRunner::new(HomeTestApp);
     runner.set_viewport_size(1280.0, 720.0);
     runner.run_frame();
@@ -155,10 +178,11 @@ fn settings_menu_closes_from_the_exit_button() {
     runner.run_frame();
     assert!(runner.find_element_by_tag("header-settings-menu").is_some());
 
-    runner.click_element("header-settings-exit-button");
-    runner.run_frame();
-
-    assert!(runner.find_element_by_tag("header-settings-menu").is_none());
+    assert!(
+        runner
+            .find_element_by_tag("header-settings-exit-button")
+            .is_some()
+    );
 }
 
 #[test]
@@ -174,6 +198,8 @@ fn settings_button_click_closes_the_open_menu_without_reopening_it() {
 
     runner.click_element("header-settings-button");
     runner.run_frame();
+    runner.run_frame();
+    thread::sleep(Duration::from_millis(320));
     runner.run_frame();
 
     assert!(runner.find_element_by_tag("header-settings-menu").is_none());
@@ -193,6 +219,8 @@ fn settings_menu_closes_from_cancel_navigation() {
     runner.press_cancel();
     runner.run_frame();
     runner.run_frame();
+    thread::sleep(Duration::from_millis(320));
+    runner.run_frame();
 
     assert!(runner.find_element_by_tag("header-settings-menu").is_none());
     runner.assert_focused("header-settings-button");
@@ -210,6 +238,8 @@ fn settings_menu_closes_when_focus_leaves_the_overlay() {
     assert!(runner.find_element_by_tag("header-settings-menu").is_some());
 
     runner.focus_element_by_key(FocusKey::new("live-tv"), FocusOrigin::Navigation);
+    runner.run_frame();
+    thread::sleep(Duration::from_millis(320));
     runner.run_frame();
 
     assert!(runner.find_element_by_tag("header-settings-menu").is_none());

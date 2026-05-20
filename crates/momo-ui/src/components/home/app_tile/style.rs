@@ -1,9 +1,11 @@
 use crate::components::home::model::{
-    TILE_BORDER_RADIUS, TILE_FOCUS_ANIMATION_DURATION_MS, TILE_HEIGHT, TILE_WIDTH,
+    TILE_BORDER_RADIUS, TILE_BORDER_WIDTH, TILE_CONTENT_GAP, TILE_FOCUS_ANIMATION_DURATION_MS,
+    TILE_HEIGHT, TILE_PADDING, TILE_WIDTH,
 };
 use daiko::animation::easing::EasingFunction;
 use daiko::animation::{AnimationParameters, transition};
 use daiko::component::ComponentContext;
+use daiko::layout::AlignItems;
 use daiko::style::{Border, BorderRadius, Color, Stroke, Style, Transform};
 use std::time::Duration;
 
@@ -13,11 +15,7 @@ pub fn tile_style(
     transform: &Transform,
     paint_decorations: bool,
 ) -> Style {
-    let background = if paint_decorations {
-        Color::from_rgb(30, 41, 60)
-    } else {
-        Color::from_rgba_unmultiplied(20, 26, 38, 220)
-    };
+    let background = Color::from_rgb(14, 18, 27);
     // let background = if is_pressed {
     //     Color::from_rgb(38, 47, 68)
     // } else if is_focus_visible {
@@ -37,9 +35,9 @@ pub fn tile_style(
     Style::new()
         .with_fixed_size(TILE_WIDTH, TILE_HEIGHT)
         .with_direction(daiko::layout::FlexDirection::Column)
-        .with_align_items(daiko::layout::AlignItems::FlexStart)
-        .with_padding(16.0)
-        .with_spacing((12.0, 12.0))
+        .with_align_items(AlignItems::Center)
+        .with_padding(TILE_PADDING)
+        .with_spacing((TILE_CONTENT_GAP, TILE_CONTENT_GAP))
         .with_background_color(transition(
             background,
             AnimationParameters::default()
@@ -48,7 +46,7 @@ pub fn tile_style(
             ctx,
         ))
         .with_border(Border::uniform(Stroke::new(
-            2.0,
+            TILE_BORDER_WIDTH,
             transition(
                 border_color,
                 AnimationParameters::default()

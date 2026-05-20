@@ -1,10 +1,15 @@
-use crate::components::home::launch::{
-    AnimatedRect, HOME_HERO_ICON_SIZE, HOME_LAUNCH_ANIMATION_ID, HOME_LAUNCH_BACKDROP_TAG,
-    HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID, HOME_LAUNCH_SURFACE_RADIUS, HOME_LAUNCH_SURFACE_TAG,
-    HOME_SHARED_CONTENT_HEIGHT, HOME_SHARED_CONTENT_WIDTH, LaunchOverlayEvent, LaunchPhase,
-    LaunchTransitionState,
+use crate::components::home::app_icon::{
+    mock_app_icon, mock_app_icon_background_color, mock_app_icon_foreground_color,
 };
-use crate::components::home::model::{LaunchRequest, TILE_BORDER_RADIUS, TILE_ICON_SIZE, color};
+use crate::components::home::launch::{
+    AnimatedRect, HOME_HERO_ICON_GLYPH_SIZE, HOME_HERO_ICON_SIZE, HOME_LAUNCH_ANIMATION_ID,
+    HOME_LAUNCH_BACKDROP_TAG, HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID, HOME_LAUNCH_SURFACE_RADIUS,
+    HOME_LAUNCH_SURFACE_TAG, HOME_SHARED_CONTENT_HEIGHT, HOME_SHARED_CONTENT_WIDTH,
+    LaunchOverlayEvent, LaunchPhase, LaunchTransitionState,
+};
+use crate::components::home::model::{
+    LaunchRequest, TILE_BORDER_RADIUS, TILE_ICON_GLYPH_SIZE, TILE_ICON_SIZE, color,
+};
 use daiko::animation::easing::{Easing, EasingFunction};
 use daiko::animation::{AnimationParameters, Interpolable};
 use daiko::component::{Component, ComponentContext};
@@ -244,25 +249,22 @@ fn render_launch_overlay(
 
 fn build_launch_tile_content(request: LaunchRequest, show_icon: bool) -> Element {
     let accent = color(request.app.accent);
-    let icon_background = accent.gamma_multiply(0.2);
-    let icon_text_color = accent.gamma_multiply(1.1);
+    let icon_background = mock_app_icon_background_color(accent);
+    let icon_foreground = mock_app_icon_foreground_color(accent);
 
     let icon = Element::new()
         .with_style(
             Style::new()
-                .with_fixed_size(72.0, 72.0)
+                .with_fixed_size(TILE_ICON_SIZE, TILE_ICON_SIZE)
                 .with_centered_content()
                 .with_background_color(icon_background)
                 .with_border_radius(BorderRadius::all(14.0)),
         )
-        .with_content(
-            Text::new(request.app.badge).with_style(
-                TextStyle::default()
-                    .with_font_size(28.0)
-                    .with_font_color(icon_text_color)
-                    .with_center_alignment(),
-            ),
-        );
+        .with_content(mock_app_icon(
+            request.app.icon,
+            TILE_ICON_GLYPH_SIZE,
+            icon_foreground,
+        ));
 
     let icon_slot = if show_icon {
         icon
@@ -331,8 +333,6 @@ fn build_launch_destination_shared_content(props: LaunchDestinationSharedContent
     let source_icon_scale = props.source_icon_size / TILE_ICON_SIZE;
     let icon_radius =
         14.0 * source_icon_scale + (24.0 - 14.0 * source_icon_scale) * props.scale_progress;
-    let badge_font_size =
-        28.0 * source_icon_scale + (42.0 - 28.0 * source_icon_scale) * props.scale_progress;
     let current_icon_top_left =
         current_icon_center - Vec2::new(current_icon_size / 2.0, current_icon_size / 2.0);
     let local_icon_x = (HOME_SHARED_CONTENT_WIDTH - current_icon_size) / 2.0;
@@ -341,6 +341,11 @@ fn build_launch_destination_shared_content(props: LaunchDestinationSharedContent
         current_icon_top_left.x - local_icon_x,
         current_icon_top_left.y - local_icon_y,
     );
+    let source_icon_glyph_size = TILE_ICON_GLYPH_SIZE as f32 * source_icon_scale;
+    let icon_glyph_size = (source_icon_glyph_size
+        + (HOME_HERO_ICON_GLYPH_SIZE as f32 - source_icon_glyph_size) * props.scale_progress)
+        .round()
+        .max(1.0) as usize;
     let icon = Element::new()
         .with_style(
             Style::new()
@@ -348,22 +353,16 @@ fn build_launch_destination_shared_content(props: LaunchDestinationSharedContent
                 .with_fixed_size(current_icon_size, current_icon_size)
                 .with_centered_content()
                 .with_background_color(with_opacity(
-                    accent.gamma_multiply(0.25),
+                    mock_app_icon_background_color(accent),
                     props.icon_opacity,
                 ))
                 .with_border_radius(BorderRadius::all(icon_radius)),
         )
-        .with_content(
-            Text::new(props.request.app.badge).with_style(
-                TextStyle::default()
-                    .with_font_size(badge_font_size)
-                    .with_font_color(with_opacity(
-                        accent.gamma_multiply(1.15),
-                        props.icon_opacity,
-                    ))
-                    .with_center_alignment(),
-            ),
-        );
+        .with_content(mock_app_icon(
+            props.request.app.icon,
+            icon_glyph_size,
+            with_opacity(mock_app_icon_foreground_color(accent), props.icon_opacity),
+        ));
 
     let labels = Container::vertical()
         .with_fit(

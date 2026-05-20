@@ -13,6 +13,7 @@ pub(super) const HOME_LAUNCH_SURFACE_RADIUS: f32 = 0.0;
 // pub(super) const HOME_LAUNCH_PRESS_SCALE: f32 = 0.972;
 // pub(super) const HOME_LAUNCH_REBOUND_SCALE: f32 = 1.018;
 pub(super) const HOME_HERO_ICON_SIZE: f32 = 112.0;
+pub(super) const HOME_HERO_ICON_GLYPH_SIZE: usize = 72;
 pub(super) const HOME_SHARED_CONTENT_WIDTH: f32 = 360.0;
 pub(super) const HOME_SHARED_CONTENT_HEIGHT: f32 = 230.0;
 

@@ -1,9 +1,13 @@
 mod style;
 
+use crate::components::home::app_icon::{
+    mock_app_icon, mock_app_icon_background_color, mock_app_icon_foreground_color,
+};
 use crate::components::home::app_tile::style::tile_style;
 use crate::components::home::model::{
-    HOME_LAUNCH_CHANNEL_ID, LaunchRequest, MockApp, TILE_HEIGHT, TILE_ICON_OFFSET, TILE_ICON_SIZE,
-    TILE_WIDTH, color, tile_focus_transform, transformed_local_rect,
+    HOME_LAUNCH_CHANNEL_ID, LaunchRequest, MockApp, TILE_HEIGHT, TILE_ICON_GLYPH_SIZE,
+    TILE_ICON_SIZE, TILE_WIDTH, color, tile_focus_transform, tile_icon_origin,
+    transformed_local_rect,
 };
 use daiko::Element;
 use daiko::Vec2;
@@ -66,8 +70,8 @@ impl Component for AppTile {
         let _is_pressed = !self.interactions_disabled && pointer.is_pressed();
         let paint_decorations = focusable.is_focus_visible() || is_hovering;
         let accent = color(self.app.accent);
-        let icon_background = accent.gamma_multiply(0.2);
-        let icon_text_color = accent.gamma_multiply(1.1);
+        let icon_background = mock_app_icon_background_color(accent);
+        let icon_text_color = mock_app_icon_foreground_color(accent);
 
         let tile_transform =
             tile_focus_transform(Vec2::new(TILE_WIDTH, TILE_HEIGHT), paint_decorations, ctx);
@@ -85,7 +89,7 @@ impl Component for AppTile {
                 let (icon_position, icon_size) = transformed_local_rect(
                     layout.position_absolute,
                     &tile_transform,
-                    Vec2::new(TILE_ICON_OFFSET, TILE_ICON_OFFSET),
+                    tile_icon_origin(),
                     Vec2::new(TILE_ICON_SIZE, TILE_ICON_SIZE),
                 );
                 let launch_channel = ctx.use_channel_with_id(HOME_LAUNCH_CHANNEL_ID);
@@ -107,22 +111,20 @@ impl Component for AppTile {
         let icon = Element::new()
             .with_style(
                 Style::new()
-                    .with_fixed_size(72.0, 72.0)
+                    .with_fixed_size(TILE_ICON_SIZE, TILE_ICON_SIZE)
                     .with_centered_content()
                     .with_background_color(icon_background)
                     .with_border_radius(BorderRadius::all(14.0)),
             )
-            .with_content(
-                Text::new(self.app.badge).with_style(
-                    TextStyle::default()
-                        .with_font_size(28.0)
-                        .with_font_color(icon_text_color)
-                        .with_center_alignment(),
-                ),
-            );
+            .with_content(mock_app_icon(
+                self.app.icon,
+                TILE_ICON_GLYPH_SIZE,
+                icon_text_color,
+            ));
 
         let meta = Container::vertical()
-            .with_fit(Fit::new().at_least_parent_width().at_least_content_height())
+            .with_fit(Fit::new().exact_content_size())
+            .align_items_center()
             .with_spacing((4.0, 4.0))
             .build()
             .with_content(
@@ -130,6 +132,7 @@ impl Component for AppTile {
                     TextStyle::default()
                         .with_font_size(18.0)
                         .with_font_color(Color::from_rgb(240, 245, 255))
+                        .with_center_alignment()
                         .with_wrap(TextWrap::NoWrap),
                 ),
             );

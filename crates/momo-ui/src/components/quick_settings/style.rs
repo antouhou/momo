@@ -1,54 +1,34 @@
-use daiko::component::ComponentContext;
-use daiko::style::{Border, BorderRadius, Color, Indent, Stroke, Style};
-use daiko::widgets::text::{Text, TextStyle, TextWrap};
+use daiko::style::Indent;
 
-pub const SETTINGS_MENU_OFFSET: f32 = 12.0;
-const SETTINGS_MENU_WIDTH: f32 = 220.0;
+pub(crate) const SETTINGS_MENU_WIDTH: f32 = 392.0;
+pub(crate) const SETTINGS_MENU_EDGE_MARGIN: f32 = 40.0;
+pub(crate) const SETTINGS_MENU_TOP_OFFSET: f32 = 96.0;
+pub(crate) const SETTINGS_MENU_GAP: f32 = 12.0;
+pub(crate) const SETTINGS_MENU_HORIZONTAL_PADDING: f32 = 16.0;
+pub(crate) const SETTINGS_MENU_VERTICAL_PADDING: f32 = 18.0;
+pub(crate) const SETTINGS_MENU_INNER_WIDTH: f32 =
+    SETTINGS_MENU_WIDTH - SETTINGS_MENU_HORIZONTAL_PADDING * 2.0;
+pub(crate) const SETTINGS_MENU_SLIDE_DISTANCE: f32 =
+    SETTINGS_MENU_WIDTH + SETTINGS_MENU_EDGE_MARGIN + 36.0;
+pub(crate) const SETTINGS_ROUND_BUTTON_SIZE: f32 = 44.0;
+pub(crate) const SETTINGS_STATUS_CHIP_WIDTH: f32 = 92.0;
+pub(crate) const SETTINGS_STATUS_CHIP_HEIGHT: f32 = 44.0;
+pub(crate) const SETTINGS_TILE_WIDTH: f32 = 174.0;
+pub(crate) const SETTINGS_TILE_HEIGHT: f32 = 76.0;
 
-pub fn settings_exit_button_style(
-    button_state: &daiko::widgets::button::state::ButtonState,
-    _ctx: &mut ComponentContext,
-) -> Style {
-    let background = if button_state.is_pressed {
-        Color::from_rgb(54, 24, 30)
-    } else if button_state.is_hovered || button_state.is_focused {
-        Color::from_rgb(74, 31, 40)
-    } else {
-        Color::from_rgb(62, 26, 34)
-    };
-
-    Style::new()
-        .with_direction(daiko::layout::FlexDirection::Row)
-        .with_align_items(daiko::layout::AlignItems::Center)
-        .with_justify_content(daiko::layout::JustifyContent::Center)
-        .with_fixed_width(daiko::layout::ItemSize::Percent(1.0))
-        .with_padding(Indent::from((14.0, 12.0)))
-        .with_background_color(background)
-        .with_border(Border::uniform(Stroke::new(
-            1.0,
-            Color::from_rgb(148, 91, 101),
-        )))
-        .with_border_radius(BorderRadius::all(14.0))
-}
-
-pub fn settings_menu_style() -> Style {
-    Style::new()
-        .with_fixed_width(daiko::layout::ItemSize::Points(SETTINGS_MENU_WIDTH))
-        .with_padding(16.0)
-        .with_direction(daiko::layout::FlexDirection::Column)
-        .with_background_color(Color::from_rgb(13, 20, 31))
-        .with_border(Border::uniform(Stroke::new(
-            1.0,
-            Color::from_rgb(72, 93, 124),
-        )))
-        .with_border_radius(BorderRadius::all(20.0))
-}
-
-pub fn menu_heading() -> Text {
-    Text::new("Settings").with_style(
-        TextStyle::default()
-            .with_font_size(16.0)
-            .with_font_color(Color::from_rgb(240, 245, 255))
-            .with_wrap(TextWrap::NoWrap),
-    )
-}
+pub(crate) const PANEL_RADIUS: f32 = 30.0;
+pub(crate) const CONTROL_RADIUS: f32 = 22.0;
+pub(crate) const TILE_RADIUS: f32 = 20.0;
+pub(crate) const CONTROL_TRANSITION_MS: u64 = 120;
+pub(crate) const SETTINGS_MENU_PADDING: Indent = Indent::new(
+    SETTINGS_MENU_HORIZONTAL_PADDING,
+    SETTINGS_MENU_VERTICAL_PADDING,
+    SETTINGS_MENU_HORIZONTAL_PADDING,
+    SETTINGS_MENU_VERTICAL_PADDING,
+);
+pub(crate) const SETTINGS_TOP_ACTIONS_GAP: f32 = 10.0;
+pub(crate) const SETTINGS_STATUS_CHIP_CONTENT_GAP: f32 = 8.0;
+pub(crate) const SETTINGS_STATUS_CHIP_PADDING: Indent = Indent::uniform(10.0);
+pub(crate) const SETTINGS_TILE_CONTENT_GAP: f32 = 12.0;
+pub(crate) const SETTINGS_TILE_PADDING: Indent = Indent::uniform(14.0);
+pub(crate) const SETTINGS_TILE_TEXT_HEIGHT: f32 = 38.0;

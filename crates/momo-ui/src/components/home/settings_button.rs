@@ -47,6 +47,7 @@ impl Component for HeaderSettingsTrigger {
                 is_open: next_is_open,
                 just_opened: next_is_open,
                 opened_from_trigger_press: next_is_open,
+                is_animating: true,
             };
         }
 

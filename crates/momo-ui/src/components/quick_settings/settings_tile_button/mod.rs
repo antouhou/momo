@@ -1,21 +1,23 @@
-use super::common::{QuickSettingsGlyph, control_state, glyph_element};
-use super::style::{
+mod style;
+
+use self::style::{
     settings_tile_button_style, settings_tile_content_style, settings_tile_icon_style,
     settings_tile_text_column_style, tile_title_style,
 };
+use super::common::{QuickSettingsGlyph, control_state, glyph_element};
 use daiko::Element;
 use daiko::component::{Component, ComponentContext};
 use daiko::style::Color;
 use daiko::widgets::text::Text;
 
-const CLOUD_ICON: &[u8] = include_bytes!("../../../assets/cloud.svg");
-const MESSAGE_ICON: &[u8] = include_bytes!("../../../assets/message.svg");
-const MOON_ICON: &[u8] = include_bytes!("../../../assets/moon.svg");
-const CIRCLE_DOT_ICON: &[u8] = include_bytes!("../../../assets/circle-dot.svg");
-const KEYBOARD_ICON: &[u8] = include_bytes!("../../../assets/keyboard.svg");
-const MAP_ICON: &[u8] = include_bytes!("../../../assets/map.svg");
-const CHECK_ICON: &[u8] = include_bytes!("../../../assets/circle-check.svg");
-const EYE_ICON: &[u8] = include_bytes!("../../../assets/eye.svg");
+const CLOUD_ICON: &[u8] = include_bytes!("../../../../assets/cloud.svg");
+const MESSAGE_ICON: &[u8] = include_bytes!("../../../../assets/message.svg");
+const MOON_ICON: &[u8] = include_bytes!("../../../../assets/moon.svg");
+const CIRCLE_DOT_ICON: &[u8] = include_bytes!("../../../../assets/circle-dot.svg");
+const KEYBOARD_ICON: &[u8] = include_bytes!("../../../../assets/keyboard.svg");
+const MAP_ICON: &[u8] = include_bytes!("../../../../assets/map.svg");
+const CHECK_ICON: &[u8] = include_bytes!("../../../../assets/circle-check.svg");
+const EYE_ICON: &[u8] = include_bytes!("../../../../assets/eye.svg");
 
 pub(super) const TILE_ROWS: [[SettingsTileSpec; 2]; 4] = [
     [

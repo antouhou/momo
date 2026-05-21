@@ -1,11 +1,13 @@
+mod style;
+
+use self::style::{settings_status_chip_style, status_chip_content_style, status_value_style};
 use super::common::{QuickSettingsGlyph, control_state, glyph_element};
-use super::style::{settings_status_chip_style, status_chip_content_style, status_value_style};
 use daiko::Element;
 use daiko::component::{Component, ComponentContext};
 use daiko::style::Color;
 use daiko::widgets::text::Text;
 
-const BATTERY_ICON: &[u8] = include_bytes!("../../../assets/battery-5.svg");
+const BATTERY_ICON: &[u8] = include_bytes!("../../../../assets/battery-5.svg");
 
 #[derive(Clone, Copy)]
 pub(super) struct StatusChip;

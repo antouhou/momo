@@ -1,3 +1,9 @@
+mod style;
+
+use self::style::{
+    settings_menu_style, settings_scrollable_style, settings_tile_grid_style,
+    settings_tile_row_style, settings_top_actions_style, settings_top_row_style,
+};
 use super::quick_action_button::{
     EXIT_ACTION, FOCUS_ACTION, NIGHT_ACTION, QuickActionButton, TOOLS_ACTION,
 };
@@ -6,9 +12,7 @@ use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState};
 use super::status_chip::StatusChip;
 use super::style::{
     SETTINGS_MENU_EDGE_MARGIN, SETTINGS_MENU_INNER_WIDTH, SETTINGS_MENU_SLIDE_DISTANCE,
-    SETTINGS_MENU_TOP_OFFSET, SETTINGS_MENU_VERTICAL_PADDING, settings_menu_style,
-    settings_scrollable_style, settings_tile_grid_style, settings_tile_row_style,
-    settings_top_actions_style, settings_top_row_style,
+    SETTINGS_MENU_TOP_OFFSET, SETTINGS_MENU_VERTICAL_PADDING,
 };
 use daiko::animation::AnimationParameters;
 use daiko::animation::easing::EasingFunction;

@@ -1,13 +1,15 @@
-use super::common::{QuickSettingsGlyph, control_state, glyph_element};
-use super::style::{QuickSettingsControlState, settings_round_button_style};
+mod style;
+
+use self::style::settings_round_button_style;
+use super::common::{QuickSettingsControlState, QuickSettingsGlyph, control_state, glyph_element};
 use daiko::Element;
 use daiko::component::{Component, ComponentContext};
 use daiko::style::Color;
 
-const MOON_ICON: &[u8] = include_bytes!("../../../assets/moon.svg");
-const GEAR_ICON: &[u8] = include_bytes!("../../../assets/gear-solid-full.svg");
-const EYE_ICON: &[u8] = include_bytes!("../../../assets/eye.svg");
-const POWER_ICON: &[u8] = include_bytes!("../../../assets/power.svg");
+const MOON_ICON: &[u8] = include_bytes!("../../../../assets/moon.svg");
+const GEAR_ICON: &[u8] = include_bytes!("../../../../assets/gear-solid-full.svg");
+const EYE_ICON: &[u8] = include_bytes!("../../../../assets/eye.svg");
+const POWER_ICON: &[u8] = include_bytes!("../../../../assets/power.svg");
 
 pub(super) const FOCUS_ACTION: QuickActionSpec = QuickActionSpec {
     tag: None,

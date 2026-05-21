@@ -1,9 +1,20 @@
-use super::style::QuickSettingsControlState;
 use daiko::Element;
 use daiko::component::ComponentContext;
 use daiko::navigation::FocusOrigin;
 use daiko::style::{Color, Style};
 use daiko::widgets::image::{Image, ImageParams, ImageSource, ImageType};
+
+#[derive(Clone, Copy)]
+pub(super) struct QuickSettingsControlState {
+    pub(super) is_hovered: bool,
+    pub(super) is_focused: bool,
+}
+
+impl QuickSettingsControlState {
+    pub(super) fn is_highlighted(self) -> bool {
+        self.is_hovered || self.is_focused
+    }
+}
 
 #[derive(Clone, Copy)]
 pub(super) enum QuickSettingsGlyph {

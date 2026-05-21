@@ -26,6 +26,17 @@ const PANEL_RADIUS: f32 = 30.0;
 const CONTROL_RADIUS: f32 = 22.0;
 const TILE_RADIUS: f32 = 20.0;
 const CONTROL_TRANSITION_MS: u64 = 120;
+const SETTINGS_MENU_PADDING: Indent = Indent::new(
+    SETTINGS_MENU_HORIZONTAL_PADDING,
+    SETTINGS_MENU_VERTICAL_PADDING,
+    SETTINGS_MENU_HORIZONTAL_PADDING,
+    SETTINGS_MENU_VERTICAL_PADDING,
+);
+const SETTINGS_TOP_ACTIONS_GAP: f32 = 10.0;
+const SETTINGS_STATUS_CHIP_CONTENT_GAP: f32 = 8.0;
+const SETTINGS_STATUS_CHIP_PADDING: Indent = Indent::uniform(10.0);
+const SETTINGS_TILE_CONTENT_GAP: f32 = 12.0;
+const SETTINGS_TILE_PADDING: Indent = Indent::uniform(14.0);
 
 #[derive(Clone, Copy)]
 pub struct QuickSettingsControlState {
@@ -43,12 +54,7 @@ pub fn settings_menu_style(max_height: f32) -> Style {
     Style::new()
         .with_size_constraint(SizeConstraint::exact_content_height().with_max_height(max_height))
         .with_fixed_width(ItemSize::Points(SETTINGS_MENU_WIDTH))
-        .with_padding(Indent::new(
-            SETTINGS_MENU_HORIZONTAL_PADDING,
-            SETTINGS_MENU_VERTICAL_PADDING,
-            SETTINGS_MENU_HORIZONTAL_PADDING,
-            SETTINGS_MENU_VERTICAL_PADDING,
-        ))
+        .with_padding(SETTINGS_MENU_PADDING)
         .with_direction(FlexDirection::Column)
         .with_spacing((SETTINGS_MENU_GAP, SETTINGS_MENU_GAP))
         .with_background_color(Color::from_rgb(12, 16, 18))
@@ -77,7 +83,7 @@ pub fn settings_top_actions_style() -> Style {
         .with_direction(FlexDirection::Row)
         .with_align_items(AlignItems::Center)
         .with_justify_content(JustifyContent::FlexEnd)
-        .with_spacing((10.0, 10.0))
+        .with_spacing((SETTINGS_TOP_ACTIONS_GAP, SETTINGS_TOP_ACTIONS_GAP))
 }
 
 pub fn settings_tile_grid_style() -> Style {
@@ -100,7 +106,7 @@ pub fn settings_tile_content_style() -> Style {
         .with_direction(FlexDirection::Row)
         .with_align_items(AlignItems::Center)
         .with_justify_content(JustifyContent::FlexStart)
-        .with_spacing((12.0, 12.0))
+        .with_spacing((SETTINGS_TILE_CONTENT_GAP, SETTINGS_TILE_CONTENT_GAP))
 }
 
 pub fn settings_tile_text_column_style() -> Style {
@@ -109,6 +115,17 @@ pub fn settings_tile_text_column_style() -> Style {
         .with_direction(FlexDirection::Column)
         .with_justify_content(JustifyContent::Center)
         .with_align_items(AlignItems::FlexStart)
+}
+
+pub fn status_chip_content_style() -> Style {
+    Style::new()
+        .with_direction(FlexDirection::Row)
+        .with_spacing((
+            SETTINGS_STATUS_CHIP_CONTENT_GAP,
+            SETTINGS_STATUS_CHIP_CONTENT_GAP,
+        ))
+        .with_align_items(AlignItems::Center)
+        .with_justify_content(JustifyContent::Center)
 }
 
 pub fn settings_status_chip_style(
@@ -131,7 +148,7 @@ pub fn settings_status_chip_style(
         .with_direction(FlexDirection::Row)
         .with_align_items(AlignItems::Center)
         .with_justify_content(JustifyContent::Center)
-        .with_padding(Indent::uniform(10.0))
+        .with_padding(SETTINGS_STATUS_CHIP_PADDING)
         .with_background_color(transition(
             background,
             AnimationParameters::default()
@@ -232,7 +249,7 @@ pub fn settings_tile_button_style(
         .with_fixed_size(SETTINGS_TILE_WIDTH, SETTINGS_TILE_HEIGHT)
         .with_direction(FlexDirection::Row)
         .with_align_items(AlignItems::Center)
-        .with_padding(Indent::new(14.0, 14.0, 14.0, 14.0))
+        .with_padding(SETTINGS_TILE_PADDING)
         .with_background_color(transition(
             background,
             AnimationParameters::default()

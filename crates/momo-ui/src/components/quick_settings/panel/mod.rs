@@ -1,19 +1,17 @@
 mod style;
+mod tile_grid;
+mod top_row;
 
-use self::style::{
-    settings_menu_style, settings_scrollable_style, settings_tile_grid_style,
-    settings_tile_row_style, settings_top_actions_style, settings_top_row_style,
-};
-use super::quick_action_button::{
-    EXIT_ACTION, FOCUS_ACTION, NIGHT_ACTION, QuickActionButton, TOOLS_ACTION,
-};
-use super::settings_tile_button::{SettingsTileButton, TILE_ROWS};
+use self::style::{settings_menu_style, settings_scrollable_style};
+use self::tile_grid::SettingsTileGrid;
+use self::top_row::SettingsTopRow;
 use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState};
-use super::status_chip::StatusChip;
 use super::style::{
-    SETTINGS_MENU_EDGE_MARGIN, SETTINGS_MENU_INNER_WIDTH, SETTINGS_MENU_SLIDE_DISTANCE,
+    SETTINGS_MENU_CHROME_HEIGHT, SETTINGS_MENU_EDGE_MARGIN, SETTINGS_MENU_INNER_WIDTH,
+    SETTINGS_MENU_MIN_HEIGHT, SETTINGS_MENU_MIN_SCROLL_HEIGHT, SETTINGS_MENU_SLIDE_DISTANCE,
     SETTINGS_MENU_TOP_OFFSET, SETTINGS_MENU_VERTICAL_PADDING,
 };
+use super::volume_control::VolumeControl;
 use daiko::animation::AnimationParameters;
 use daiko::animation::easing::EasingFunction;
 use daiko::component::{Component, ComponentContext};
@@ -26,8 +24,6 @@ use std::time::Duration;
 const SETTINGS_MENU_ANIMATION_ID: &str = "momo_home_settings_menu_animation";
 const SETTINGS_MENU_SCROLLABLE_ID: &str = "momo_home_settings_menu_scrollable";
 const SETTINGS_MENU_SLIDE_DURATION_MS: u64 = 280;
-const SETTINGS_MENU_CHROME_HEIGHT: f32 = 56.0;
-
 #[derive(Clone, Copy)]
 pub(super) struct SettingsMenuPanel {}
 
@@ -106,19 +102,20 @@ impl Component for SettingsMenuPanel {
         let max_drawer_height = (ctx.app_context.viewport().size().height
             - SETTINGS_MENU_TOP_OFFSET
             - SETTINGS_MENU_EDGE_MARGIN)
-            .max(160.0);
+            .max(SETTINGS_MENU_MIN_HEIGHT);
 
         let max_scroll_height = (max_drawer_height
             - SETTINGS_MENU_VERTICAL_PADDING * 2.0
             - SETTINGS_MENU_CHROME_HEIGHT)
-            .max(120.0);
+            .max(SETTINGS_MENU_MIN_SCROLL_HEIGHT);
 
         Element::new()
             .with_tag("header-settings-menu")
             .with_style(settings_menu_style(max_drawer_height))
-            .with_content(top_row())
+            .with_content(SettingsTopRow)
+            .with_content(VolumeControl)
             .with_content(
-                Scrollable::new(settings_tile_grid(), Id::new(SETTINGS_MENU_SCROLLABLE_ID))
+                Scrollable::new(SettingsTileGrid, Id::new(SETTINGS_MENU_SCROLLABLE_ID))
                     .size_to_content_with_clamp(Vec2::new(
                         SETTINGS_MENU_INNER_WIDTH,
                         max_scroll_height,
@@ -184,34 +181,4 @@ fn settings_menu_visibility(ctx: &mut ComponentContext, is_open: bool) -> Settin
         progress: animation.progress(),
         is_visible: is_open || animation.is_running() || animation.progress_linear() > 0.0,
     }
-}
-
-fn top_row() -> Element {
-    Element::new()
-        .with_style(settings_top_row_style())
-        .with_content(StatusChip)
-        .with_content(top_actions())
-}
-
-fn top_actions() -> Element {
-    Element::new()
-        .with_style(settings_top_actions_style())
-        .with_content(QuickActionButton { spec: FOCUS_ACTION })
-        .with_content(QuickActionButton { spec: NIGHT_ACTION })
-        .with_content(QuickActionButton { spec: TOOLS_ACTION })
-        .with_content(QuickActionButton { spec: EXIT_ACTION })
-}
-
-fn settings_tile_grid() -> Element {
-    let mut grid = Element::new().with_style(settings_tile_grid_style());
-
-    for row in TILE_ROWS {
-        let mut row_element = Element::new().with_style(settings_tile_row_style());
-        for tile in row {
-            row_element.add_content(SettingsTileButton { spec: tile });
-        }
-        grid.add_content(row_element);
-    }
-
-    grid
 }

@@ -1,23 +1,22 @@
 use super::super::common::QuickSettingsControlState;
 use super::super::style::{
-    CONTROL_RADIUS, CONTROL_TRANSITION_MS, SETTINGS_STATUS_CHIP_CONTENT_GAP,
+    CONTROL_RADIUS, CONTROL_TRANSITION_MS, SETTINGS_COMPACT_CONTENT_GAP,
     SETTINGS_STATUS_CHIP_HEIGHT, SETTINGS_STATUS_CHIP_PADDING, SETTINGS_STATUS_CHIP_WIDTH,
+    settings_bright_surface_color, settings_bright_surface_muted_color,
+    settings_inverse_text_color, settings_label_text_style, settings_status_chip_border_color,
 };
 use daiko::animation::easing::EasingFunction;
 use daiko::animation::{AnimationParameters, transition};
 use daiko::component::ComponentContext;
 use daiko::layout::{AlignItems, FlexDirection, JustifyContent};
-use daiko::style::{Border, BorderRadius, Color, CursorIcon, Stroke, Style};
-use daiko::widgets::text::{TextStyle, TextWrap, Weight};
+use daiko::style::{Border, BorderRadius, CursorIcon, Stroke, Style};
+use daiko::widgets::text::TextStyle;
 use std::time::Duration;
 
 pub(crate) fn status_chip_content_style() -> Style {
     Style::new()
         .with_direction(FlexDirection::Row)
-        .with_spacing((
-            SETTINGS_STATUS_CHIP_CONTENT_GAP,
-            SETTINGS_STATUS_CHIP_CONTENT_GAP,
-        ))
+        .with_spacing((SETTINGS_COMPACT_CONTENT_GAP, SETTINGS_COMPACT_CONTENT_GAP))
         .with_align_items(AlignItems::Center)
         .with_justify_content(JustifyContent::Center)
 }
@@ -27,14 +26,14 @@ pub(crate) fn settings_status_chip_style(
     ctx: &mut ComponentContext,
 ) -> Style {
     let background = if state.is_highlighted() {
-        Color::from_rgb(236, 240, 243)
+        settings_bright_surface_color()
     } else {
-        Color::from_rgb(214, 220, 226)
+        settings_bright_surface_muted_color()
     };
     let border_color = if state.is_highlighted() {
-        Color::from_rgb(236, 240, 243)
+        settings_bright_surface_color()
     } else {
-        Color::from_rgba_unmultiplied(255, 255, 255, 48)
+        settings_status_chip_border_color()
     };
 
     Style::new()
@@ -67,9 +66,5 @@ pub(crate) fn settings_status_chip_style(
 }
 
 pub(crate) fn status_value_style() -> TextStyle {
-    TextStyle::default()
-        .with_font_size(18.0)
-        .with_weight(Weight::NORMAL)
-        .with_font_color(Color::from_rgb(12, 16, 20))
-        .with_wrap(TextWrap::NoWrap)
+    settings_label_text_style(settings_inverse_text_color())
 }

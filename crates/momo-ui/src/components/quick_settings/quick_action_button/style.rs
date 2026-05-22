@@ -1,10 +1,16 @@
 use super::super::common::QuickSettingsControlState;
-use super::super::style::{CONTROL_RADIUS, CONTROL_TRANSITION_MS, SETTINGS_ROUND_BUTTON_SIZE};
+use super::super::style::{
+    CONTROL_RADIUS, CONTROL_TRANSITION_MS, SETTINGS_ROUND_BUTTON_SIZE,
+    settings_bright_surface_border_color, settings_bright_surface_color,
+    settings_danger_surface_border_color, settings_danger_surface_border_hover_color,
+    settings_danger_surface_color, settings_danger_surface_hover_color,
+    settings_surface_border_color, settings_surface_color,
+};
 use daiko::animation::easing::EasingFunction;
 use daiko::animation::{AnimationParameters, transition};
 use daiko::component::ComponentContext;
 use daiko::layout::{AlignItems, FlexDirection, JustifyContent};
-use daiko::style::{Border, BorderRadius, Color, CursorIcon, Stroke, Style};
+use daiko::style::{Border, BorderRadius, CursorIcon, Stroke, Style};
 use std::time::Duration;
 
 pub(crate) fn settings_round_button_style(
@@ -14,22 +20,22 @@ pub(crate) fn settings_round_button_style(
     is_danger: bool,
 ) -> Style {
     let background = if is_danger && state.is_highlighted() {
-        Color::from_rgb(92, 32, 43)
+        settings_danger_surface_hover_color()
     } else if is_danger {
-        Color::from_rgb(74, 28, 36)
+        settings_danger_surface_color()
     } else if is_active || state.is_highlighted() {
-        Color::from_rgb(236, 240, 243)
+        settings_bright_surface_color()
     } else {
-        Color::from_rgb(24, 28, 31)
+        settings_surface_color()
     };
     let border_color = if is_danger && state.is_highlighted() {
-        Color::from_rgba_unmultiplied(255, 189, 198, 184)
+        settings_danger_surface_border_hover_color()
     } else if is_danger {
-        Color::from_rgba_unmultiplied(255, 160, 174, 72)
+        settings_danger_surface_border_color()
     } else if is_active || state.is_highlighted() {
-        Color::from_rgba_unmultiplied(255, 255, 255, 138)
+        settings_bright_surface_border_color()
     } else {
-        Color::from_rgba_unmultiplied(255, 255, 255, 30)
+        settings_surface_border_color()
     };
 
     Style::new()

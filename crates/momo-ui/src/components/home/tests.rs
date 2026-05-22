@@ -1,3 +1,4 @@
+use super::super::quick_settings::{SETTINGS_VOLUME_STATE_ID, SETTINGS_VOLUME_TRACK_TAG};
 use super::Home;
 use super::app_grid::AppGrid;
 use super::model::{MOCK_APPS, SCREEN_PADDING, TILE_HEIGHT, columns_for_width};
@@ -7,7 +8,7 @@ use daiko::layout::{AlignItems, FlexDirection, ItemSize};
 use daiko::navigation::{FocusKey, FocusOrigin};
 use daiko::style::Style;
 use daiko::testing::TestRunner;
-use daiko::{App, AppContext, Element, Pos2, Vec2};
+use daiko::{App, AppContext, Element, Id, Pos2, Vec2};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -64,6 +65,14 @@ impl Component for FixedWidthGridRoot {
                     }),
             )
     }
+}
+
+fn settings_volume_value(runner: &mut TestRunner<HomeTestApp>) -> u8 {
+    let volume = runner
+        .app_runner_mut()
+        .context
+        .peek_shared_state(Id::new(SETTINGS_VOLUME_STATE_ID), || 0_u8);
+    *volume.read()
 }
 
 #[test]
@@ -182,6 +191,203 @@ fn settings_menu_renders_the_mock_power_button() {
         runner
             .find_element_by_tag("header-settings-exit-button")
             .is_some()
+    );
+}
+
+#[test]
+fn settings_menu_renders_the_mock_volume_control() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+
+    runner.click_element("header-settings-button");
+    runner.run_frame();
+
+    assert!(
+        runner
+            .find_element_by_tag("header-settings-volume-control")
+            .is_some()
+    );
+    assert!(
+        runner
+            .find_element_by_tag(SETTINGS_VOLUME_TRACK_TAG)
+            .is_some()
+    );
+}
+
+#[test]
+fn volume_control_uses_left_right_without_blocking_vertical_navigation() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+
+    runner.click_element("header-settings-button");
+    runner.run_frame();
+    runner.run_frame();
+    thread::sleep(Duration::from_millis(320));
+    runner.run_frame();
+
+    runner.focus_element_by_tag("header-settings-status-chip", FocusOrigin::Navigation);
+    runner.run_frame();
+    runner.navigate_down();
+    runner.assert_focused("header-settings-volume-control");
+
+    assert_eq!(settings_volume_value(&mut runner), 40);
+
+    runner.navigate_right();
+    assert_eq!(
+        settings_volume_value(&mut runner),
+        50,
+        "right navigation should advance the mock volume by 10"
+    );
+
+    runner.navigate_left();
+    assert_eq!(
+        settings_volume_value(&mut runner),
+        40,
+        "left navigation should restore the previous mock volume"
+    );
+
+    runner.navigate_up();
+    runner.assert_focused("header-settings-status-chip");
+
+    runner.navigate_down();
+    runner.assert_focused("header-settings-volume-control");
+    runner.navigate_down();
+    runner.assert_focused("header-settings-tile-network");
+}
+
+#[test]
+fn volume_track_click_focuses_the_parent_control_for_keyboard_input() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+
+    runner.click_element("header-settings-button");
+    runner.run_frame();
+    runner.run_frame();
+    thread::sleep(Duration::from_millis(320));
+    runner.run_frame();
+
+    runner.click_element(SETTINGS_VOLUME_TRACK_TAG);
+    runner.run_frame();
+    runner.assert_focused("header-settings-volume-control");
+    assert_eq!(settings_volume_value(&mut runner), 50);
+
+    runner.navigate_right();
+    assert_eq!(
+        settings_volume_value(&mut runner),
+        60,
+        "clicking the track should focus the volume control so right navigation keeps adjusting it"
+    );
+}
+
+#[test]
+fn settings_sections_remember_the_last_focused_control_when_reentering() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+
+    runner.click_element("header-settings-button");
+    runner.run_frame();
+    runner.run_frame();
+    thread::sleep(Duration::from_millis(320));
+    runner.run_frame();
+
+    runner.focus_element_by_tag("header-settings-status-chip", FocusOrigin::Navigation);
+    runner.run_frame();
+    runner.navigate_right();
+    runner.run_frame();
+    runner.navigate_right();
+    runner.run_frame();
+    runner.navigate_right();
+    runner.run_frame();
+    runner.navigate_right();
+    runner.run_frame();
+    runner.assert_focused("header-settings-exit-button");
+
+    runner.navigate_down();
+    runner.assert_focused("header-settings-volume-control");
+    runner.navigate_up();
+    runner.assert_focused("header-settings-exit-button");
+
+    runner.navigate_down();
+    runner.assert_focused("header-settings-volume-control");
+    runner.navigate_down();
+    runner.assert_focused("header-settings-tile-network");
+    runner.navigate_right();
+    runner.run_frame();
+    runner.assert_focused("header-settings-tile-bluetooth");
+
+    runner.navigate_up();
+    runner.assert_focused("header-settings-volume-control");
+    runner.navigate_down();
+    runner.assert_focused("header-settings-tile-bluetooth");
+}
+
+#[test]
+fn volume_control_supports_pointer_drag() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+
+    runner.click_element("header-settings-button");
+    runner.run_frame();
+    runner.run_frame();
+    thread::sleep(Duration::from_millis(320));
+    runner.run_frame();
+
+    let (track_position, track_size) = runner.get_element_bounds(SETTINGS_VOLUME_TRACK_TAG);
+    let y = track_position.y + track_size.y * 0.5;
+    let start = Pos2::new(track_position.x + 24.0, y);
+    let end = Pos2::new(track_position.x + track_size.x - 12.0, y);
+
+    runner.drag_primary_button(start, end);
+    runner.run_frame();
+    assert_eq!(
+        settings_volume_value(&mut runner),
+        100,
+        "dragging should move the mock volume to the end of the track"
+    );
+}
+
+#[test]
+fn volume_control_stops_dragging_after_releasing_outside_the_track() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+
+    runner.click_element("header-settings-button");
+    runner.run_frame();
+    runner.run_frame();
+    thread::sleep(Duration::from_millis(320));
+    runner.run_frame();
+
+    let (track_position, track_size) = runner.get_element_bounds(SETTINGS_VOLUME_TRACK_TAG);
+    let y = track_position.y + track_size.y * 0.5;
+    let start = Pos2::new(track_position.x + 24.0, y);
+    let released_outside = Pos2::new(track_position.x + track_size.x + 80.0, y);
+    let moved_after_release = Pos2::new(track_position.x - 80.0, y);
+
+    runner.move_pointer_to(start);
+    runner.run_frame();
+    runner.press_button(start, daiko::integration::input::PointerButton::Primary);
+    runner.run_frame();
+    runner.move_pointer_to(released_outside);
+    runner.run_frame();
+    runner.release_button(
+        released_outside,
+        daiko::integration::input::PointerButton::Primary,
+    );
+    runner.run_frame();
+    assert_eq!(settings_volume_value(&mut runner), 100);
+    runner.move_pointer_to(moved_after_release);
+    runner.run_frame();
+
+    assert_eq!(
+        settings_volume_value(&mut runner),
+        100,
+        "moving the pointer after releasing outside the track should not keep dragging"
     );
 }
 

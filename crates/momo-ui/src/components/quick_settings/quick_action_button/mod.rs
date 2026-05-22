@@ -2,9 +2,12 @@ mod style;
 
 use self::style::settings_round_button_style;
 use super::common::{QuickSettingsControlState, QuickSettingsGlyph, control_state, glyph_element};
+use super::style::{
+    SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_danger_text_color,
+    settings_inverse_text_color, settings_text_color,
+};
 use daiko::Element;
 use daiko::component::{Component, ComponentContext};
-use daiko::style::Color;
 
 const MOON_ICON: &[u8] = include_bytes!("../../../../assets/moon.svg");
 const GEAR_ICON: &[u8] = include_bytes!("../../../../assets/gear-solid-full.svg");
@@ -74,14 +77,14 @@ fn quick_action_content(spec: QuickActionSpec, state: QuickSettingsControlState)
 
     glyph_element(
         spec.glyph,
-        16,
-        20.0,
+        SETTINGS_ICON_SIZE,
+        SETTINGS_ICON_FRAME_SIZE,
         if spec.is_danger {
-            Color::from_rgb(255, 231, 235)
+            settings_danger_text_color()
         } else if spec.is_active || is_highlighted {
-            Color::from_rgb(12, 16, 20)
+            settings_inverse_text_color()
         } else {
-            Color::from_rgb(236, 240, 248)
+            settings_text_color()
         },
     )
 }

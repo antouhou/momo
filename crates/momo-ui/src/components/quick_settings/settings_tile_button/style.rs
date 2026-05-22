@@ -1,14 +1,17 @@
 use super::super::common::QuickSettingsControlState;
 use super::super::style::{
-    SETTINGS_TILE_CONTENT_GAP, SETTINGS_TILE_HEIGHT, SETTINGS_TILE_PADDING,
-    SETTINGS_TILE_TEXT_HEIGHT, SETTINGS_TILE_WIDTH, TILE_RADIUS,
+    CONTROL_TRANSITION_MS, SETTINGS_TILE_CONTENT_GAP, SETTINGS_TILE_HEIGHT, SETTINGS_TILE_PADDING,
+    SETTINGS_TILE_TEXT_HEIGHT, SETTINGS_TILE_WIDTH, TILE_RADIUS, settings_accent_border_color,
+    settings_accent_color, settings_accent_text_color, settings_label_text_style,
+    settings_surface_border_color, settings_surface_border_hover_color, settings_surface_color,
+    settings_surface_hover_color, settings_text_color, settings_tile_icon_background_color,
 };
 use daiko::animation::easing::EasingFunction;
 use daiko::animation::{AnimationParameters, transition};
 use daiko::component::ComponentContext;
 use daiko::layout::{AlignItems, FlexDirection, ItemSize, JustifyContent};
-use daiko::style::{Border, BorderRadius, Color, CursorIcon, Stroke, Style};
-use daiko::widgets::text::{TextStyle, TextWrap, Weight};
+use daiko::style::{Border, BorderRadius, CursorIcon, Stroke, Style};
+use daiko::widgets::text::TextStyle;
 use std::time::Duration;
 
 pub(crate) fn settings_tile_content_style() -> Style {
@@ -33,18 +36,18 @@ pub(crate) fn settings_tile_button_style(
     is_active: bool,
 ) -> Style {
     let background = if is_active {
-        Color::from_rgb(104, 79, 140)
+        settings_accent_color()
     } else if state.is_highlighted() {
-        Color::from_rgb(38, 42, 46)
+        settings_surface_hover_color()
     } else {
-        Color::from_rgb(24, 28, 31)
+        settings_surface_color()
     };
     let border_color = if is_active {
-        Color::from_rgba_unmultiplied(211, 191, 255, 112)
+        settings_accent_border_color()
     } else if state.is_highlighted() {
-        Color::from_rgba_unmultiplied(255, 255, 255, 92)
+        settings_surface_border_hover_color()
     } else {
-        Color::from_rgba_unmultiplied(255, 255, 255, 28)
+        settings_surface_border_color()
     };
 
     Style::new()
@@ -55,7 +58,7 @@ pub(crate) fn settings_tile_button_style(
         .with_background_color(transition(
             background,
             AnimationParameters::default()
-                .with_duration(Duration::from_millis(120))
+                .with_duration(Duration::from_millis(CONTROL_TRANSITION_MS))
                 .with_easing(EasingFunction::EaseOut)
                 .to_transition_options(),
             ctx,
@@ -65,7 +68,7 @@ pub(crate) fn settings_tile_button_style(
             transition(
                 border_color,
                 AnimationParameters::default()
-                    .with_duration(Duration::from_millis(120))
+                    .with_duration(Duration::from_millis(CONTROL_TRANSITION_MS))
                     .with_easing(EasingFunction::EaseOut)
                     .to_transition_options(),
                 ctx,
@@ -76,31 +79,21 @@ pub(crate) fn settings_tile_button_style(
 }
 
 pub(crate) fn settings_tile_icon_style(is_active: bool) -> Style {
-    let background = if is_active {
-        Color::from_rgba_unmultiplied(255, 255, 255, 26)
-    } else {
-        Color::from_rgba_unmultiplied(255, 255, 255, 12)
-    };
-
     Style::new()
-        .with_fixed_size(38.0, 38.0)
+        .with_fixed_size(SETTINGS_TILE_TEXT_HEIGHT, SETTINGS_TILE_TEXT_HEIGHT)
         .with_direction(FlexDirection::Row)
         .with_align_items(AlignItems::Center)
         .with_justify_content(JustifyContent::Center)
-        .with_background_color(background)
-        .with_border_radius(BorderRadius::all(19.0))
+        .with_background_color(settings_tile_icon_background_color(is_active))
+        .with_border_radius(BorderRadius::all(SETTINGS_TILE_TEXT_HEIGHT * 0.5))
 }
 
 pub(crate) fn tile_title_style(is_active: bool) -> TextStyle {
     let color = if is_active {
-        Color::from_rgb(248, 241, 255)
+        settings_accent_text_color()
     } else {
-        Color::from_rgb(235, 240, 247)
+        settings_text_color()
     };
 
-    TextStyle::default()
-        .with_font_size(18.0)
-        .with_weight(Weight::NORMAL)
-        .with_font_color(color)
-        .with_wrap(TextWrap::NoWrap)
+    settings_label_text_style(color)
 }

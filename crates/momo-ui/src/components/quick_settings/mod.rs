@@ -5,6 +5,8 @@ mod settings_tile_button;
 pub mod state;
 mod status_chip;
 mod style;
+mod volume_control;
 
 pub(crate) use panel::settings_overlay;
 pub(crate) use state::{SETTINGS_MENU_STATE_ID, should_render_settings_menu};
+pub(crate) use volume_control::{SETTINGS_VOLUME_STATE_ID, SETTINGS_VOLUME_TRACK_TAG};

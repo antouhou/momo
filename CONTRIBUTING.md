@@ -12,6 +12,6 @@ app style is consistent and can be changed by changing a single value.
 6. When working with focus, try to avoid using focus keys as much as possible. Use them only when absolutely necessary, 
 in extremely rare cases, when there is absolutely no other way to achieve the desired result. In all other cases, rely 
 on the spatial navigation, scopes, and such. Build a correct topology first.
-7. When designing a new component, keep in mind that all spacing, sizes and padding should be uniform and rythm with the
-rest of the project. There should be multiple levels/layers of spacings and paddings, of course, but they all should
+7. When designing a new component, keep in mind that all spacings, sizes, and padding should be uniform and rhythm with 
+the rest of the project. There should be multiple levels/layers of spacings and paddings, of course, but they all should
 rhythm nonetheless.

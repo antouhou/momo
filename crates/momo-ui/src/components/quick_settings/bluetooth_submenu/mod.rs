@@ -113,7 +113,7 @@ impl Component for BluetoothBackButton {
             menu_state.last_active_view = menu_state.active_view;
         }
 
-        if is_active && (pointer.just_clicked() || focusable.just_activated()) {
+        if is_active && (pointer.just_pressed() || focusable.just_activated()) {
             *state.write() = SettingsMenuState {
                 last_active_view: snapshot.active_view,
                 active_view: SettingsMenuView::Main,
@@ -158,7 +158,7 @@ impl Component for BluetoothToggleRow {
             focusable.request_focus(FocusOrigin::Pointer);
         }
 
-        if is_active && (pointer.just_clicked() || focusable.just_activated()) {
+        if is_active && (pointer.just_pressed() || focusable.just_activated()) {
             *state.write() = SettingsMenuState {
                 bluetooth_enabled: !snapshot.bluetooth_enabled,
                 ..snapshot

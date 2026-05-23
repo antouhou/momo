@@ -154,7 +154,7 @@ impl Component for SettingsTileButton {
         };
         let is_active = is_tile_active(self.spec, menu_state);
 
-        if is_main_view && (pointer.just_clicked() || focusable.just_activated()) {
+        if is_main_view && (pointer.just_pressed() || focusable.just_activated()) {
             match self.spec.action {
                 SettingsTileAction::OpenBluetoothSubmenu => {
                     *shared_state.write() = SettingsMenuState {

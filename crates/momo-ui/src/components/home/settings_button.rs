@@ -22,7 +22,7 @@ impl Component for HeaderSettingsTrigger {
         let state =
             ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
         let state_snapshot = *state.read();
-        let just_activated = pointer.just_clicked() || focusable.just_activated();
+        let just_activated = pointer.just_pressed() || focusable.just_activated();
         focusable.set_focus_key(home_top_row_settings_focus_key());
 
         if pointer.just_entered() || pointer.just_pressed() {

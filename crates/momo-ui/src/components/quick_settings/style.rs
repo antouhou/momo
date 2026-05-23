@@ -158,15 +158,23 @@ pub(crate) fn settings_accent_text_color() -> Color {
 
 pub(crate) fn settings_tile_icon_background_color(is_active: bool) -> Color {
     if is_active {
-        Color::from_rgba_unmultiplied(255, 255, 255, 26)
+        settings_accent_color()
     } else {
         Color::from_rgba_unmultiplied(255, 255, 255, 12)
     }
 }
 
+pub(crate) fn settings_tile_icon_border_color(is_active: bool) -> Color {
+    if is_active {
+        settings_accent_border_color()
+    } else {
+        settings_surface_border_color()
+    }
+}
+
 pub(crate) fn settings_tile_icon_color(is_active: bool) -> Color {
     if is_active {
-        Color::from_rgb(246, 237, 255)
+        settings_accent_text_color()
     } else {
         Color::from_rgb(232, 238, 247)
     }

@@ -1,17 +1,17 @@
 mod style;
 
 use self::style::{
-    DeviceRowAvailability, bluetooth_submenu_body_style, bluetooth_submenu_style,
-    submenu_device_icon_color, submenu_device_icon_ring_style, submenu_section_label_style,
-    submenu_section_style, submenu_section_title_style,
+    bluetooth_submenu_body_style, bluetooth_submenu_style, submenu_device_icon_color,
+    submenu_device_icon_ring_style, submenu_section_label_style, submenu_section_style,
+    submenu_section_title_style, DeviceRowAvailability,
 };
-use super::common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_element};
-use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuView};
+use super::common::{glyph_element, QuickSettingsControlState, QuickSettingsGlyph};
+use super::state::{SettingsMenuState, SettingsMenuView, SETTINGS_MENU_STATE_ID};
+use super::style::{settings_text_color, SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE};
 use super::submenu_button::{
-    SubmenuButton, SubmenuButtonState, SubmenuButtonSurface, submenu_button_glyph,
-    submenu_button_leading_slot, submenu_toggle_switch,
+    submenu_button_glyph, submenu_button_leading_slot, submenu_button_surface_glyph,
+    submenu_toggle_switch, SubmenuButton, SubmenuButtonState, SubmenuButtonSurface,
 };
-use super::style::{SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_inverse_text_color, settings_text_color};
 use daiko::component::{Component, ComponentContext};
 use daiko::navigation::{FocusEntryPolicy, FocusOrigin};
 use daiko::widgets::text::Text;
@@ -209,9 +209,10 @@ impl Component for BluetoothSettingsButton {
             control,
             surface: SubmenuButtonSurface::Emphasized,
             state: SubmenuButtonState::Enabled,
-            leading: submenu_button_glyph(
+            leading: submenu_button_surface_glyph(
                 QuickSettingsGlyph::Asset(GEAR_ICON),
-                settings_inverse_text_color(),
+                SubmenuButtonSurface::Emphasized,
+                SubmenuButtonState::Enabled,
             ),
             trailing: None,
         }

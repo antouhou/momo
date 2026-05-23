@@ -1,10 +1,11 @@
 mod style;
 
 use self::style::{
-    submenu_button_label_style, submenu_button_style, submenu_label_group_style,
-    submenu_leading_slot_style, submenu_toggle_knob_style, submenu_toggle_switch_style,
+    submenu_button_foreground_color, submenu_button_label_style, submenu_button_style,
+    submenu_label_group_style, submenu_leading_slot_style, submenu_toggle_knob_style,
+    submenu_toggle_switch_style,
 };
-use super::common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_element};
+use super::common::{glyph_element, QuickSettingsControlState, QuickSettingsGlyph};
 use super::style::{SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE};
 use daiko::component::{Component, ComponentContext};
 use daiko::style::Color;
@@ -40,6 +41,14 @@ pub(super) fn submenu_button_glyph(glyph: QuickSettingsGlyph, icon_color: Color)
         SETTINGS_ICON_FRAME_SIZE,
         icon_color,
     ))
+}
+
+pub(super) fn submenu_button_surface_glyph(
+    glyph: QuickSettingsGlyph,
+    surface: SubmenuButtonSurface,
+    state: SubmenuButtonState,
+) -> Element {
+    submenu_button_glyph(glyph, submenu_button_foreground_color(surface, state))
 }
 
 pub(super) fn submenu_button_leading_slot(content: Element) -> Element {

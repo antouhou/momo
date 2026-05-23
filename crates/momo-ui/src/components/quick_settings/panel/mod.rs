@@ -2,10 +2,10 @@ mod style;
 mod tile_grid;
 mod top_row;
 
-use super::bluetooth_submenu::BluetoothSubmenu;
 use self::style::{settings_content_style, settings_menu_style};
 use self::tile_grid::SettingsTileGrid;
 use self::top_row::SettingsTopRow;
+use super::bluetooth_submenu::BluetoothSubmenu;
 use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuView};
 use super::style::{
     SETTINGS_MENU_EDGE_MARGIN, SETTINGS_MENU_MIN_HEIGHT, SETTINGS_MENU_SLIDE_DISTANCE,

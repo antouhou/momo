@@ -2,8 +2,9 @@ use super::super::common::QuickSettingsControlState;
 use super::super::style::{
     CONTROL_RADIUS, CONTROL_TRANSITION_MS, SETTINGS_COMPACT_CONTENT_GAP,
     SETTINGS_STATUS_CHIP_HEIGHT, SETTINGS_STATUS_CHIP_PADDING, SETTINGS_STATUS_CHIP_WIDTH,
-    settings_bright_surface_color, settings_bright_surface_muted_color,
-    settings_inverse_text_color, settings_label_text_style, settings_status_chip_border_color,
+    settings_emphasized_surface_border_color, settings_emphasized_surface_border_hover_color,
+    settings_emphasized_surface_color, settings_emphasized_surface_hover_color,
+    settings_label_text_style, settings_text_color,
 };
 use daiko::animation::easing::EasingFunction;
 use daiko::animation::{AnimationParameters, transition};
@@ -26,14 +27,14 @@ pub(crate) fn settings_status_chip_style(
     ctx: &mut ComponentContext,
 ) -> Style {
     let background = if state.is_highlighted() {
-        settings_bright_surface_color()
+        settings_emphasized_surface_hover_color()
     } else {
-        settings_bright_surface_muted_color()
+        settings_emphasized_surface_color()
     };
-    let border_color = if state.is_highlighted() {
-        settings_bright_surface_color()
+    let border_color = if state.is_focused {
+        settings_emphasized_surface_border_hover_color()
     } else {
-        settings_status_chip_border_color()
+        settings_emphasized_surface_border_color()
     };
 
     Style::new()
@@ -66,5 +67,5 @@ pub(crate) fn settings_status_chip_style(
 }
 
 pub(crate) fn status_value_style() -> TextStyle {
-    settings_label_text_style(settings_inverse_text_color())
+    settings_label_text_style(settings_text_color())
 }

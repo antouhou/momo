@@ -154,7 +154,7 @@ impl Component for SettingsTileButton {
         };
         let is_active = is_tile_active(self.spec, menu_state);
 
-        if is_main_view && (pointer.just_clicked() || focusable.just_activated()) {
+        if is_main_view && (pointer.just_pressed() || focusable.just_activated()) {
             match self.spec.action {
                 SettingsTileAction::OpenBluetoothSubmenu => {
                     *shared_state.write() = SettingsMenuState {
@@ -169,17 +169,21 @@ impl Component for SettingsTileButton {
 
         Element::new()
             .with_tag(self.spec.tag)
-            .with_style(settings_tile_button_style(state, ctx, is_active))
-            .with_content(settings_tile_content(self.spec, is_active))
+            .with_style(settings_tile_button_style(state, ctx))
+            .with_content(settings_tile_content(ctx, self.spec, is_active))
     }
 }
 
-fn settings_tile_content(spec: SettingsTileSpec, is_active: bool) -> Element {
+fn settings_tile_content(
+    ctx: &mut ComponentContext,
+    spec: SettingsTileSpec,
+    is_active: bool,
+) -> Element {
     Element::new()
         .with_style(settings_tile_content_style())
         .with_content(
             Element::new()
-                .with_style(settings_tile_icon_style(is_active))
+                .with_style(settings_tile_icon_style(ctx, is_active))
                 .with_content(glyph_element(
                     spec.glyph,
                     SETTINGS_ICON_SIZE,
@@ -190,7 +194,7 @@ fn settings_tile_content(spec: SettingsTileSpec, is_active: bool) -> Element {
         .with_content(
             Element::new()
                 .with_style(settings_tile_text_column_style())
-                .with_content(Text::new(spec.label).with_style(tile_title_style(is_active))),
+                .with_content(Text::new(spec.label).with_style(tile_title_style())),
         )
 }
 

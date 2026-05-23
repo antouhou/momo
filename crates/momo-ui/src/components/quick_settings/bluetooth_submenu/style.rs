@@ -2,8 +2,8 @@ use super::super::style::{
     CONTROL_TRANSITION_MS, SETTINGS_COMPACT_CONTENT_GAP, SETTINGS_MENU_GAP,
     SETTINGS_MENU_INNER_WIDTH, SETTINGS_SUBMENU_DEVICE_ICON_RING_SIZE,
     SETTINGS_SUBMENU_SECTION_LABEL_HEIGHT, SETTINGS_SUBMENU_SECTION_PADDING,
-    SETTINGS_SUBMENU_SECTION_TITLE_TEXT_SIZE, settings_accent_border_color,
-    settings_accent_color, settings_accent_text_color, settings_label_text_style,
+    SETTINGS_SUBMENU_SECTION_TITLE_TEXT_SIZE, settings_accent_border_color, settings_accent_color,
+    settings_accent_text_color, settings_label_text_style,
     settings_submenu_device_available_border_color,
     settings_submenu_device_available_surface_color,
     settings_submenu_device_unavailable_border_color,
@@ -27,14 +27,18 @@ pub(super) enum DeviceRowAvailability {
 
 pub(super) fn bluetooth_submenu_style() -> Style {
     Style::new()
-        .with_size_constraint(SizeConstraint::exact_content_height().with_exact_width(SETTINGS_MENU_INNER_WIDTH))
+        .with_size_constraint(
+            SizeConstraint::exact_content_height().with_exact_width(SETTINGS_MENU_INNER_WIDTH),
+        )
         .with_direction(FlexDirection::Column)
         .with_spacing((SETTINGS_MENU_GAP, SETTINGS_MENU_GAP))
 }
 
 pub(super) fn bluetooth_submenu_body_style() -> Style {
     Style::new()
-        .with_size_constraint(SizeConstraint::exact_content_height().with_exact_width(SETTINGS_MENU_INNER_WIDTH))
+        .with_size_constraint(
+            SizeConstraint::exact_content_height().with_exact_width(SETTINGS_MENU_INNER_WIDTH),
+        )
         .with_direction(FlexDirection::Column)
         .with_spacing((SETTINGS_MENU_GAP, SETTINGS_MENU_GAP))
 }

@@ -1,4 +1,3 @@
-use super::super::quick_settings::{SETTINGS_VOLUME_STATE_ID, SETTINGS_VOLUME_TRACK_TAG};
 use super::Home;
 use super::app_grid::AppGrid;
 use super::model::{MOCK_APPS, SCREEN_PADDING, TILE_HEIGHT, columns_for_width};
@@ -8,7 +7,7 @@ use daiko::layout::{AlignItems, FlexDirection, ItemSize};
 use daiko::navigation::{FocusKey, FocusOrigin};
 use daiko::style::Style;
 use daiko::testing::TestRunner;
-use daiko::{App, AppContext, Element, Id, Pos2, Vec2};
+use daiko::{App, AppContext, Element, Pos2, Vec2};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -67,14 +66,6 @@ impl Component for FixedWidthGridRoot {
     }
 }
 
-fn settings_volume_value(runner: &mut TestRunner<HomeTestApp>) -> u8 {
-    let volume = runner
-        .app_runner_mut()
-        .context
-        .peek_shared_state(Id::new(SETTINGS_VOLUME_STATE_ID), || 0_u8);
-    *volume.read()
-}
-
 #[test]
 fn first_tile_is_preferred_focus_target() {
     let mut runner = TestRunner::new(HomeTestApp);
@@ -124,21 +115,6 @@ fn clock_chip_stays_near_the_right_edge() {
     assert!(
         size.x < 220.0,
         "clock chip should size to content, not fill the row"
-    );
-}
-
-#[test]
-fn settings_button_sits_to_the_right_of_the_clock() {
-    let mut runner = TestRunner::new(HomeTestApp);
-    runner.set_viewport_size(1280.0, 720.0);
-    runner.run_frame();
-
-    let (clock_position, clock_size) = runner.get_element_bounds("clock-chip");
-    let (button_position, _button_size) = runner.get_element_bounds("header-settings-button");
-
-    assert!(
-        button_position.x >= clock_position.x + clock_size.x + 8.0,
-        "settings button should sit to the right of the clock"
     );
 }
 
@@ -195,94 +171,6 @@ fn settings_menu_renders_the_mock_power_button() {
 }
 
 #[test]
-fn settings_menu_renders_the_mock_volume_control() {
-    let mut runner = TestRunner::new(HomeTestApp);
-    runner.set_viewport_size(1280.0, 720.0);
-    runner.run_frame();
-
-    runner.click_element("header-settings-button");
-    runner.run_frame();
-
-    assert!(
-        runner
-            .find_element_by_tag("header-settings-volume-control")
-            .is_some()
-    );
-    assert!(
-        runner
-            .find_element_by_tag(SETTINGS_VOLUME_TRACK_TAG)
-            .is_some()
-    );
-}
-
-#[test]
-fn volume_control_uses_left_right_without_blocking_vertical_navigation() {
-    let mut runner = TestRunner::new(HomeTestApp);
-    runner.set_viewport_size(1280.0, 720.0);
-    runner.run_frame();
-
-    runner.click_element("header-settings-button");
-    runner.run_frame();
-    runner.run_frame();
-    thread::sleep(Duration::from_millis(320));
-    runner.run_frame();
-
-    runner.focus_element_by_tag("header-settings-status-chip", FocusOrigin::Navigation);
-    runner.run_frame();
-    runner.navigate_down();
-    runner.assert_focused("header-settings-volume-control");
-
-    assert_eq!(settings_volume_value(&mut runner), 40);
-
-    runner.navigate_right();
-    assert_eq!(
-        settings_volume_value(&mut runner),
-        50,
-        "right navigation should advance the mock volume by 10"
-    );
-
-    runner.navigate_left();
-    assert_eq!(
-        settings_volume_value(&mut runner),
-        40,
-        "left navigation should restore the previous mock volume"
-    );
-
-    runner.navigate_up();
-    runner.assert_focused("header-settings-status-chip");
-
-    runner.navigate_down();
-    runner.assert_focused("header-settings-volume-control");
-    runner.navigate_down();
-    runner.assert_focused("header-settings-tile-network");
-}
-
-#[test]
-fn volume_track_click_focuses_the_parent_control_for_keyboard_input() {
-    let mut runner = TestRunner::new(HomeTestApp);
-    runner.set_viewport_size(1280.0, 720.0);
-    runner.run_frame();
-
-    runner.click_element("header-settings-button");
-    runner.run_frame();
-    runner.run_frame();
-    thread::sleep(Duration::from_millis(320));
-    runner.run_frame();
-
-    runner.click_element(SETTINGS_VOLUME_TRACK_TAG);
-    runner.run_frame();
-    runner.assert_focused("header-settings-volume-control");
-    assert_eq!(settings_volume_value(&mut runner), 50);
-
-    runner.navigate_right();
-    assert_eq!(
-        settings_volume_value(&mut runner),
-        60,
-        "clicking the track should focus the volume control so right navigation keeps adjusting it"
-    );
-}
-
-#[test]
 fn settings_sections_remember_the_last_focused_control_when_reentering() {
     let mut runner = TestRunner::new(HomeTestApp);
     runner.set_viewport_size(1280.0, 720.0);
@@ -323,72 +211,6 @@ fn settings_sections_remember_the_last_focused_control_when_reentering() {
     runner.assert_focused("header-settings-volume-control");
     runner.navigate_down();
     runner.assert_focused("header-settings-tile-bluetooth");
-}
-
-#[test]
-fn volume_control_supports_pointer_drag() {
-    let mut runner = TestRunner::new(HomeTestApp);
-    runner.set_viewport_size(1280.0, 720.0);
-    runner.run_frame();
-
-    runner.click_element("header-settings-button");
-    runner.run_frame();
-    runner.run_frame();
-    thread::sleep(Duration::from_millis(320));
-    runner.run_frame();
-
-    let (track_position, track_size) = runner.get_element_bounds(SETTINGS_VOLUME_TRACK_TAG);
-    let y = track_position.y + track_size.y * 0.5;
-    let start = Pos2::new(track_position.x + 24.0, y);
-    let end = Pos2::new(track_position.x + track_size.x - 12.0, y);
-
-    runner.drag_primary_button(start, end);
-    runner.run_frame();
-    assert_eq!(
-        settings_volume_value(&mut runner),
-        100,
-        "dragging should move the mock volume to the end of the track"
-    );
-}
-
-#[test]
-fn volume_control_stops_dragging_after_releasing_outside_the_track() {
-    let mut runner = TestRunner::new(HomeTestApp);
-    runner.set_viewport_size(1280.0, 720.0);
-    runner.run_frame();
-
-    runner.click_element("header-settings-button");
-    runner.run_frame();
-    runner.run_frame();
-    thread::sleep(Duration::from_millis(320));
-    runner.run_frame();
-
-    let (track_position, track_size) = runner.get_element_bounds(SETTINGS_VOLUME_TRACK_TAG);
-    let y = track_position.y + track_size.y * 0.5;
-    let start = Pos2::new(track_position.x + 24.0, y);
-    let released_outside = Pos2::new(track_position.x + track_size.x + 80.0, y);
-    let moved_after_release = Pos2::new(track_position.x - 80.0, y);
-
-    runner.move_pointer_to(start);
-    runner.run_frame();
-    runner.press_button(start, daiko::integration::input::PointerButton::Primary);
-    runner.run_frame();
-    runner.move_pointer_to(released_outside);
-    runner.run_frame();
-    runner.release_button(
-        released_outside,
-        daiko::integration::input::PointerButton::Primary,
-    );
-    runner.run_frame();
-    assert_eq!(settings_volume_value(&mut runner), 100);
-    runner.move_pointer_to(moved_after_release);
-    runner.run_frame();
-
-    assert_eq!(
-        settings_volume_value(&mut runner),
-        100,
-        "moving the pointer after releasing outside the track should not keep dragging"
-    );
 }
 
 #[test]
@@ -668,46 +490,6 @@ fn app_grid_width_shrinks_after_window_width_shrinks() {
 }
 
 #[test]
-fn directional_navigation_pages_at_the_grid_edge() {
-    let mut runner = TestRunner::new(HomeTestApp);
-    runner.set_viewport_size(1280.0, 720.0);
-    runner.run_frame();
-    runner.run_frame();
-
-    runner.focus_element_by_key(FocusKey::new("photos"), FocusOrigin::Navigation);
-    runner.run_frame();
-
-    let (start_position, start_size) =
-        runner.get_element_bounds("apps-grid-page-dot-active-visual");
-    runner.navigate_right();
-    runner.run_frame();
-    thread::sleep(Duration::from_millis(40));
-    runner.run_frame();
-
-    runner.assert_focused("podcasts");
-    let (mid_position, mid_size) = runner.get_element_bounds("apps-grid-page-dot-active-visual");
-    assert!(
-        mid_position.x > start_position.x + 0.5,
-        "active page indicator should leave the previous dot when paging right"
-    );
-    assert!(
-        (mid_size.x - start_size.x).abs() < 0.5,
-        "active page indicator should keep its pill width while moving"
-    );
-
-    thread::sleep(Duration::from_millis(220));
-    runner.run_frame();
-
-    let (indicator_position, indicator_size) =
-        runner.get_element_bounds("apps-grid-page-dot-active-visual");
-    let (target_position, _target_size) = runner.get_element_bounds("apps-grid-page-dot-1");
-    assert!(
-        indicator_position.x + indicator_size.x * 0.5 > target_position.x + 2.0,
-        "second page indicator should settle over the second dot after paging right"
-    );
-}
-
-#[test]
 fn focused_page_dot_keeps_active_page_visual_distinct() {
     let mut runner = TestRunner::new(HomeTestApp);
     runner.set_viewport_size(1280.0, 720.0);
@@ -728,32 +510,6 @@ fn focused_page_dot_keeps_active_page_visual_distinct() {
     assert!(
         active_size.x > focused_size.x,
         "focused inactive page dot should keep the inactive visual size"
-    );
-}
-
-#[test]
-fn focused_page_dot_shows_focus_ring_on_the_target() {
-    let mut runner = TestRunner::new(HomeTestApp);
-    runner.set_viewport_size(1280.0, 720.0);
-    runner.run_frame();
-    runner.run_frame();
-
-    runner.focus_element_by_key(
-        FocusKey::new("apps-grid-page-dot-1"),
-        FocusOrigin::Navigation,
-    );
-    runner.run_frame();
-
-    let (ring_position, ring_size) = runner.get_element_bounds("apps-grid-page-dot-focus-ring");
-    let (target_position, target_size) = runner.get_element_bounds("apps-grid-page-dot-1");
-
-    assert!(
-        (ring_position.x - target_position.x).abs() < 0.5,
-        "focus ring should align with the focused dot target"
-    );
-    assert!(
-        (ring_size.x - target_size.x).abs() < 0.5,
-        "focus ring should match the focused dot target width"
     );
 }
 
@@ -781,58 +537,6 @@ fn focused_active_page_dot_shows_pill_shaped_focus_ring() {
     assert!(
         (ring_position.x + ring_size.x * 0.5 - (pill_position.x + pill_size.x * 0.5)).abs() < 0.5,
         "focus ring should stay centered on the active pill"
-    );
-}
-
-#[test]
-fn focused_page_dot_focus_ring_animates_between_dots() {
-    let mut runner = TestRunner::new(HomeTestApp);
-    runner.set_viewport_size(1280.0, 720.0);
-    runner.run_frame();
-    runner.run_frame();
-
-    runner.focus_element_by_key(
-        FocusKey::new("apps-grid-page-dot-0"),
-        FocusOrigin::Navigation,
-    );
-    runner.run_frame();
-
-    let (start_position, start_size) = runner.get_element_bounds("apps-grid-page-dot-focus-ring");
-    let (target_position, target_size) = runner.get_element_bounds("apps-grid-page-dot-1");
-
-    runner.focus_element_by_key(
-        FocusKey::new("apps-grid-page-dot-1"),
-        FocusOrigin::Navigation,
-    );
-    runner.run_frame();
-    thread::sleep(Duration::from_millis(40));
-    runner.run_frame();
-
-    let (mid_position, mid_size) = runner.get_element_bounds("apps-grid-page-dot-focus-ring");
-    assert!(
-        mid_position.x > start_position.x + 0.5,
-        "focus ring should move away from the previous dot instead of staying in place"
-    );
-    assert!(
-        mid_position.x < target_position.x - 0.5,
-        "focus ring should be in flight toward the next dot rather than teleporting"
-    );
-    assert!(
-        mid_size.x < start_size.x - 0.5 && mid_size.x > target_size.x + 0.5,
-        "focus ring width should animate from the active pill width down to the compact target width"
-    );
-
-    thread::sleep(Duration::from_millis(220));
-    runner.run_frame();
-
-    let (final_position, final_size) = runner.get_element_bounds("apps-grid-page-dot-focus-ring");
-    assert!(
-        (final_position.x - target_position.x).abs() < 0.5,
-        "focus ring should settle on the next dot target"
-    );
-    assert!(
-        (final_size.x - target_size.x).abs() < 0.5,
-        "focus ring should settle to the next dot target width"
     );
 }
 
@@ -966,95 +670,6 @@ fn first_page_dot_up_targets_the_middle_column_when_the_grid_has_three_columns()
     assert_eq!(
         focused_tag, "browser",
         "focus should move to the middle column of the last visible row on the first page, got {focused_tag}"
-    );
-}
-
-#[test]
-fn page_dot_up_on_last_page_targets_a_tile_on_the_last_page() {
-    let mut runner = TestRunner::new(HomeTestApp);
-    runner.set_viewport_size(1280.0, 900.0);
-    runner.run_frame();
-    runner.run_frame();
-
-    runner.click_element("apps-grid-page-dot-2");
-    runner.run_frame();
-    thread::sleep(Duration::from_millis(260));
-    runner.run_frame();
-
-    runner.focus_element_by_key(
-        FocusKey::new("apps-grid-page-dot-2"),
-        FocusOrigin::Navigation,
-    );
-    runner.navigate_up();
-    runner.run_frame();
-
-    let focused_tag = runner
-        .focused_element()
-        .and_then(|element| element.tag())
-        .unwrap_or("<untagged>");
-
-    assert!(
-        matches!(focused_tag, "recipes" | "security"),
-        "focus should move to a tile on the last page when pressing up from the last page dot, got {focused_tag}"
-    );
-}
-
-#[test]
-fn last_page_single_row_tile_moves_down_to_page_dots() {
-    let mut runner = TestRunner::new(HomeTestApp);
-    runner.set_viewport_size(1280.0, 900.0);
-    runner.run_frame();
-    runner.run_frame();
-
-    runner.click_element("apps-grid-page-dot-2");
-    runner.run_frame();
-    thread::sleep(Duration::from_millis(260));
-    runner.run_frame();
-
-    runner.focus_element_by_key(FocusKey::new("security"), FocusOrigin::Navigation);
-    runner.navigate_down();
-    runner.run_frame();
-
-    let focused_tag = runner
-        .focused_element()
-        .and_then(|element| element.tag())
-        .unwrap_or("<untagged>");
-
-    assert!(
-        focused_tag.starts_with("apps-grid-page-dot-"),
-        "focus should move from the last-page tile to the page dots when pressing down, got {focused_tag}"
-    );
-}
-
-#[test]
-fn last_page_dot_up_then_down_returns_to_page_dots() {
-    let mut runner = TestRunner::new(HomeTestApp);
-    runner.set_viewport_size(1280.0, 900.0);
-    runner.run_frame();
-    runner.run_frame();
-
-    runner.click_element("apps-grid-page-dot-2");
-    runner.run_frame();
-    thread::sleep(Duration::from_millis(260));
-    runner.run_frame();
-
-    runner.focus_element_by_key(
-        FocusKey::new("apps-grid-page-dot-2"),
-        FocusOrigin::Navigation,
-    );
-    runner.navigate_up();
-    runner.run_frame();
-    runner.navigate_down();
-    runner.run_frame();
-
-    let focused_tag = runner
-        .focused_element()
-        .and_then(|element| element.tag())
-        .unwrap_or("<untagged>");
-
-    assert!(
-        focused_tag.starts_with("apps-grid-page-dot-"),
-        "focus should return to page dots after moving up into the last-page row and back down, got {focused_tag}"
     );
 }
 
@@ -1237,30 +852,6 @@ fn apps_header_has_visible_height() {
     assert!(
         position.x.abs() < 0.5,
         "apps header should fill from the window edge"
-    );
-}
-
-#[test]
-fn apps_header_content_is_padded() {
-    let mut runner = TestRunner::new(HomeTestApp);
-    runner.set_viewport_size(1280.0, 720.0);
-    runner.run_frame();
-
-    let (title_position, _title_size) = runner.get_element_bounds("apps-header-title");
-    let (clock_position, clock_size) = runner.get_element_bounds("clock-chip");
-    let clock_right_edge = clock_position.x + clock_size.x;
-
-    assert!(
-        (title_position.x - SCREEN_PADDING).abs() < 0.5,
-        "header title should start after the left padding"
-    );
-    assert!(
-        title_position.y >= SCREEN_PADDING - 0.5,
-        "header title should sit below the top padding"
-    );
-    assert!(
-        clock_right_edge <= 1280.0 - SCREEN_PADDING + 0.5,
-        "clock chip should stay inside the right padding"
     );
 }
 

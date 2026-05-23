@@ -4,8 +4,8 @@ use self::style::{
     volume_control_style, volume_label_container_style, volume_label_style,
     volume_slider_row_style, volume_slider_track_style,
 };
-use super::common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_element};
 use super::common::is_menu_view_active;
+use super::common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_element};
 use super::state::SettingsMenuView;
 use super::style::{
     SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, SETTINGS_VOLUME_THUMB_SIZE,

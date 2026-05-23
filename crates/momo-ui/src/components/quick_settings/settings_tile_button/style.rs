@@ -1,10 +1,10 @@
 use super::super::common::QuickSettingsControlState;
 use super::super::style::{
     CONTROL_TRANSITION_MS, SETTINGS_TILE_CONTENT_GAP, SETTINGS_TILE_HEIGHT, SETTINGS_TILE_PADDING,
-    SETTINGS_TILE_TEXT_HEIGHT, SETTINGS_TILE_WIDTH, TILE_RADIUS, settings_accent_border_color,
-    settings_accent_color, settings_accent_text_color, settings_label_text_style,
+    SETTINGS_TILE_TEXT_HEIGHT, SETTINGS_TILE_WIDTH, TILE_RADIUS, settings_label_text_style,
     settings_surface_border_color, settings_surface_border_hover_color, settings_surface_color,
     settings_surface_hover_color, settings_text_color, settings_tile_icon_background_color,
+    settings_tile_icon_border_color,
 };
 use daiko::animation::easing::EasingFunction;
 use daiko::animation::{AnimationParameters, transition};
@@ -33,18 +33,13 @@ pub(crate) fn settings_tile_text_column_style() -> Style {
 pub(crate) fn settings_tile_button_style(
     state: QuickSettingsControlState,
     ctx: &mut ComponentContext,
-    is_active: bool,
 ) -> Style {
-    let background = if is_active {
-        settings_accent_color()
-    } else if state.is_highlighted() {
+    let background = if state.is_highlighted() {
         settings_surface_hover_color()
     } else {
         settings_surface_color()
     };
-    let border_color = if is_active {
-        settings_accent_border_color()
-    } else if state.is_highlighted() {
+    let border_color = if state.is_highlighted() {
         settings_surface_border_hover_color()
     } else {
         settings_surface_border_color()
@@ -78,22 +73,34 @@ pub(crate) fn settings_tile_button_style(
         .with_cursor(CursorIcon::PointingHand)
 }
 
-pub(crate) fn settings_tile_icon_style(is_active: bool) -> Style {
+pub(crate) fn settings_tile_icon_style(ctx: &mut ComponentContext, is_active: bool) -> Style {
     Style::new()
         .with_fixed_size(SETTINGS_TILE_TEXT_HEIGHT, SETTINGS_TILE_TEXT_HEIGHT)
         .with_direction(FlexDirection::Row)
         .with_align_items(AlignItems::Center)
         .with_justify_content(JustifyContent::Center)
-        .with_background_color(settings_tile_icon_background_color(is_active))
+        .with_background_color(transition(
+            settings_tile_icon_background_color(is_active),
+            AnimationParameters::default()
+                .with_duration(Duration::from_millis(CONTROL_TRANSITION_MS))
+                .with_easing(EasingFunction::EaseOut)
+                .to_transition_options(),
+            ctx,
+        ))
+        .with_border(Border::uniform(Stroke::new(
+            1.0,
+            transition(
+                settings_tile_icon_border_color(is_active),
+                AnimationParameters::default()
+                    .with_duration(Duration::from_millis(CONTROL_TRANSITION_MS))
+                    .with_easing(EasingFunction::EaseOut)
+                    .to_transition_options(),
+                ctx,
+            ),
+        )))
         .with_border_radius(BorderRadius::all(SETTINGS_TILE_TEXT_HEIGHT * 0.5))
 }
 
-pub(crate) fn tile_title_style(is_active: bool) -> TextStyle {
-    let color = if is_active {
-        settings_accent_text_color()
-    } else {
-        settings_text_color()
-    };
-
-    settings_label_text_style(color)
+pub(crate) fn tile_title_style() -> TextStyle {
+    settings_label_text_style(settings_text_color())
 }

@@ -7,11 +7,11 @@ use self::style::{
 };
 use super::common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_element};
 use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuView};
+use super::style::{SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_text_color};
 use super::submenu_button::{
     SubmenuButton, SubmenuButtonState, SubmenuButtonSurface, submenu_button_glyph,
-    submenu_button_leading_slot, submenu_toggle_switch,
+    submenu_button_leading_slot, submenu_button_surface_glyph, submenu_toggle_switch,
 };
-use super::style::{SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_inverse_text_color, settings_text_color};
 use daiko::component::{Component, ComponentContext};
 use daiko::navigation::{FocusEntryPolicy, FocusOrigin};
 use daiko::widgets::text::Text;
@@ -113,7 +113,7 @@ impl Component for BluetoothBackButton {
             menu_state.last_active_view = menu_state.active_view;
         }
 
-        if is_active && (pointer.just_clicked() || focusable.just_activated()) {
+        if is_active && (pointer.just_pressed() || focusable.just_activated()) {
             *state.write() = SettingsMenuState {
                 last_active_view: snapshot.active_view,
                 active_view: SettingsMenuView::Main,
@@ -158,7 +158,7 @@ impl Component for BluetoothToggleRow {
             focusable.request_focus(FocusOrigin::Pointer);
         }
 
-        if is_active && (pointer.just_clicked() || focusable.just_activated()) {
+        if is_active && (pointer.just_pressed() || focusable.just_activated()) {
             *state.write() = SettingsMenuState {
                 bluetooth_enabled: !snapshot.bluetooth_enabled,
                 ..snapshot
@@ -209,9 +209,10 @@ impl Component for BluetoothSettingsButton {
             control,
             surface: SubmenuButtonSurface::Emphasized,
             state: SubmenuButtonState::Enabled,
-            leading: submenu_button_glyph(
+            leading: submenu_button_surface_glyph(
                 QuickSettingsGlyph::Asset(GEAR_ICON),
-                settings_inverse_text_color(),
+                SubmenuButtonSurface::Emphasized,
+                SubmenuButtonState::Enabled,
             ),
             trailing: None,
         }

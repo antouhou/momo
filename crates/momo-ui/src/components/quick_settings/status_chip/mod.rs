@@ -1,9 +1,9 @@
 mod style;
 
-use super::state::SettingsMenuView;
 use self::style::{settings_status_chip_style, status_chip_content_style, status_value_style};
 use super::common::{QuickSettingsGlyph, control_state, glyph_element, is_menu_view_active};
-use super::style::{SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_inverse_text_color};
+use super::state::SettingsMenuView;
+use super::style::{SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_text_color};
 use daiko::Element;
 use daiko::component::{Component, ComponentContext};
 use daiko::widgets::text::Text;
@@ -36,7 +36,7 @@ fn status_chip_content() -> Element {
             QuickSettingsGlyph::Asset(BATTERY_ICON),
             SETTINGS_ICON_SIZE,
             SETTINGS_ICON_FRAME_SIZE,
-            settings_inverse_text_color(),
+            settings_text_color(),
         ))
         .with_content(Text::new("96%").with_style(status_value_style()))
 }

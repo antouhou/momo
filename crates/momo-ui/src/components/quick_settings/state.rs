@@ -1,12 +1,36 @@
 use daiko::Id;
 use daiko::component::ComponentContext;
 
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum SettingsMenuView {
+    #[default]
+    Main,
+    Bluetooth,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct SettingsMenuState {
     pub is_open: bool,
     pub just_opened: bool,
     pub opened_from_trigger_press: bool,
     pub is_animating: bool,
+    pub last_active_view: SettingsMenuView,
+    pub active_view: SettingsMenuView,
+    pub bluetooth_enabled: bool,
+}
+
+impl Default for SettingsMenuState {
+    fn default() -> Self {
+        Self {
+            is_open: false,
+            just_opened: false,
+            opened_from_trigger_press: false,
+            is_animating: false,
+            last_active_view: SettingsMenuView::Main,
+            active_view: SettingsMenuView::Main,
+            bluetooth_enabled: true,
+        }
+    }
 }
 
 pub(crate) const SETTINGS_MENU_STATE_ID: &str = "momo_home_settings_menu_state";

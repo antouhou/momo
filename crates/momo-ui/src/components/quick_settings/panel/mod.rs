@@ -2,27 +2,25 @@ mod style;
 mod tile_grid;
 mod top_row;
 
-use self::style::{settings_menu_style, settings_scrollable_style};
+use super::bluetooth_submenu::BluetoothSubmenu;
+use self::style::{settings_content_style, settings_menu_style};
 use self::tile_grid::SettingsTileGrid;
 use self::top_row::SettingsTopRow;
-use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState};
+use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuView};
 use super::style::{
-    SETTINGS_MENU_CHROME_HEIGHT, SETTINGS_MENU_EDGE_MARGIN, SETTINGS_MENU_INNER_WIDTH,
-    SETTINGS_MENU_MIN_HEIGHT, SETTINGS_MENU_MIN_SCROLL_HEIGHT, SETTINGS_MENU_SLIDE_DISTANCE,
-    SETTINGS_MENU_TOP_OFFSET, SETTINGS_MENU_VERTICAL_PADDING,
+    SETTINGS_MENU_EDGE_MARGIN, SETTINGS_MENU_MIN_HEIGHT, SETTINGS_MENU_SLIDE_DISTANCE,
+    SETTINGS_MENU_TOP_OFFSET,
 };
 use super::volume_control::VolumeControl;
 use daiko::animation::AnimationParameters;
 use daiko::animation::easing::EasingFunction;
 use daiko::component::{Component, ComponentContext};
-use daiko::navigation::{FocusBoundary, FocusOrigin, NavigationInputAction};
+use daiko::navigation::{FocusBoundary, FocusEntryPolicy, FocusOrigin, NavigationInputAction};
 use daiko::widgets::overlay::{Overlay, OverlayPositioning};
-use daiko::widgets::scrollable::Scrollable;
 use daiko::{Element, Id, Vec2};
 use std::time::Duration;
 
 const SETTINGS_MENU_ANIMATION_ID: &str = "momo_home_settings_menu_animation";
-const SETTINGS_MENU_SCROLLABLE_ID: &str = "momo_home_settings_menu_scrollable";
 const SETTINGS_MENU_SLIDE_DURATION_MS: u64 = 280;
 #[derive(Clone, Copy)]
 pub(super) struct SettingsMenuPanel {}
@@ -37,6 +35,12 @@ struct SettingsMenuVisibility {
     progress: f32,
     is_visible: bool,
 }
+
+#[derive(Clone, Copy)]
+struct SettingsMenuContent;
+
+#[derive(Clone, Copy)]
+struct MainSettingsView;
 
 impl Component for SettingsMenuPanel {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
@@ -65,14 +69,18 @@ impl Component for SettingsMenuPanel {
         }
 
         if state_snapshot.is_open {
+            let is_view_transition_pending =
+                state_snapshot.last_active_view != state_snapshot.active_view;
             let close_from_navigation = focus_scope.drain_captured_actions().any(|action| {
                 matches!(
                     action,
                     NavigationInputAction::Cancel | NavigationInputAction::Back
                 )
             });
-            let close_from_focus_leave =
-                !just_opened && focus_scope.just_left() && !pointer.is_pressed_anywhere();
+            let close_from_focus_leave = !is_view_transition_pending
+                && !just_opened
+                && focus_scope.just_left()
+                && !pointer.is_pressed_anywhere();
             let should_close = close_from_navigation
                 || (!just_opened && pointer.just_clicked_outside())
                 || close_from_focus_leave;
@@ -94,6 +102,9 @@ impl Component for SettingsMenuPanel {
                         state_snapshot.opened_from_trigger_press
                     },
                     is_animating: true,
+                    last_active_view: state_snapshot.last_active_view,
+                    active_view: state_snapshot.active_view,
+                    bluetooth_enabled: state_snapshot.bluetooth_enabled,
                 };
             }
         }
@@ -104,24 +115,36 @@ impl Component for SettingsMenuPanel {
             - SETTINGS_MENU_EDGE_MARGIN)
             .max(SETTINGS_MENU_MIN_HEIGHT);
 
-        let max_scroll_height = (max_drawer_height
-            - SETTINGS_MENU_VERTICAL_PADDING * 2.0
-            - SETTINGS_MENU_CHROME_HEIGHT)
-            .max(SETTINGS_MENU_MIN_SCROLL_HEIGHT);
-
         Element::new()
             .with_tag("header-settings-menu")
             .with_style(settings_menu_style(max_drawer_height))
+            .with_content(SettingsMenuContent)
+    }
+}
+
+impl Component for SettingsMenuContent {
+    fn to_element(&self, ctx: &mut ComponentContext) -> Element {
+        ctx.focus_scope()
+            .set_entry_policy(FocusEntryPolicy::Remembered);
+
+        let state =
+            ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
+        let active_view = state.read().active_view;
+
+        match active_view {
+            SettingsMenuView::Main => Element::new().with_content(MainSettingsView),
+            SettingsMenuView::Bluetooth => Element::new().with_content(BluetoothSubmenu),
+        }
+    }
+}
+
+impl Component for MainSettingsView {
+    fn to_element(&self, _ctx: &mut ComponentContext) -> Element {
+        Element::new()
+            .with_style(settings_content_style())
             .with_content(SettingsTopRow)
             .with_content(VolumeControl)
-            .with_content(
-                Scrollable::new(SettingsTileGrid, Id::new(SETTINGS_MENU_SCROLLABLE_ID))
-                    .size_to_content_with_clamp(Vec2::new(
-                        SETTINGS_MENU_INNER_WIDTH,
-                        max_scroll_height,
-                    ))
-                    .with_style(settings_scrollable_style()),
-            )
+            .with_content(SettingsTileGrid)
     }
 }
 

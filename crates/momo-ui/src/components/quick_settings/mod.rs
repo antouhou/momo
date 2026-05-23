@@ -1,3 +1,4 @@
+mod bluetooth_submenu;
 mod common;
 mod panel;
 mod quick_action_button;

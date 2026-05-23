@@ -5,6 +5,8 @@ use self::style::{
     volume_slider_row_style, volume_slider_track_style,
 };
 use super::common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_element};
+use super::common::is_menu_view_active;
+use super::state::SettingsMenuView;
 use super::style::{
     SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, SETTINGS_VOLUME_THUMB_SIZE,
     SETTINGS_VOLUME_TRACK_HEIGHT, settings_accent_color, settings_bright_surface_border_color,
@@ -36,12 +38,15 @@ impl Component for VolumeControl {
         let mut current_volume = *volume.read();
         let mut pointer = ctx.pointer();
         let focusable = ctx.focusable();
+        let is_active = is_menu_view_active(ctx, SettingsMenuView::Main);
+
+        focusable.set_navigation_enabled(is_active);
 
         if pointer.just_entered() || pointer.just_pressed() {
             focusable.request_focus(FocusOrigin::Pointer);
         }
 
-        if focusable.just_focused() {
+        if is_active && focusable.just_focused() {
             focusable.engage();
         }
 

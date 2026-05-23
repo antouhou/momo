@@ -5,12 +5,14 @@ pub(crate) const SETTINGS_MENU_WIDTH: f32 = 392.0;
 pub(crate) const SETTINGS_MENU_EDGE_MARGIN: f32 = 40.0;
 pub(crate) const SETTINGS_MENU_TOP_OFFSET: f32 = 96.0;
 pub(crate) const SETTINGS_MENU_MIN_HEIGHT: f32 = 160.0;
-pub(crate) const SETTINGS_MENU_MIN_SCROLL_HEIGHT: f32 = 120.0;
 pub(crate) const SETTINGS_MENU_GAP: f32 = 12.0;
 pub(crate) const SETTINGS_MENU_HORIZONTAL_PADDING: f32 = 16.0;
 pub(crate) const SETTINGS_MENU_VERTICAL_PADDING: f32 = 18.0;
+pub(crate) const SETTINGS_PANEL_BORDER_WIDTH: f32 = 1.0;
 pub(crate) const SETTINGS_MENU_INNER_WIDTH: f32 =
-    SETTINGS_MENU_WIDTH - SETTINGS_MENU_HORIZONTAL_PADDING * 2.0;
+    SETTINGS_MENU_WIDTH
+        - SETTINGS_MENU_HORIZONTAL_PADDING * 2.0
+        - SETTINGS_PANEL_BORDER_WIDTH * 2.0;
 pub(crate) const SETTINGS_MENU_SLIDE_DISTANCE: f32 =
     SETTINGS_MENU_WIDTH + SETTINGS_MENU_EDGE_MARGIN + 36.0;
 pub(crate) const SETTINGS_ROUND_BUTTON_SIZE: f32 = 44.0;
@@ -18,9 +20,6 @@ pub(crate) const SETTINGS_STATUS_CHIP_WIDTH: f32 = 92.0;
 pub(crate) const SETTINGS_STATUS_CHIP_HEIGHT: f32 = 44.0;
 pub(crate) const SETTINGS_TILE_WIDTH: f32 = 174.0;
 pub(crate) const SETTINGS_TILE_HEIGHT: f32 = 76.0;
-pub(crate) const SETTINGS_TOP_ROW_HEIGHT: f32 = SETTINGS_ROUND_BUTTON_SIZE;
-pub(crate) const SETTINGS_MENU_CHROME_HEIGHT: f32 =
-    SETTINGS_TOP_ROW_HEIGHT + SETTINGS_TILE_HEIGHT + SETTINGS_MENU_GAP * 2.0;
 
 pub(crate) const PANEL_RADIUS: f32 = 30.0;
 pub(crate) const CONTROL_RADIUS: f32 = 22.0;
@@ -41,6 +40,32 @@ pub(crate) const SETTINGS_ICON_FRAME_SIZE: f32 = 20.0;
 pub(crate) const SETTINGS_TILE_CONTENT_GAP: f32 = SETTINGS_MENU_GAP;
 pub(crate) const SETTINGS_TILE_PADDING: Indent = Indent::uniform(14.0);
 pub(crate) const SETTINGS_TILE_TEXT_HEIGHT: f32 = 38.0;
+pub(crate) const SETTINGS_SUBMENU_SECTION_LABEL_HEIGHT: f32 = 20.0;
+pub(crate) const SETTINGS_SUBMENU_SECTION_TITLE_TEXT_SIZE: f32 = 16.0;
+pub(crate) const SETTINGS_SUBMENU_ROW_PADDING: Indent = Indent::new(
+    SETTINGS_TILE_PADDING.left,
+    0.0,
+    SETTINGS_TILE_PADDING.right,
+    0.0,
+);
+pub(crate) const SETTINGS_SUBMENU_BUTTON_PADDING: Indent =
+    Indent::new(0.0, 0.0, SETTINGS_TILE_PADDING.right, 0.0);
+pub(crate) const SETTINGS_SUBMENU_SECTION_PADDING: Indent = SETTINGS_SUBMENU_ROW_PADDING;
+pub(crate) const SETTINGS_SUBMENU_TRAILING_CONTROL_PADDING: f32 = SETTINGS_MENU_GAP * 0.5;
+pub(crate) const SETTINGS_SUBMENU_SWITCH_WIDTH: f32 = 56.0;
+pub(crate) const SETTINGS_SUBMENU_SWITCH_HEIGHT: f32 = 32.0;
+pub(crate) const SETTINGS_SUBMENU_SWITCH_KNOB_SIZE: f32 = 24.0;
+pub(crate) const SETTINGS_SUBMENU_SWITCH_INSET: f32 = 4.0;
+pub(crate) const SETTINGS_SUBMENU_SWITCH_KNOB_Y: f32 = 4.0;
+pub(crate) const SETTINGS_SUBMENU_TOGGLE_PADDING: Indent = Indent::new(
+    0.0,
+    0.0,
+    SETTINGS_SUBMENU_TRAILING_CONTROL_PADDING,
+    0.0,
+);
+pub(crate) const SETTINGS_SUBMENU_DEVICE_ICON_RING_SIZE: f32 = 32.0;
+pub(crate) const SETTINGS_SUBMENU_DEVICE_ROW_PADDING: Indent =
+    Indent::new(0.0, 0.0, SETTINGS_TILE_PADDING.right, 0.0);
 pub(crate) const SETTINGS_VOLUME_TRACK_HEIGHT: f32 = 22.0;
 pub(crate) const SETTINGS_VOLUME_THUMB_SIZE: f32 = 24.0;
 pub(crate) const SETTINGS_VOLUME_SLIDER_ROW_HEIGHT: f32 = SETTINGS_VOLUME_THUMB_SIZE;
@@ -71,6 +96,22 @@ pub(crate) fn settings_surface_border_hover_color() -> Color {
 
 pub(crate) fn settings_surface_muted_color() -> Color {
     Color::from_rgb(92, 96, 101)
+}
+
+pub(crate) fn settings_submenu_device_available_surface_color() -> Color {
+    Color::from_rgb(50, 54, 60)
+}
+
+pub(crate) fn settings_submenu_device_available_border_color() -> Color {
+    Color::from_rgba_unmultiplied(255, 255, 255, 34)
+}
+
+pub(crate) fn settings_submenu_device_unavailable_surface_color() -> Color {
+    Color::from_rgb(34, 38, 42)
+}
+
+pub(crate) fn settings_submenu_device_unavailable_border_color() -> Color {
+    Color::from_rgba_unmultiplied(255, 255, 255, 16)
 }
 
 pub(crate) fn settings_bright_surface_color() -> Color {

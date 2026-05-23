@@ -1,4 +1,6 @@
+use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuView};
 use daiko::Element;
+use daiko::Id;
 use daiko::component::ComponentContext;
 use daiko::navigation::FocusOrigin;
 use daiko::style::{Color, Style};
@@ -52,6 +54,11 @@ pub(super) fn control_state(ctx: &mut ComponentContext) -> QuickSettingsControlS
         is_hovered: pointer.is_hovering(),
         is_focused: focusable.is_focused(),
     }
+}
+
+pub(super) fn is_menu_view_active(ctx: &mut ComponentContext, view: SettingsMenuView) -> bool {
+    let state = ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
+    state.read().active_view == view
 }
 
 fn centered_glyph_frame(size: f32) -> Element {

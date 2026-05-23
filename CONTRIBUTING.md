@@ -15,3 +15,4 @@ on the spatial navigation, scopes, and such. Build a correct topology first.
 7. When designing a new component, keep in mind that all spacings, sizes, and padding should be uniform and rhythm with 
 the rest of the project. There should be multiple levels/layers of spacings and paddings, of course, but they all should
 rhythm nonetheless.
+8. NEVER manually calculate sizes of ANYTHING outside the most basic components, such as buttons.

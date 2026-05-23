@@ -4,7 +4,7 @@ use crate::components::home::header::{
 };
 use crate::components::home::model::home_top_row_settings_focus_key;
 use crate::components::quick_settings::SETTINGS_MENU_STATE_ID;
-use crate::components::quick_settings::state::SettingsMenuState;
+use crate::components::quick_settings::state::{SettingsMenuState, SettingsMenuView};
 use daiko::Element;
 use daiko::Id;
 use daiko::component::{Component, ComponentContext};
@@ -41,13 +41,16 @@ impl Component for HeaderSettingsTrigger {
             };
         }
 
-        if just_activated {
+        if just_activated && !(state_snapshot.is_animating && !state_snapshot.is_open) {
             let next_is_open = !state_snapshot.is_open;
             *state.write() = SettingsMenuState {
                 is_open: next_is_open,
                 just_opened: next_is_open,
                 opened_from_trigger_press: next_is_open,
                 is_animating: true,
+                last_active_view: SettingsMenuView::Main,
+                active_view: SettingsMenuView::Main,
+                bluetooth_enabled: state_snapshot.bluetooth_enabled,
             };
         }
 

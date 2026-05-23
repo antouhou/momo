@@ -1,16 +1,17 @@
 use super::super::style::{
-    settings_accent_border_color, settings_accent_color, settings_accent_text_color,
-    settings_label_text_style, settings_submenu_device_available_border_color,
+    CONTROL_TRANSITION_MS, SETTINGS_COMPACT_CONTENT_GAP, SETTINGS_MENU_GAP,
+    SETTINGS_MENU_INNER_WIDTH, SETTINGS_SUBMENU_DEVICE_ICON_RING_SIZE,
+    SETTINGS_SUBMENU_SECTION_LABEL_HEIGHT, SETTINGS_SUBMENU_SECTION_PADDING,
+    SETTINGS_SUBMENU_SECTION_TITLE_TEXT_SIZE, settings_accent_border_color, settings_accent_color,
+    settings_accent_text_color, settings_label_text_style,
+    settings_submenu_device_available_border_color,
     settings_submenu_device_available_surface_color,
     settings_submenu_device_unavailable_border_color,
     settings_submenu_device_unavailable_surface_color, settings_surface_muted_color,
-    settings_text_color, CONTROL_TRANSITION_MS, SETTINGS_COMPACT_CONTENT_GAP, SETTINGS_MENU_GAP,
-    SETTINGS_MENU_INNER_WIDTH, SETTINGS_SUBMENU_DEVICE_ICON_RING_SIZE,
-    SETTINGS_SUBMENU_SECTION_LABEL_HEIGHT, SETTINGS_SUBMENU_SECTION_PADDING,
-    SETTINGS_SUBMENU_SECTION_TITLE_TEXT_SIZE,
+    settings_text_color,
 };
 use daiko::animation::easing::EasingFunction;
-use daiko::animation::{transition, AnimationParameters};
+use daiko::animation::{AnimationParameters, transition};
 use daiko::component::ComponentContext;
 use daiko::layout::{AlignItems, FlexDirection, ItemSize, JustifyContent, SizeConstraint};
 use daiko::style::{Border, BorderRadius, Stroke, Style};

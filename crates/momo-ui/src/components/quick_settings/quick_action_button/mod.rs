@@ -87,7 +87,7 @@ fn quick_action_content(spec: QuickActionSpec, state: QuickSettingsControlState)
         SETTINGS_ICON_FRAME_SIZE,
         if spec.is_danger {
             settings_danger_text_color()
-        } else if spec.is_active || is_highlighted {
+        } else if is_highlighted {
             settings_inverse_text_color()
         } else {
             settings_text_color()

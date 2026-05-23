@@ -6,6 +6,7 @@ use super::super::style::{
     settings_danger_surface_color, settings_danger_surface_hover_color,
     settings_surface_border_color, settings_surface_color,
 };
+use crate::components::quick_settings::style::settings_accent_color;
 use daiko::animation::easing::EasingFunction;
 use daiko::animation::{AnimationParameters, transition};
 use daiko::component::ComponentContext;
@@ -23,8 +24,10 @@ pub(crate) fn settings_round_button_style(
         settings_danger_surface_hover_color()
     } else if is_danger {
         settings_danger_surface_color()
-    } else if is_active || state.is_highlighted() {
+    } else if state.is_highlighted() {
         settings_bright_surface_color()
+    } else if is_active {
+        settings_accent_color()
     } else {
         settings_surface_color()
     };
@@ -32,7 +35,7 @@ pub(crate) fn settings_round_button_style(
         settings_danger_surface_border_hover_color()
     } else if is_danger {
         settings_danger_surface_border_color()
-    } else if is_active || state.is_highlighted() {
+    } else if state.is_highlighted() {
         settings_bright_surface_border_color()
     } else {
         settings_surface_border_color()

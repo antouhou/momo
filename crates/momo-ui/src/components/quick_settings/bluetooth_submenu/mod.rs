@@ -1,16 +1,16 @@
 mod style;
 
 use self::style::{
-    bluetooth_submenu_body_style, bluetooth_submenu_style, submenu_device_icon_color,
-    submenu_device_icon_ring_style, submenu_section_label_style, submenu_section_style,
-    submenu_section_title_style, DeviceRowAvailability,
+    DeviceRowAvailability, bluetooth_submenu_body_style, bluetooth_submenu_style,
+    submenu_device_icon_color, submenu_device_icon_ring_style, submenu_section_label_style,
+    submenu_section_style, submenu_section_title_style,
 };
-use super::common::{glyph_element, QuickSettingsControlState, QuickSettingsGlyph};
-use super::state::{SettingsMenuState, SettingsMenuView, SETTINGS_MENU_STATE_ID};
-use super::style::{settings_text_color, SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE};
+use super::common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_element};
+use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuView};
+use super::style::{SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_text_color};
 use super::submenu_button::{
-    submenu_button_glyph, submenu_button_leading_slot, submenu_button_surface_glyph,
-    submenu_toggle_switch, SubmenuButton, SubmenuButtonState, SubmenuButtonSurface,
+    SubmenuButton, SubmenuButtonState, SubmenuButtonSurface, submenu_button_glyph,
+    submenu_button_leading_slot, submenu_button_surface_glyph, submenu_toggle_switch,
 };
 use daiko::component::{Component, ComponentContext};
 use daiko::navigation::{FocusEntryPolicy, FocusOrigin};

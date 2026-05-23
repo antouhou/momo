@@ -41,7 +41,7 @@ impl Component for HeaderSettingsTrigger {
             };
         }
 
-        if just_activated && !(state_snapshot.is_animating && !state_snapshot.is_open) {
+        if (state_snapshot.is_open || !state_snapshot.is_animating) && just_activated {
             let next_is_open = !state_snapshot.is_open;
             *state.write() = SettingsMenuState {
                 is_open: next_is_open,

@@ -1,12 +1,12 @@
 mod style;
 
 use self::style::{settings_status_chip_style, status_chip_content_style, status_value_style};
-use super::common::{control_state, glyph_element, is_menu_view_active, QuickSettingsGlyph};
+use super::common::{QuickSettingsGlyph, control_state, glyph_element, is_menu_view_active};
 use super::state::SettingsMenuView;
-use super::style::{settings_text_color, SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE};
+use super::style::{SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_text_color};
+use daiko::Element;
 use daiko::component::{Component, ComponentContext};
 use daiko::widgets::text::Text;
-use daiko::Element;
 
 const BATTERY_ICON: &[u8] = include_bytes!("../../../../assets/battery-5.svg");
 pub(super) const SETTINGS_STATUS_CHIP_TAG: &str = "header-settings-status-chip";

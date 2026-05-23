@@ -5,12 +5,12 @@ use self::style::{
     submenu_label_group_style, submenu_leading_slot_style, submenu_toggle_knob_style,
     submenu_toggle_switch_style,
 };
-use super::common::{glyph_element, QuickSettingsControlState, QuickSettingsGlyph};
+use super::common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_element};
 use super::style::{SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE};
+use daiko::Element;
 use daiko::component::{Component, ComponentContext};
 use daiko::style::Color;
 use daiko::widgets::text::Text;
-use daiko::Element;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum SubmenuButtonState {

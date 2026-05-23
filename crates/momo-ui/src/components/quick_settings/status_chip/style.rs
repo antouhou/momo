@@ -1,13 +1,13 @@
 use super::super::common::QuickSettingsControlState;
 use super::super::style::{
+    CONTROL_RADIUS, CONTROL_TRANSITION_MS, SETTINGS_COMPACT_CONTENT_GAP,
+    SETTINGS_STATUS_CHIP_HEIGHT, SETTINGS_STATUS_CHIP_PADDING, SETTINGS_STATUS_CHIP_WIDTH,
     settings_emphasized_surface_border_color, settings_emphasized_surface_border_hover_color,
     settings_emphasized_surface_color, settings_emphasized_surface_hover_color,
-    settings_label_text_style, settings_text_color, CONTROL_RADIUS, CONTROL_TRANSITION_MS,
-    SETTINGS_COMPACT_CONTENT_GAP, SETTINGS_STATUS_CHIP_HEIGHT, SETTINGS_STATUS_CHIP_PADDING,
-    SETTINGS_STATUS_CHIP_WIDTH,
+    settings_label_text_style, settings_text_color,
 };
 use daiko::animation::easing::EasingFunction;
-use daiko::animation::{transition, AnimationParameters};
+use daiko::animation::{AnimationParameters, transition};
 use daiko::component::ComponentContext;
 use daiko::layout::{AlignItems, FlexDirection, JustifyContent};
 use daiko::style::{Border, BorderRadius, CursorIcon, Stroke, Style};

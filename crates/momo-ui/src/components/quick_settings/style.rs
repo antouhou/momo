@@ -64,8 +64,6 @@ pub(crate) const SETTINGS_SUBMENU_TOGGLE_PADDING: Indent = Indent::new(
     0.0,
 );
 pub(crate) const SETTINGS_SUBMENU_DEVICE_ICON_RING_SIZE: f32 = 32.0;
-pub(crate) const SETTINGS_SUBMENU_DEVICE_ROW_PADDING: Indent =
-    Indent::new(0.0, 0.0, SETTINGS_TILE_PADDING.right, 0.0);
 pub(crate) const SETTINGS_VOLUME_TRACK_HEIGHT: f32 = 22.0;
 pub(crate) const SETTINGS_VOLUME_THUMB_SIZE: f32 = 24.0;
 pub(crate) const SETTINGS_VOLUME_SLIDER_ROW_HEIGHT: f32 = SETTINGS_VOLUME_THUMB_SIZE;

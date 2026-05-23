@@ -1,12 +1,12 @@
 mod style;
 
 use self::style::{
-    DeviceRowAvailability, bluetooth_submenu_body_style, bluetooth_submenu_style,
-    submenu_action_label_style, submenu_action_row_style, submenu_back_button_style,
-    submenu_device_icon_color, submenu_device_icon_ring_style, submenu_device_label_style,
-    submenu_device_row_style, submenu_label_group_style, submenu_leading_slot_style,
+    DeviceRowAvailability, SubmenuButtonState, SubmenuButtonSurface, bluetooth_submenu_body_style,
+    bluetooth_submenu_style, submenu_button_label_style, submenu_button_style,
+    submenu_device_icon_color, submenu_device_icon_ring_style, submenu_label_group_style,
+    submenu_leading_slot_style,
     submenu_section_label_style, submenu_section_style, submenu_section_title_style,
-    submenu_toggle_knob_style, submenu_toggle_row_style, submenu_toggle_switch_style,
+    submenu_toggle_knob_style, submenu_toggle_switch_style,
 };
 use super::common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_element};
 use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuView};
@@ -29,6 +29,35 @@ pub(super) const BLUETOOTH_SETTINGS_BUTTON_TAG: &str = "header-settings-bluetoot
 #[derive(Clone, Copy)]
 pub(super) struct BluetoothSubmenu;
 
+#[derive(Clone, Copy)]
+enum SubmenuLeading {
+    Glyph {
+        glyph: QuickSettingsGlyph,
+        color: daiko::style::Color,
+    },
+    RingGlyph {
+        glyph: QuickSettingsGlyph,
+        glyph_color: daiko::style::Color,
+        availability: DeviceRowAvailability,
+    },
+}
+
+#[derive(Clone, Copy)]
+enum SubmenuTrailing {
+    ToggleSwitch(bool),
+}
+
+#[derive(Clone, Copy)]
+struct SubmenuButton {
+    tag: &'static str,
+    label: &'static str,
+    control: QuickSettingsControlState,
+    surface: SubmenuButtonSurface,
+    state: SubmenuButtonState,
+    leading: SubmenuLeading,
+    trailing: Option<SubmenuTrailing>,
+}
+
 impl Component for BluetoothSubmenu {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         ctx.focus_scope()
@@ -39,6 +68,69 @@ impl Component for BluetoothSubmenu {
             .with_style(bluetooth_submenu_style())
             .with_content(BluetoothBackButton)
             .with_content(BluetoothSubmenuBody)
+    }
+}
+
+impl Component for SubmenuButton {
+    fn to_element(&self, ctx: &mut ComponentContext) -> Element {
+        let row_style = submenu_button_style(
+            self.control,
+            ctx,
+            self.surface,
+            self.trailing.is_some(),
+        );
+        let label_style = submenu_button_label_style(self.surface, self.state);
+        let leading = match self.leading {
+            SubmenuLeading::Glyph { glyph, color } => Element::new()
+                .with_style(submenu_leading_slot_style())
+                .with_content(glyph_element(
+                    glyph,
+                    SETTINGS_ICON_SIZE,
+                    SETTINGS_ICON_FRAME_SIZE,
+                    color,
+                )),
+            SubmenuLeading::RingGlyph {
+                glyph,
+                glyph_color,
+                availability,
+            } => Element::new().with_style(submenu_leading_slot_style()).with_content(
+                Element::new()
+                    .with_style(submenu_device_icon_ring_style(availability, ctx))
+                    .with_content(glyph_element(
+                        glyph,
+                        SETTINGS_ICON_SIZE,
+                        SETTINGS_ICON_FRAME_SIZE,
+                        glyph_color,
+                    )),
+            ),
+        };
+
+        let mut button = Element::new()
+            .with_tag(self.tag)
+            .with_style(row_style)
+            .with_content(
+                Element::new()
+                    .with_style(submenu_label_group_style())
+                    .with_content(leading)
+                    .with_content(Text::new(self.label).with_style(label_style)),
+            );
+
+        if let Some(trailing) = self.trailing {
+            match trailing {
+                SubmenuTrailing::ToggleSwitch(is_enabled) => {
+                    button.add_content(
+                        Element::new()
+                            .with_style(submenu_toggle_switch_style(ctx, is_enabled))
+                            .with_content(
+                                Element::new()
+                                    .with_style(submenu_toggle_knob_style(ctx, is_enabled)),
+                            ),
+                    );
+                }
+            }
+        }
+
+        button
     }
 }
 
@@ -100,8 +192,6 @@ impl Component for BluetoothBackButton {
         let snapshot = *state.read();
         let is_active = snapshot.active_view == SettingsMenuView::Bluetooth;
 
-        focusable.set_navigation_enabled(is_active);
-
         if pointer.just_entered() || pointer.just_pressed() {
             focusable.request_focus(FocusOrigin::Pointer);
         }
@@ -127,27 +217,19 @@ impl Component for BluetoothBackButton {
             is_focused: focusable.is_focused(),
         };
 
-        Element::new()
-            .with_tag(BLUETOOTH_BACK_BUTTON_TAG)
-            .with_style(submenu_back_button_style(control, ctx))
-            .with_content(
-                Element::new()
-                    .with_style(submenu_label_group_style())
-                    .with_content(
-                        Element::new()
-                            .with_style(submenu_leading_slot_style())
-                            .with_content(glyph_element(
-                                QuickSettingsGlyph::Asset(CHEVRON_LEFT_ICON),
-                                SETTINGS_ICON_SIZE,
-                                SETTINGS_ICON_FRAME_SIZE,
-                                settings_text_color(),
-                            )),
-                    )
-                    .with_content(
-                        Text::new("Bluetooth")
-                            .with_style(submenu_action_label_style(false)),
-                    ),
-            )
+        SubmenuButton {
+            tag: BLUETOOTH_BACK_BUTTON_TAG,
+            label: "Bluetooth",
+            control,
+            surface: SubmenuButtonSurface::Standard,
+            state: SubmenuButtonState::Enabled,
+            leading: SubmenuLeading::Glyph {
+                glyph: QuickSettingsGlyph::Asset(CHEVRON_LEFT_ICON),
+                color: settings_text_color(),
+            },
+            trailing: None,
+        }
+        .to_element(ctx)
     }
 }
 
@@ -162,8 +244,6 @@ impl Component for BluetoothToggleRow {
             ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
         let snapshot = *state.read();
         let is_active = snapshot.active_view == SettingsMenuView::Bluetooth;
-
-        focusable.set_navigation_enabled(is_active);
 
         if pointer.just_entered() || pointer.just_pressed() {
             focusable.request_focus(FocusOrigin::Pointer);
@@ -181,34 +261,19 @@ impl Component for BluetoothToggleRow {
             is_focused: focusable.is_focused(),
         };
 
-        Element::new()
-            .with_tag(BLUETOOTH_TOGGLE_TAG)
-            .with_style(submenu_toggle_row_style(control, ctx))
-            .with_content(
-                Element::new()
-                    .with_style(submenu_label_group_style())
-                    .with_content(
-                        Element::new()
-                            .with_style(submenu_leading_slot_style())
-                            .with_content(glyph_element(
-                                QuickSettingsGlyph::Asset(BLUETOOTH_ICON),
-                                SETTINGS_ICON_SIZE,
-                                SETTINGS_ICON_FRAME_SIZE,
-                                settings_text_color(),
-                            )),
-                    )
-                    .with_content(
-                        Text::new("Bluetooth").with_style(submenu_action_label_style(false)),
-                    ),
-            )
-            .with_content(
-                Element::new()
-                    .with_style(submenu_toggle_switch_style(ctx, snapshot.bluetooth_enabled))
-                    .with_content(
-                        Element::new()
-                            .with_style(submenu_toggle_knob_style(ctx, snapshot.bluetooth_enabled)),
-                    ),
-            )
+        SubmenuButton {
+            tag: BLUETOOTH_TOGGLE_TAG,
+            label: "Bluetooth",
+            control,
+            surface: SubmenuButtonSurface::Standard,
+            state: SubmenuButtonState::Enabled,
+            leading: SubmenuLeading::Glyph {
+                glyph: QuickSettingsGlyph::Asset(BLUETOOTH_ICON),
+                color: settings_text_color(),
+            },
+            trailing: Some(SubmenuTrailing::ToggleSwitch(snapshot.bluetooth_enabled)),
+        }
+        .to_element(ctx)
     }
 }
 
@@ -219,13 +284,6 @@ impl Component for BluetoothSettingsButton {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         let mut pointer = ctx.pointer();
         let focusable = ctx.focusable();
-        let is_active = {
-            let state =
-                ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
-            state.read().active_view == SettingsMenuView::Bluetooth
-        };
-
-        focusable.set_navigation_enabled(is_active);
 
         if pointer.just_entered() || pointer.just_pressed() {
             focusable.request_focus(FocusOrigin::Pointer);
@@ -236,26 +294,19 @@ impl Component for BluetoothSettingsButton {
             is_focused: focusable.is_focused(),
         };
 
-        Element::new()
-            .with_tag(BLUETOOTH_SETTINGS_BUTTON_TAG)
-            .with_style(submenu_action_row_style(control, ctx, true))
-            .with_content(
-                Element::new()
-                    .with_style(submenu_label_group_style())
-                    .with_content(
-                        Element::new()
-                            .with_style(submenu_leading_slot_style())
-                            .with_content(glyph_element(
-                                QuickSettingsGlyph::Asset(GEAR_ICON),
-                                SETTINGS_ICON_SIZE,
-                                SETTINGS_ICON_FRAME_SIZE,
-                                settings_inverse_text_color(),
-                            )),
-                    )
-                    .with_content(
-                        Text::new("Settings").with_style(submenu_action_label_style(true)),
-                    ),
-            )
+        SubmenuButton {
+            tag: BLUETOOTH_SETTINGS_BUTTON_TAG,
+            label: "Settings",
+            control,
+            surface: SubmenuButtonSurface::Emphasized,
+            state: SubmenuButtonState::Enabled,
+            leading: SubmenuLeading::Glyph {
+                glyph: QuickSettingsGlyph::Asset(GEAR_ICON),
+                color: settings_inverse_text_color(),
+            },
+            trailing: None,
+        }
+        .to_element(ctx)
     }
 }
 
@@ -279,10 +330,7 @@ impl Component for BluetoothDeviceRow {
         let state =
             ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
         let snapshot = *state.read();
-        let is_active = snapshot.active_view == SettingsMenuView::Bluetooth;
         let availability = effective_device_availability(self.spec, snapshot.bluetooth_enabled);
-
-        focusable.set_navigation_enabled(is_active);
 
         if pointer.just_entered() || pointer.just_pressed() {
             focusable.request_focus(FocusOrigin::Pointer);
@@ -293,31 +341,20 @@ impl Component for BluetoothDeviceRow {
             is_focused: focusable.is_focused(),
         };
 
-        Element::new()
-            .with_tag(self.spec.tag)
-            .with_style(submenu_device_row_style(control, ctx, availability))
-            .with_content(
-                Element::new()
-                    .with_style(submenu_label_group_style())
-                    .with_content(
-                        Element::new()
-                            .with_style(submenu_leading_slot_style())
-                            .with_content(
-                                Element::new()
-                                    .with_style(submenu_device_icon_ring_style(availability, ctx))
-                                    .with_content(glyph_element(
-                                        self.spec.glyph,
-                                        SETTINGS_ICON_SIZE,
-                                        SETTINGS_ICON_FRAME_SIZE,
-                                        submenu_device_icon_color(availability),
-                                    )),
-                            ),
-                    )
-                    .with_content(
-                        Text::new(self.spec.label)
-                            .with_style(submenu_device_label_style(availability)),
-                    ),
-            )
+        SubmenuButton {
+            tag: self.spec.tag,
+            label: self.spec.label,
+            control,
+            surface: SubmenuButtonSurface::Standard,
+            state: button_state_for_device(availability),
+            leading: SubmenuLeading::RingGlyph {
+                glyph: self.spec.glyph,
+                glyph_color: submenu_device_icon_color(availability),
+                availability,
+            },
+            trailing: None,
+        }
+        .to_element(ctx)
     }
 }
 
@@ -345,5 +382,14 @@ fn effective_device_availability(
         spec.availability
     } else {
         DeviceRowAvailability::Unavailable
+    }
+}
+
+fn button_state_for_device(availability: DeviceRowAvailability) -> SubmenuButtonState {
+    match availability {
+        DeviceRowAvailability::Connected | DeviceRowAvailability::Available => {
+            SubmenuButtonState::Enabled
+        }
+        DeviceRowAvailability::Unavailable => SubmenuButtonState::Disabled,
     }
 }

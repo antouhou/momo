@@ -2,8 +2,8 @@ use super::super::common::QuickSettingsControlState;
 use super::super::style::{
     CONTROL_RADIUS, CONTROL_TRANSITION_MS, SETTINGS_COMPACT_CONTENT_GAP, SETTINGS_MENU_GAP,
     SETTINGS_MENU_INNER_WIDTH, SETTINGS_ROUND_BUTTON_SIZE, SETTINGS_SUBMENU_BUTTON_PADDING,
-    SETTINGS_SUBMENU_DEVICE_ICON_RING_SIZE, SETTINGS_SUBMENU_DEVICE_ROW_PADDING,
-    SETTINGS_SUBMENU_SECTION_LABEL_HEIGHT, SETTINGS_SUBMENU_SECTION_PADDING,
+    SETTINGS_SUBMENU_DEVICE_ICON_RING_SIZE, SETTINGS_SUBMENU_SECTION_LABEL_HEIGHT,
+    SETTINGS_SUBMENU_SECTION_PADDING,
     SETTINGS_SUBMENU_SECTION_TITLE_TEXT_SIZE, SETTINGS_SUBMENU_SWITCH_HEIGHT,
     SETTINGS_SUBMENU_SWITCH_INSET, SETTINGS_SUBMENU_SWITCH_KNOB_SIZE,
     SETTINGS_SUBMENU_SWITCH_KNOB_Y, SETTINGS_SUBMENU_SWITCH_WIDTH,
@@ -34,6 +34,18 @@ pub(super) enum DeviceRowAvailability {
     Unavailable,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) enum SubmenuButtonState {
+    Enabled,
+    Disabled,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) enum SubmenuButtonSurface {
+    Standard,
+    Emphasized,
+}
+
 pub(super) fn bluetooth_submenu_style() -> Style {
     Style::new()
         .with_size_constraint(SizeConstraint::exact_content_height().with_exact_width(SETTINGS_MENU_INNER_WIDTH))
@@ -48,35 +60,22 @@ pub(super) fn bluetooth_submenu_body_style() -> Style {
         .with_spacing((SETTINGS_MENU_GAP, SETTINGS_MENU_GAP))
 }
 
-pub(super) fn submenu_back_button_style(
+pub(super) fn submenu_button_style(
     state: QuickSettingsControlState,
     ctx: &mut ComponentContext,
+    surface: SubmenuButtonSurface,
+    has_trailing_control: bool,
 ) -> Style {
-    menu_button_surface_style(state, ctx, false)
-        .with_fixed_width(ItemSize::Percent(1.0))
-        .with_padding(SETTINGS_SUBMENU_BUTTON_PADDING)
-        .with_justify_content(JustifyContent::FlexStart)
-}
+    let is_emphasized = matches!(surface, SubmenuButtonSurface::Emphasized);
+    let padding = if has_trailing_control {
+        SETTINGS_SUBMENU_TOGGLE_PADDING
+    } else {
+        SETTINGS_SUBMENU_BUTTON_PADDING
+    };
 
-pub(super) fn submenu_action_row_style(
-    state: QuickSettingsControlState,
-    ctx: &mut ComponentContext,
-    is_emphasized: bool,
-) -> Style {
     menu_button_surface_style(state, ctx, is_emphasized)
         .with_fixed_width(ItemSize::Percent(1.0))
-        .with_fixed_height(ItemSize::Points(SETTINGS_ROUND_BUTTON_SIZE))
-        .with_padding(SETTINGS_SUBMENU_BUTTON_PADDING)
-}
-
-pub(super) fn submenu_toggle_row_style(
-    state: QuickSettingsControlState,
-    ctx: &mut ComponentContext,
-) -> Style {
-    menu_button_surface_style(state, ctx, false)
-        .with_fixed_width(ItemSize::Percent(1.0))
-        .with_fixed_height(ItemSize::Points(SETTINGS_ROUND_BUTTON_SIZE))
-        .with_padding(SETTINGS_SUBMENU_TOGGLE_PADDING)
+        .with_padding(padding)
 }
 
 fn menu_button_surface_style(
@@ -166,58 +165,17 @@ pub(super) fn submenu_section_title_style() -> TextStyle {
         .with_font_size(SETTINGS_SUBMENU_SECTION_TITLE_TEXT_SIZE)
 }
 
-pub(super) fn submenu_action_label_style(is_emphasized: bool) -> TextStyle {
-    if is_emphasized {
-        settings_label_text_style(settings_inverse_text_color())
-    } else {
-        settings_label_text_style(settings_text_color())
-    }
-}
-
-pub(super) fn submenu_device_row_style(
-    state: QuickSettingsControlState,
-    ctx: &mut ComponentContext,
-    _availability: DeviceRowAvailability,
-) -> Style {
-    let background = if state.is_highlighted() {
-        settings_surface_hover_color()
-    } else {
-        settings_surface_color()
-    };
-    let border_color = if state.is_highlighted() {
-        settings_surface_border_hover_color()
-    } else {
-        settings_surface_border_color()
+pub(super) fn submenu_button_label_style(
+    surface: SubmenuButtonSurface,
+    state: SubmenuButtonState,
+) -> TextStyle {
+    let color = match (surface, state) {
+        (SubmenuButtonSurface::Emphasized, _) => settings_inverse_text_color(),
+        (_, SubmenuButtonState::Enabled) => settings_text_color(),
+        (_, SubmenuButtonState::Disabled) => settings_surface_muted_color(),
     };
 
-    Style::new()
-        .with_fixed_width(ItemSize::Percent(1.0))
-        .with_fixed_height(ItemSize::Points(SETTINGS_ROUND_BUTTON_SIZE))
-        .with_direction(FlexDirection::Row)
-        .with_align_items(AlignItems::Center)
-        .with_justify_content(JustifyContent::SpaceBetween)
-        .with_padding(SETTINGS_SUBMENU_DEVICE_ROW_PADDING)
-        .with_background_color(transition(
-            background,
-            AnimationParameters::default()
-                .with_duration(Duration::from_millis(CONTROL_TRANSITION_MS))
-                .with_easing(EasingFunction::EaseOut)
-                .to_transition_options(),
-            ctx,
-        ))
-        .with_border(Border::uniform(Stroke::new(
-            1.0,
-            transition(
-                border_color,
-                AnimationParameters::default()
-                    .with_duration(Duration::from_millis(CONTROL_TRANSITION_MS))
-                    .with_easing(EasingFunction::EaseOut)
-                    .to_transition_options(),
-                ctx,
-            ),
-        )))
-        .with_border_radius(BorderRadius::all(CONTROL_RADIUS))
-        .with_cursor(CursorIcon::PointingHand)
+    settings_label_text_style(color)
 }
 
 pub(super) fn submenu_device_icon_ring_style(
@@ -268,14 +226,6 @@ pub(super) fn submenu_device_icon_ring_style(
         .with_border_radius(BorderRadius::all(
             SETTINGS_SUBMENU_DEVICE_ICON_RING_SIZE * 0.5,
         ))
-}
-
-pub(super) fn submenu_device_label_style(availability: DeviceRowAvailability) -> TextStyle {
-    settings_label_text_style(match availability {
-        DeviceRowAvailability::Connected => settings_text_color(),
-        DeviceRowAvailability::Available => settings_text_color(),
-        DeviceRowAvailability::Unavailable => settings_surface_muted_color(),
-    })
 }
 
 pub(super) fn submenu_device_icon_color(

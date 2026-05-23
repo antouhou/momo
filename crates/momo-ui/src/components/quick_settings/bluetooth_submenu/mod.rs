@@ -1,15 +1,16 @@
 mod style;
 
 use self::style::{
-    DeviceRowAvailability, SubmenuButtonState, SubmenuButtonSurface, bluetooth_submenu_body_style,
-    bluetooth_submenu_style, submenu_button_label_style, submenu_button_style,
-    submenu_device_icon_color, submenu_device_icon_ring_style, submenu_label_group_style,
-    submenu_leading_slot_style,
-    submenu_section_label_style, submenu_section_style, submenu_section_title_style,
-    submenu_toggle_knob_style, submenu_toggle_switch_style,
+    DeviceRowAvailability, bluetooth_submenu_body_style, bluetooth_submenu_style,
+    submenu_device_icon_color, submenu_device_icon_ring_style, submenu_section_label_style,
+    submenu_section_style, submenu_section_title_style,
 };
 use super::common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_element};
 use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuView};
+use super::submenu_button::{
+    SubmenuButton, SubmenuButtonState, SubmenuButtonSurface, submenu_button_glyph,
+    submenu_button_leading_slot, submenu_toggle_switch,
+};
 use super::style::{SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_inverse_text_color, settings_text_color};
 use daiko::component::{Component, ComponentContext};
 use daiko::navigation::{FocusEntryPolicy, FocusOrigin};
@@ -29,35 +30,6 @@ pub(super) const BLUETOOTH_SETTINGS_BUTTON_TAG: &str = "header-settings-bluetoot
 #[derive(Clone, Copy)]
 pub(super) struct BluetoothSubmenu;
 
-#[derive(Clone, Copy)]
-enum SubmenuLeading {
-    Glyph {
-        glyph: QuickSettingsGlyph,
-        color: daiko::style::Color,
-    },
-    RingGlyph {
-        glyph: QuickSettingsGlyph,
-        glyph_color: daiko::style::Color,
-        availability: DeviceRowAvailability,
-    },
-}
-
-#[derive(Clone, Copy)]
-enum SubmenuTrailing {
-    ToggleSwitch(bool),
-}
-
-#[derive(Clone, Copy)]
-struct SubmenuButton {
-    tag: &'static str,
-    label: &'static str,
-    control: QuickSettingsControlState,
-    surface: SubmenuButtonSurface,
-    state: SubmenuButtonState,
-    leading: SubmenuLeading,
-    trailing: Option<SubmenuTrailing>,
-}
-
 impl Component for BluetoothSubmenu {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         ctx.focus_scope()
@@ -68,69 +40,6 @@ impl Component for BluetoothSubmenu {
             .with_style(bluetooth_submenu_style())
             .with_content(BluetoothBackButton)
             .with_content(BluetoothSubmenuBody)
-    }
-}
-
-impl Component for SubmenuButton {
-    fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        let row_style = submenu_button_style(
-            self.control,
-            ctx,
-            self.surface,
-            self.trailing.is_some(),
-        );
-        let label_style = submenu_button_label_style(self.surface, self.state);
-        let leading = match self.leading {
-            SubmenuLeading::Glyph { glyph, color } => Element::new()
-                .with_style(submenu_leading_slot_style())
-                .with_content(glyph_element(
-                    glyph,
-                    SETTINGS_ICON_SIZE,
-                    SETTINGS_ICON_FRAME_SIZE,
-                    color,
-                )),
-            SubmenuLeading::RingGlyph {
-                glyph,
-                glyph_color,
-                availability,
-            } => Element::new().with_style(submenu_leading_slot_style()).with_content(
-                Element::new()
-                    .with_style(submenu_device_icon_ring_style(availability, ctx))
-                    .with_content(glyph_element(
-                        glyph,
-                        SETTINGS_ICON_SIZE,
-                        SETTINGS_ICON_FRAME_SIZE,
-                        glyph_color,
-                    )),
-            ),
-        };
-
-        let mut button = Element::new()
-            .with_tag(self.tag)
-            .with_style(row_style)
-            .with_content(
-                Element::new()
-                    .with_style(submenu_label_group_style())
-                    .with_content(leading)
-                    .with_content(Text::new(self.label).with_style(label_style)),
-            );
-
-        if let Some(trailing) = self.trailing {
-            match trailing {
-                SubmenuTrailing::ToggleSwitch(is_enabled) => {
-                    button.add_content(
-                        Element::new()
-                            .with_style(submenu_toggle_switch_style(ctx, is_enabled))
-                            .with_content(
-                                Element::new()
-                                    .with_style(submenu_toggle_knob_style(ctx, is_enabled)),
-                            ),
-                    );
-                }
-            }
-        }
-
-        button
     }
 }
 
@@ -223,10 +132,10 @@ impl Component for BluetoothBackButton {
             control,
             surface: SubmenuButtonSurface::Standard,
             state: SubmenuButtonState::Enabled,
-            leading: SubmenuLeading::Glyph {
-                glyph: QuickSettingsGlyph::Asset(CHEVRON_LEFT_ICON),
-                color: settings_text_color(),
-            },
+            leading: submenu_button_glyph(
+                QuickSettingsGlyph::Asset(CHEVRON_LEFT_ICON),
+                settings_text_color(),
+            ),
             trailing: None,
         }
         .to_element(ctx)
@@ -267,11 +176,11 @@ impl Component for BluetoothToggleRow {
             control,
             surface: SubmenuButtonSurface::Standard,
             state: SubmenuButtonState::Enabled,
-            leading: SubmenuLeading::Glyph {
-                glyph: QuickSettingsGlyph::Asset(BLUETOOTH_ICON),
-                color: settings_text_color(),
-            },
-            trailing: Some(SubmenuTrailing::ToggleSwitch(snapshot.bluetooth_enabled)),
+            leading: submenu_button_glyph(
+                QuickSettingsGlyph::Asset(BLUETOOTH_ICON),
+                settings_text_color(),
+            ),
+            trailing: Some(submenu_toggle_switch(ctx, snapshot.bluetooth_enabled)),
         }
         .to_element(ctx)
     }
@@ -300,10 +209,10 @@ impl Component for BluetoothSettingsButton {
             control,
             surface: SubmenuButtonSurface::Emphasized,
             state: SubmenuButtonState::Enabled,
-            leading: SubmenuLeading::Glyph {
-                glyph: QuickSettingsGlyph::Asset(GEAR_ICON),
-                color: settings_inverse_text_color(),
-            },
+            leading: submenu_button_glyph(
+                QuickSettingsGlyph::Asset(GEAR_ICON),
+                settings_inverse_text_color(),
+            ),
             trailing: None,
         }
         .to_element(ctx)
@@ -347,11 +256,16 @@ impl Component for BluetoothDeviceRow {
             control,
             surface: SubmenuButtonSurface::Standard,
             state: button_state_for_device(availability),
-            leading: SubmenuLeading::RingGlyph {
-                glyph: self.spec.glyph,
-                glyph_color: submenu_device_icon_color(availability),
-                availability,
-            },
+            leading: submenu_button_leading_slot(
+                Element::new()
+                    .with_style(submenu_device_icon_ring_style(availability, ctx))
+                    .with_content(glyph_element(
+                        self.spec.glyph,
+                        SETTINGS_ICON_SIZE,
+                        SETTINGS_ICON_FRAME_SIZE,
+                        submenu_device_icon_color(availability),
+                    )),
+            ),
             trailing: None,
         }
         .to_element(ctx)

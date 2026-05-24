@@ -453,7 +453,7 @@ async fn handle_command(
         },
         BluetoothCommand::StartDiscovery { operation_id } => {
             if discovery_task.is_none() {
-                match adapter.discover_devices().await {
+                match adapter.discover_devices_with_changes().await {
                     Ok(mut discovery_stream) => {
                         let sender = runtime_sender.clone();
                         *discovery_task = Some(tokio::spawn(async move {
@@ -745,17 +745,13 @@ async fn refresh_device_from_identifier(
 async fn load_device(adapter: &Adapter, device_identifier: String) -> Option<BluetoothDevice> {
     let device_identifier = BluetoothDeviceId(device_identifier);
     let device = device_from_identifier(adapter, &device_identifier).ok()?;
-    let alias = device
-        .alias()
-        .await
-        .ok()
-        .filter(|alias| is_human_device_name(alias, &device_identifier));
+    let alias = device.alias().await.ok().filter(|alias| !alias.is_empty());
     let remote_name = device
         .name()
         .await
         .ok()
         .flatten()
-        .filter(|name| is_human_device_name(name, &device_identifier));
+        .filter(|name| !name.is_empty());
     let display_name = alias
         .or(remote_name)
         .unwrap_or_else(|| device_identifier.0.clone());
@@ -802,11 +798,6 @@ fn device_from_identifier(
     let address =
         bluer::Address::from_str(&device_identifier.0).map_err(|error| error.to_string())?;
     adapter.device(address).map_err(|error| error.to_string())
-}
-
-fn is_human_device_name(candidate: &str, device_identifier: &BluetoothDeviceId) -> bool {
-    let trimmed = candidate.trim();
-    !trimmed.is_empty() && trimmed != device_identifier.0
 }
 
 fn apply_pending_operation(

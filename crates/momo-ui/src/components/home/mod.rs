@@ -1,6 +1,7 @@
 mod app_grid;
 mod app_icon;
 mod app_tile;
+pub(crate) mod bluetooth;
 mod clock_chip;
 mod header;
 mod launch;
@@ -35,12 +36,6 @@ impl Home {
     #[cfg(test)]
     fn for_testing() -> Self {
         Self { live_clock: false }
-    }
-}
-
-impl Default for Home {
-    fn default() -> Self {
-        Self::new()
     }
 }
 

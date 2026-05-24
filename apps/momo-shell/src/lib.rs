@@ -3,6 +3,7 @@ use momo_app::{ShellApp, ShellConfiguration, ShellMode};
 use momo_ui::MomoUi;
 use momo_wayfire::WayfireBackend;
 use std::sync::Once;
+use system_control::SystemControl;
 use tracing_subscriber::EnvFilter;
 
 static INIT: Once = Once::new();
@@ -43,7 +44,9 @@ pub fn create_app() -> DynApp {
 
     let backend = WayfireBackend::disconnected();
     let app = ShellApp::new(configuration, backend);
-    let ui = MomoUi::new(app.initial_view_model());
+    let system_control =
+        SystemControl::new().expect("failed to initialize system control services");
+    let ui = MomoUi::new(app.initial_view_model(), system_control);
 
     DynApp::new(ui)
 }

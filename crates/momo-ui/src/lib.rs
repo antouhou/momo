@@ -1,9 +1,11 @@
 mod components;
 
 use crate::components::home::Home;
+use crate::components::home::bluetooth::initialize_bluetooth_state;
 use daiko::{App, AppContext};
 use momo_app::ShellViewModel;
 use std::sync::Once;
+use system_control::SystemControl;
 use tracing_subscriber::EnvFilter;
 
 static INIT: Once = Once::new();
@@ -34,11 +36,15 @@ pub fn init_tracing() {
 
 pub struct MomoUi {
     view_model: ShellViewModel,
+    system_control: SystemControl,
 }
 
 impl MomoUi {
-    pub fn new(view_model: ShellViewModel) -> Self {
-        Self { view_model }
+    pub fn new(view_model: ShellViewModel, system_control: SystemControl) -> Self {
+        Self {
+            view_model,
+            system_control,
+        }
     }
 
     pub fn view_model(&self) -> &ShellViewModel {
@@ -51,6 +57,7 @@ impl App for MomoUi {
 
     fn create(&mut self, app_context: &mut AppContext) -> Self::RootComponent {
         app_context.set_vsync_enabled(true);
+        initialize_bluetooth_state(app_context, self.system_control.bluetooth());
         Home::new()
     }
 

@@ -104,7 +104,6 @@ impl Component for SettingsMenuPanel {
                     is_animating: true,
                     last_active_view: state_snapshot.last_active_view,
                     active_view: state_snapshot.active_view,
-                    bluetooth_enabled: state_snapshot.bluetooth_enabled,
                 };
             }
         }

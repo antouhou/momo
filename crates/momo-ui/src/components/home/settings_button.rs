@@ -50,7 +50,6 @@ impl Component for HeaderSettingsTrigger {
                 is_animating: true,
                 last_active_view: SettingsMenuView::Main,
                 active_view: SettingsMenuView::Main,
-                bluetooth_enabled: state_snapshot.bluetooth_enabled,
             };
         }
 

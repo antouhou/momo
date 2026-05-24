@@ -9,6 +9,7 @@ use super::common::{
 };
 use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuView};
 use super::style::{SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_tile_icon_color};
+use crate::components::home::bluetooth::bluetooth_state;
 use daiko::Element;
 use daiko::Id;
 use daiko::component::{Component, ComponentContext};
@@ -152,7 +153,8 @@ impl Component for SettingsTileButton {
             is_hovered: pointer.is_hovering(),
             is_focused: focusable.is_focused(),
         };
-        let is_active = is_tile_active(self.spec, menu_state);
+        let bluetooth_state = bluetooth_state(ctx);
+        let is_active = is_tile_active(self.spec, bluetooth_state.read().is_enabled);
 
         if is_main_view && (pointer.just_pressed() || focusable.just_activated()) {
             match self.spec.action {
@@ -198,9 +200,9 @@ fn settings_tile_content(
         )
 }
 
-fn is_tile_active(spec: SettingsTileSpec, state: SettingsMenuState) -> bool {
+fn is_tile_active(spec: SettingsTileSpec, bluetooth_is_enabled: bool) -> bool {
     match spec.action {
-        SettingsTileAction::OpenBluetoothSubmenu => state.bluetooth_enabled,
+        SettingsTileAction::OpenBluetoothSubmenu => bluetooth_is_enabled,
         SettingsTileAction::None => spec.is_active,
     }
 }

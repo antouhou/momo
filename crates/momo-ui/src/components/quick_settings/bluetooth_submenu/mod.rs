@@ -12,15 +12,21 @@ use super::submenu_button::{
     SubmenuButton, SubmenuButtonState, SubmenuButtonSurface, submenu_button_glyph,
     submenu_button_leading_slot, submenu_button_surface_glyph, submenu_toggle_switch,
 };
+use crate::components::home::bluetooth::{
+    HomeBluetoothDevice, HomeBluetoothDeviceSection, bluetooth_handle, bluetooth_state,
+};
 use daiko::component::{Component, ComponentContext};
 use daiko::navigation::{FocusEntryPolicy, FocusOrigin};
 use daiko::widgets::text::Text;
 use daiko::{Element, Id};
+use system_control::{BluetoothConnectionState, BluetoothDeviceCategory};
+use tracing::warn;
 
 const BLUETOOTH_ICON: &[u8] = include_bytes!("../../../../assets/bluetooth-b.svg");
 const CHEVRON_LEFT_ICON: &[u8] = include_bytes!("../../../../assets/chevron-left.svg");
 const KEYBOARD_ICON: &[u8] = include_bytes!("../../../../assets/keyboard.svg");
 const AUDIO_ICON: &[u8] = include_bytes!("../../../../assets/volume.svg");
+const PHONE_ICON: &[u8] = include_bytes!("../../../../assets/mobile-screen.svg");
 const GEAR_ICON: &[u8] = include_bytes!("../../../../assets/gear-solid-full.svg");
 
 pub(super) const BLUETOOTH_BACK_BUTTON_TAG: &str = "header-settings-bluetooth-back-button";
@@ -47,45 +53,26 @@ impl Component for BluetoothSubmenu {
 struct BluetoothSubmenuBody;
 
 impl Component for BluetoothSubmenuBody {
-    fn to_element(&self, _ctx: &mut ComponentContext) -> Element {
-        Element::new()
+    fn to_element(&self, ctx: &mut ComponentContext) -> Element {
+        let bluetooth_state = bluetooth_state(ctx);
+        let bluetooth_state = bluetooth_state.read();
+        let content = Element::new()
             .with_style(bluetooth_submenu_body_style())
             .with_content(BluetoothToggleRow)
             .with_content(device_section(
                 "Recent",
-                &[
-                    DeviceRowSpec {
-                        tag: "header-settings-bluetooth-device-pods",
-                        label: "Pods",
-                        glyph: QuickSettingsGlyph::Asset(BLUETOOTH_ICON),
-                        availability: DeviceRowAvailability::Connected,
-                    },
-                    DeviceRowSpec {
-                        tag: "header-settings-bluetooth-device-keyboard",
-                        label: "Keyboard",
-                        glyph: QuickSettingsGlyph::Asset(KEYBOARD_ICON),
-                        availability: DeviceRowAvailability::Available,
-                    },
-                ],
+                &bluetooth_state.recent_devices,
+                bluetooth_state.is_enabled,
+                "No recent devices",
             ))
             .with_content(device_section(
                 "Nearby",
-                &[
-                    DeviceRowSpec {
-                        tag: "header-settings-bluetooth-nearby-speaker",
-                        label: "Speaker",
-                        glyph: QuickSettingsGlyph::Asset(AUDIO_ICON),
-                        availability: DeviceRowAvailability::Available,
-                    },
-                    DeviceRowSpec {
-                        tag: "header-settings-bluetooth-nearby-keyboard",
-                        label: "Keyboard",
-                        glyph: QuickSettingsGlyph::Asset(KEYBOARD_ICON),
-                        availability: DeviceRowAvailability::Unavailable,
-                    },
-                ],
-            ))
-            .with_content(BluetoothSettingsButton)
+                &bluetooth_state.nearby_devices,
+                bluetooth_state.is_enabled,
+                "No nearby devices",
+            ));
+
+        content.with_content(BluetoothSettingsButton)
     }
 }
 
@@ -127,8 +114,8 @@ impl Component for BluetoothBackButton {
         };
 
         SubmenuButton {
-            tag: BLUETOOTH_BACK_BUTTON_TAG,
-            label: "Bluetooth",
+            tag: BLUETOOTH_BACK_BUTTON_TAG.to_string(),
+            label: "Bluetooth".to_string(),
             control,
             surface: SubmenuButtonSurface::Standard,
             state: SubmenuButtonState::Enabled,
@@ -153,16 +140,19 @@ impl Component for BluetoothToggleRow {
             ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
         let snapshot = *state.read();
         let is_active = snapshot.active_view == SettingsMenuView::Bluetooth;
+        let bluetooth_state = bluetooth_state(ctx);
+        let bluetooth_state = bluetooth_state.read();
+        let toggle_enabled = bluetooth_state.can_toggle_power;
+        let toggle_value = bluetooth_state.is_enabled;
 
         if pointer.just_entered() || pointer.just_pressed() {
             focusable.request_focus(FocusOrigin::Pointer);
         }
 
-        if is_active && (pointer.just_pressed() || focusable.just_activated()) {
-            *state.write() = SettingsMenuState {
-                bluetooth_enabled: !snapshot.bluetooth_enabled,
-                ..snapshot
-            };
+        if is_active && toggle_enabled && (pointer.just_pressed() || focusable.just_activated()) {
+            if let Err(error) = bluetooth_handle(ctx).set_power_enabled(!toggle_value) {
+                warn!("failed to toggle bluetooth power: {error:?}");
+            }
         }
 
         let control = QuickSettingsControlState {
@@ -171,16 +161,20 @@ impl Component for BluetoothToggleRow {
         };
 
         SubmenuButton {
-            tag: BLUETOOTH_TOGGLE_TAG,
-            label: "Bluetooth",
+            tag: BLUETOOTH_TOGGLE_TAG.to_string(),
+            label: "Bluetooth".to_string(),
             control,
             surface: SubmenuButtonSurface::Standard,
-            state: SubmenuButtonState::Enabled,
+            state: if toggle_enabled {
+                SubmenuButtonState::Enabled
+            } else {
+                SubmenuButtonState::Disabled
+            },
             leading: submenu_button_glyph(
                 QuickSettingsGlyph::Asset(BLUETOOTH_ICON),
                 settings_text_color(),
             ),
-            trailing: Some(submenu_toggle_switch(ctx, snapshot.bluetooth_enabled)),
+            trailing: Some(submenu_toggle_switch(ctx, toggle_value)),
         }
         .to_element(ctx)
     }
@@ -204,8 +198,8 @@ impl Component for BluetoothSettingsButton {
         };
 
         SubmenuButton {
-            tag: BLUETOOTH_SETTINGS_BUTTON_TAG,
-            label: "Settings",
+            tag: BLUETOOTH_SETTINGS_BUTTON_TAG.to_string(),
+            label: "Settings".to_string(),
             control,
             surface: SubmenuButtonSurface::Emphasized,
             state: SubmenuButtonState::Enabled,
@@ -220,30 +214,46 @@ impl Component for BluetoothSettingsButton {
     }
 }
 
-#[derive(Clone, Copy)]
-struct DeviceRowSpec {
-    tag: &'static str,
-    label: &'static str,
-    glyph: QuickSettingsGlyph,
-    availability: DeviceRowAvailability,
-}
-
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 struct BluetoothDeviceRow {
-    spec: DeviceRowSpec,
+    bluetooth_device: HomeBluetoothDevice,
+    is_bluetooth_enabled: bool,
 }
 
 impl Component for BluetoothDeviceRow {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         let mut pointer = ctx.pointer();
         let focusable = ctx.focusable();
-        let state =
-            ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
-        let snapshot = *state.read();
-        let availability = effective_device_availability(self.spec, snapshot.bluetooth_enabled);
+        let availability =
+            effective_device_availability(&self.bluetooth_device, self.is_bluetooth_enabled);
 
         if pointer.just_entered() || pointer.just_pressed() {
             focusable.request_focus(FocusOrigin::Pointer);
+        }
+
+        if pointer.just_pressed() || focusable.just_activated() {
+            match self.bluetooth_device.connection_state {
+                BluetoothConnectionState::Connected => {
+                    if let Err(error) = bluetooth_handle(ctx)
+                        .disconnect_device(self.bluetooth_device.device_identifier.clone())
+                    {
+                        warn!("failed to disconnect bluetooth device: {error:?}");
+                    }
+                }
+                BluetoothConnectionState::Disconnected
+                    if self.is_bluetooth_enabled
+                        && matches!(availability, DeviceRowAvailability::Available) =>
+                {
+                    if let Err(error) = bluetooth_handle(ctx)
+                        .connect_device(self.bluetooth_device.device_identifier.clone())
+                    {
+                        warn!("failed to connect bluetooth device: {error:?}");
+                    }
+                }
+                BluetoothConnectionState::Connecting { .. }
+                | BluetoothConnectionState::Disconnecting { .. }
+                | BluetoothConnectionState::Disconnected => {}
+            }
         }
 
         let control = QuickSettingsControlState {
@@ -252,8 +262,8 @@ impl Component for BluetoothDeviceRow {
         };
 
         SubmenuButton {
-            tag: self.spec.tag,
-            label: self.spec.label,
+            tag: self.bluetooth_device.tag.clone(),
+            label: self.bluetooth_device.display_name.clone(),
             control,
             surface: SubmenuButtonSurface::Standard,
             state: button_state_for_device(availability),
@@ -261,7 +271,7 @@ impl Component for BluetoothDeviceRow {
                 Element::new()
                     .with_style(submenu_device_icon_ring_style(availability, ctx))
                     .with_content(glyph_element(
-                        self.spec.glyph,
+                        glyph_for_device(&self.bluetooth_device),
                         SETTINGS_ICON_SIZE,
                         SETTINGS_ICON_FRAME_SIZE,
                         submenu_device_icon_color(availability),
@@ -273,7 +283,12 @@ impl Component for BluetoothDeviceRow {
     }
 }
 
-fn device_section(title: &'static str, rows: &[DeviceRowSpec]) -> Element {
+fn device_section(
+    title: &'static str,
+    devices: &HomeBluetoothDeviceSection,
+    is_bluetooth_enabled: bool,
+    empty_label: &'static str,
+) -> Element {
     let mut section = Element::new()
         .with_style(submenu_section_style())
         .with_content(
@@ -282,21 +297,91 @@ fn device_section(title: &'static str, rows: &[DeviceRowSpec]) -> Element {
                 .with_content(Text::new(title).with_style(submenu_section_title_style())),
         );
 
-    for row in rows {
-        section.add_content(BluetoothDeviceRow { spec: *row });
+    match devices {
+        HomeBluetoothDeviceSection::Loading => {
+            section.add_content(BluetoothPlaceholderRow {
+                tag: match title {
+                    "Recent" => "header-settings-bluetooth-recent-loading",
+                    "Nearby" => "header-settings-bluetooth-nearby-loading",
+                    _ => "header-settings-bluetooth-loading",
+                },
+                label: "Loading devices...",
+            });
+        }
+        HomeBluetoothDeviceSection::Unavailable => {
+            section.add_content(BluetoothPlaceholderRow {
+                tag: match title {
+                    "Recent" => "header-settings-bluetooth-recent-unavailable",
+                    "Nearby" => "header-settings-bluetooth-nearby-unavailable",
+                    _ => "header-settings-bluetooth-unavailable",
+                },
+                label: "Bluetooth unavailable",
+            });
+        }
+        HomeBluetoothDeviceSection::Ready(devices) if devices.is_empty() => {
+            section.add_content(BluetoothPlaceholderRow {
+                tag: match title {
+                    "Recent" => "header-settings-bluetooth-recent-empty",
+                    "Nearby" => "header-settings-bluetooth-nearby-empty",
+                    _ => "header-settings-bluetooth-empty",
+                },
+                label: empty_label,
+            });
+        }
+        HomeBluetoothDeviceSection::Ready(devices) => {
+            for device in devices {
+                section.add_content(BluetoothDeviceRow {
+                    bluetooth_device: device.clone(),
+                    is_bluetooth_enabled,
+                });
+            }
+        }
     }
 
     section
 }
 
+#[derive(Clone, Copy)]
+struct BluetoothPlaceholderRow {
+    tag: &'static str,
+    label: &'static str,
+}
+
+impl Component for BluetoothPlaceholderRow {
+    fn to_element(&self, ctx: &mut ComponentContext) -> Element {
+        SubmenuButton {
+            tag: self.tag.to_string(),
+            label: self.label.to_string(),
+            control: QuickSettingsControlState {
+                is_hovered: false,
+                is_focused: false,
+            },
+            surface: SubmenuButtonSurface::Standard,
+            state: SubmenuButtonState::Disabled,
+            leading: submenu_button_surface_glyph(
+                QuickSettingsGlyph::Asset(BLUETOOTH_ICON),
+                SubmenuButtonSurface::Standard,
+                SubmenuButtonState::Disabled,
+            ),
+            trailing: None,
+        }
+        .to_element(ctx)
+    }
+}
+
 fn effective_device_availability(
-    spec: DeviceRowSpec,
-    bluetooth_enabled: bool,
+    bluetooth_device: &HomeBluetoothDevice,
+    is_bluetooth_enabled: bool,
 ) -> DeviceRowAvailability {
-    if bluetooth_enabled {
-        spec.availability
-    } else {
+    if !is_bluetooth_enabled {
         DeviceRowAvailability::Unavailable
+    } else {
+        match bluetooth_device.connection_state {
+            BluetoothConnectionState::Connected
+            | BluetoothConnectionState::Connecting { .. }
+            | BluetoothConnectionState::Disconnecting { .. } => DeviceRowAvailability::Connected,
+            BluetoothConnectionState::Disconnected => DeviceRowAvailability::Available,
+        }
     }
 }
 
@@ -306,5 +391,16 @@ fn button_state_for_device(availability: DeviceRowAvailability) -> SubmenuButton
             SubmenuButtonState::Enabled
         }
         DeviceRowAvailability::Unavailable => SubmenuButtonState::Disabled,
+    }
+}
+
+fn glyph_for_device(device: &HomeBluetoothDevice) -> QuickSettingsGlyph {
+    match device.category {
+        BluetoothDeviceCategory::Audio => QuickSettingsGlyph::Asset(AUDIO_ICON),
+        BluetoothDeviceCategory::Computer => QuickSettingsGlyph::Asset(BLUETOOTH_ICON),
+        BluetoothDeviceCategory::Input => QuickSettingsGlyph::Asset(KEYBOARD_ICON),
+        BluetoothDeviceCategory::Peripheral => QuickSettingsGlyph::Asset(BLUETOOTH_ICON),
+        BluetoothDeviceCategory::Phone => QuickSettingsGlyph::Asset(PHONE_ICON),
+        BluetoothDeviceCategory::Unknown => QuickSettingsGlyph::Asset(BLUETOOTH_ICON),
     }
 }

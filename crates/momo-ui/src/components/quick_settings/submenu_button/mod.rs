@@ -25,8 +25,8 @@ pub(super) enum SubmenuButtonSurface {
 }
 
 pub(super) struct SubmenuButton {
-    pub(super) tag: &'static str,
-    pub(super) label: &'static str,
+    pub(super) tag: String,
+    pub(super) label: String,
     pub(super) control: QuickSettingsControlState,
     pub(super) surface: SubmenuButtonSurface,
     pub(super) state: SubmenuButtonState,
@@ -66,7 +66,7 @@ pub(super) fn submenu_toggle_switch(ctx: &mut ComponentContext, is_enabled: bool
 impl Component for SubmenuButton {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         let mut button = Element::new()
-            .with_tag(self.tag)
+            .with_tag(self.tag.clone())
             .with_style(submenu_button_style(
                 self.control,
                 ctx,
@@ -78,7 +78,7 @@ impl Component for SubmenuButton {
                     .with_style(submenu_label_group_style())
                     .with_content(self.leading.clone())
                     .with_content(
-                        Text::new(self.label)
+                        Text::new(self.label.clone())
                             .with_style(submenu_button_label_style(self.surface, self.state)),
                     ),
             );

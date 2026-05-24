@@ -46,6 +46,7 @@ impl Component for BluetoothSubmenu {
             .with_tag("header-settings-bluetooth-submenu")
             .with_style(bluetooth_submenu_style())
             .with_content(BluetoothBackButton)
+            .with_content(BluetoothSettingsButton)
             .with_content(
                 Scrollable::new(BluetoothSubmenuBody, "pipa")
                     .size_to_content_with_clamp(Vec2::new(f32::INFINITY, f32::INFINITY)),
@@ -58,9 +59,6 @@ struct BluetoothSubmenuBody;
 
 impl Component for BluetoothSubmenuBody {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        ctx.layout().map(|layout| {
-            println!("Layout: {:?}", layout);
-        });
         let bluetooth_state = bluetooth_state(ctx);
         let bluetooth_state = bluetooth_state.read();
         let content = Element::new()
@@ -79,7 +77,7 @@ impl Component for BluetoothSubmenuBody {
                 "No nearby devices",
             ));
 
-        content.with_content(BluetoothSettingsButton)
+        content
     }
 }
 

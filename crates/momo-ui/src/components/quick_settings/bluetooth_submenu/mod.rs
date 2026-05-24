@@ -101,6 +101,9 @@ impl Component for BluetoothBackButton {
         }
 
         if is_active && (pointer.just_pressed() || focusable.just_activated()) {
+            if let Err(error) = bluetooth_handle(ctx).stop_discovery() {
+                warn!("failed to stop bluetooth discovery: {error:?}");
+            }
             *state.write() = SettingsMenuState {
                 last_active_view: snapshot.active_view,
                 active_view: SettingsMenuView::Main,

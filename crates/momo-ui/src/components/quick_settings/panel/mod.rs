@@ -12,6 +12,7 @@ use super::style::{
     SETTINGS_MENU_TOP_OFFSET,
 };
 use super::volume_control::VolumeControl;
+use crate::components::home::bluetooth::bluetooth_handle;
 use daiko::animation::AnimationParameters;
 use daiko::animation::easing::EasingFunction;
 use daiko::component::{Component, ComponentContext};
@@ -19,6 +20,7 @@ use daiko::navigation::{FocusBoundary, FocusEntryPolicy, FocusOrigin, Navigation
 use daiko::widgets::overlay::{Overlay, OverlayPositioning};
 use daiko::{Element, Id, Vec2};
 use std::time::Duration;
+use tracing::warn;
 
 const SETTINGS_MENU_ANIMATION_ID: &str = "momo_home_settings_menu_animation";
 const SETTINGS_MENU_SLIDE_DURATION_MS: u64 = 280;
@@ -91,6 +93,12 @@ impl Component for SettingsMenuPanel {
                         crate::components::home::model::home_top_row_settings_focus_key(),
                         FocusOrigin::Navigation,
                     );
+                }
+
+                if should_close && state_snapshot.active_view == SettingsMenuView::Bluetooth {
+                    if let Err(error) = bluetooth_handle(ctx).stop_discovery() {
+                        warn!("failed to stop Bluetooth discovery: {error:?}");
+                    }
                 }
 
                 *state.write() = SettingsMenuState {

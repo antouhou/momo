@@ -9,12 +9,13 @@ use super::common::{
 };
 use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuView};
 use super::style::{SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_tile_icon_color};
-use crate::components::home::bluetooth::bluetooth_state;
+use crate::components::home::bluetooth::{bluetooth_handle, bluetooth_state};
 use daiko::Element;
 use daiko::Id;
 use daiko::component::{Component, ComponentContext};
 use daiko::navigation::FocusOrigin;
 use daiko::widgets::text::Text;
+use tracing::warn;
 
 const CLOUD_ICON: &[u8] = include_bytes!("../../../../assets/cloud.svg");
 const BLUETOOTH_ICON: &[u8] = include_bytes!("../../../../assets/bluetooth-b.svg");
@@ -159,6 +160,11 @@ impl Component for SettingsTileButton {
         if is_main_view && (pointer.just_pressed() || focusable.just_activated()) {
             match self.spec.action {
                 SettingsTileAction::OpenBluetoothSubmenu => {
+                    if bluetooth_state.read().is_enabled {
+                        if let Err(error) = bluetooth_handle(ctx).start_discovery() {
+                            warn!("failed to start Bluetooth discovery: {error:?}");
+                        }
+                    }
                     *shared_state.write() = SettingsMenuState {
                         last_active_view: menu_state.active_view,
                         active_view: SettingsMenuView::Bluetooth,

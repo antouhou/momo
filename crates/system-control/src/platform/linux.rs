@@ -749,7 +749,7 @@ async fn load_device(adapter: &Adapter, device_identifier: String) -> Option<Blu
         .alias()
         .await
         .ok()
-        .flatten()
+        .filter(|alias| !alias.is_empty())
         .unwrap_or_else(|| device_identifier.0.clone());
     let is_paired = device.is_paired().await.ok()?;
     let is_trusted = device.is_trusted().await.ok()?;

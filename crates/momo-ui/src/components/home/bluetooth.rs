@@ -107,7 +107,11 @@ fn build_home_bluetooth_state(feature_state: BluetoothFeatureState) -> HomeBluet
             let nearby_devices = state
                 .devices
                 .iter()
-                .filter(|device| !device.is_paired && !is_device_connected(device))
+                .filter(|device| {
+                    !device.is_paired
+                        && !is_device_connected(device)
+                        && device.signal_strength_dbm.is_some()
+                })
                 .map(build_home_bluetooth_device)
                 .collect();
 

@@ -745,11 +745,15 @@ async fn refresh_device_from_identifier(
 async fn load_device(adapter: &Adapter, device_identifier: String) -> Option<BluetoothDevice> {
     let device_identifier = BluetoothDeviceId(device_identifier);
     let device = device_from_identifier(adapter, &device_identifier).ok()?;
-    let display_name = device
-        .alias()
+    let alias = device.alias().await.ok().filter(|alias| !alias.is_empty());
+    let remote_name = device
+        .name()
         .await
         .ok()
-        .filter(|alias| !alias.is_empty())
+        .flatten()
+        .filter(|name| !name.is_empty());
+    let display_name = alias
+        .or(remote_name)
         .unwrap_or_else(|| device_identifier.0.clone());
     let is_paired = device.is_paired().await.ok()?;
     let is_trusted = device.is_trusted().await.ok()?;

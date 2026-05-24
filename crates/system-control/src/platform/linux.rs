@@ -745,6 +745,10 @@ async fn refresh_device_from_identifier(
 async fn load_device(adapter: &Adapter, device_identifier: String) -> Option<BluetoothDevice> {
     let device_identifier = BluetoothDeviceId(device_identifier);
     let device = device_from_identifier(adapter, &device_identifier).ok()?;
+    let is_paired = device.is_paired().await.ok().unwrap_or(false);
+    let is_trusted = device.is_trusted().await.ok().unwrap_or(false);
+    let is_connected = device.is_connected().await.ok().unwrap_or(false);
+
     let alias = device.alias().await.ok().filter(|alias| !alias.is_empty());
     let remote_name = device
         .name()
@@ -752,12 +756,12 @@ async fn load_device(adapter: &Adapter, device_identifier: String) -> Option<Blu
         .ok()
         .flatten()
         .filter(|name| !name.is_empty());
-    let display_name = alias
-        .or(remote_name)
-        .unwrap_or_else(|| device_identifier.0.clone());
-    let is_paired = device.is_paired().await.ok()?;
-    let is_trusted = device.is_trusted().await.ok()?;
-    let is_connected = device.is_connected().await.ok()?;
+    let display_name = if is_paired || is_trusted {
+        alias.or(remote_name)
+    } else {
+        remote_name.or(alias)
+    }
+    .unwrap_or_else(|| device_identifier.0.clone());
     let signal_strength_dbm = device.rssi().await.ok().flatten();
 
     Some(BluetoothDevice {

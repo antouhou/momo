@@ -57,6 +57,7 @@ impl App for MomoUi {
 
     fn create(&mut self, app_context: &mut AppContext) -> Self::RootComponent {
         app_context.set_vsync_enabled(true);
+        app_context.set_fullscreen(true);
         initialize_bluetooth_state(app_context, self.system_control.bluetooth());
         Home::new()
     }

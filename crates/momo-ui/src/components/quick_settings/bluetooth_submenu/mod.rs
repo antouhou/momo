@@ -18,9 +18,10 @@ use crate::components::home::bluetooth::{
 use daiko::component::{Component, ComponentContext};
 use daiko::navigation::{FocusEntryPolicy, FocusOrigin};
 use daiko::widgets::text::Text;
-use daiko::{Element, Id};
+use daiko::{Element, Id, Vec2};
+use daiko::widgets::scrollable::Scrollable;
 use system_control::{BluetoothConnectionState, BluetoothDeviceCategory};
-use tracing::warn;
+use tracing::{info, warn};
 
 const BLUETOOTH_ICON: &[u8] = include_bytes!("../../../../assets/bluetooth-b.svg");
 const CHEVRON_LEFT_ICON: &[u8] = include_bytes!("../../../../assets/chevron-left.svg");
@@ -45,7 +46,7 @@ impl Component for BluetoothSubmenu {
             .with_tag("header-settings-bluetooth-submenu")
             .with_style(bluetooth_submenu_style())
             .with_content(BluetoothBackButton)
-            .with_content(BluetoothSubmenuBody)
+            .with_content(Scrollable::new(BluetoothSubmenuBody, "pipa").size_to_content_with_clamp(Vec2::new(f32::INFINITY, f32::INFINITY)))
     }
 }
 
@@ -54,6 +55,9 @@ struct BluetoothSubmenuBody;
 
 impl Component for BluetoothSubmenuBody {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
+        ctx.layout().map(|layout| {
+            println!("Layout: {:?}", layout);
+        });
         let bluetooth_state = bluetooth_state(ctx);
         let bluetooth_state = bluetooth_state.read();
         let content = Element::new()

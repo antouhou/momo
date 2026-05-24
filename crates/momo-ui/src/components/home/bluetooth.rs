@@ -111,6 +111,7 @@ fn build_home_bluetooth_state(feature_state: BluetoothFeatureState) -> HomeBluet
                     !device.is_paired
                         && !is_device_connected(device)
                         && device.signal_strength_dbm.is_some()
+                        && has_presentable_device_name(&device.display_name)
                 })
                 .map(build_home_bluetooth_device)
                 .collect();
@@ -165,4 +166,47 @@ fn is_device_connected(device: &BluetoothDevice) -> bool {
             | BluetoothConnectionState::Connecting { .. }
             | BluetoothConnectionState::Disconnecting { .. }
     )
+}
+
+fn has_presentable_device_name(display_name: &str) -> bool {
+    let trimmed = display_name.trim();
+    if trimmed.is_empty() {
+        return false;
+    }
+
+    !looks_like_hardware_identifier(trimmed)
+}
+
+fn looks_like_hardware_identifier(value: &str) -> bool {
+    let separator = if value.contains('-') {
+        '-'
+    } else if value.contains(':') {
+        ':'
+    } else {
+        return false;
+    };
+
+    let parts = value.split(separator).collect::<Vec<_>>();
+    parts.len() >= 3
+        && parts.iter().all(|part| {
+            part.len() == 2 && part.chars().all(|character| character.is_ascii_hexdigit())
+        })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::has_presentable_device_name;
+
+    #[test]
+    fn bluetooth_name_filter_keeps_regular_names() {
+        assert!(has_presentable_device_name("Sony WH-1000XM5"));
+        assert!(has_presentable_device_name("Magic Keyboard"));
+    }
+
+    #[test]
+    fn bluetooth_name_filter_drops_address_like_names() {
+        assert!(!has_presentable_device_name("0D-48-AC-11-22-33"));
+        assert!(!has_presentable_device_name("0d:48:ac:11:22:33"));
+        assert!(!has_presentable_device_name("  0D-48-AC-11-22-33  "));
+    }
 }

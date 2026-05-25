@@ -160,11 +160,10 @@ impl Component for SettingsTileButton {
         if is_main_view && (pointer.just_pressed() || focusable.just_activated()) {
             match self.spec.action {
                 SettingsTileAction::OpenBluetoothSubmenu => {
-                    if bluetooth_state.read().is_enabled {
-                        if let Err(error) = bluetooth_handle(ctx).start_discovery() {
+                    if bluetooth_state.read().is_enabled
+                        && let Err(error) = bluetooth_handle(ctx).start_discovery() {
                             warn!("failed to start Bluetooth discovery: {error:?}");
                         }
-                    }
                     *shared_state.write() = SettingsMenuState {
                         last_active_view: menu_state.active_view,
                         active_view: SettingsMenuView::Bluetooth,

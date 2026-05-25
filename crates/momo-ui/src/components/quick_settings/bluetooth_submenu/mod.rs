@@ -61,7 +61,8 @@ impl Component for BluetoothSubmenuBody {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         let bluetooth_state = bluetooth_state(ctx);
         let bluetooth_state = bluetooth_state.read();
-        let content = Element::new()
+
+        Element::new()
             .with_style(bluetooth_submenu_body_style())
             .with_content(BluetoothToggleRow)
             .with_content(device_section(
@@ -75,9 +76,7 @@ impl Component for BluetoothSubmenuBody {
                 &bluetooth_state.nearby_devices,
                 bluetooth_state.is_enabled,
                 "No nearby devices",
-            ));
-
-        content
+            ))
     }
 }
 
@@ -157,11 +156,10 @@ impl Component for BluetoothToggleRow {
             focusable.request_focus(FocusOrigin::Pointer);
         }
 
-        if is_active && toggle_enabled && (pointer.just_pressed() || focusable.just_activated()) {
-            if let Err(error) = bluetooth_handle(ctx).set_power_enabled(!toggle_value) {
+        if is_active && toggle_enabled && (pointer.just_pressed() || focusable.just_activated())
+            && let Err(error) = bluetooth_handle(ctx).set_power_enabled(!toggle_value) {
                 warn!("failed to toggle bluetooth power: {error:?}");
             }
-        }
 
         let control = QuickSettingsControlState {
             is_hovered: pointer.is_hovering(),

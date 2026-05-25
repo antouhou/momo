@@ -1,5 +1,11 @@
-use daiko::hot_reloading::HotReloadApp;
-use std::path::PathBuf;
+#[cfg(debug_assertions)]
+use {daiko::hot_reloading::HotReloadApp, std::path::PathBuf};
+#[cfg(not(debug_assertions))]
+use {
+    momo_app::{ShellApp, ShellConfiguration, ShellMode},
+    momo_ui::MomoUi,
+    momo_wayfire::WayfireBackend,
+};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Set up basic logging

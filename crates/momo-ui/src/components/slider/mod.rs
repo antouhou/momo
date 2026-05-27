@@ -127,9 +127,11 @@ impl Component for Slider {
         let default_value = self.clamped_default_value();
         let value = ctx.use_shared_state(self.id, move || default_value);
         let drag_active = ctx.use_local_state(|| false);
+        let thumb_offset_initialized = ctx.use_local_state(|| false);
         let raw_current_value = *value.read();
         let mut current_value = self.clamp_value(i16::from(raw_current_value));
         let mut is_drag_active = *drag_active.read();
+        let is_thumb_offset_initialized = *thumb_offset_initialized.read();
         let mut pointer = ctx.pointer();
         let pointer_position = pointer.current_position();
         let just_pressed = pointer.just_pressed();
@@ -175,8 +177,11 @@ impl Component for Slider {
             self.id.with(THUMB_OFFSET_SMOOTH_FOLLOW_SUFFIX),
             slider_smooth_follow_config(),
         );
-        let rendered_thumb_offset = if is_drag_active {
+        let rendered_thumb_offset = if !is_thumb_offset_initialized || is_drag_active {
             smooth_thumb_offset.reset_to(target_thumb_offset);
+            if !is_thumb_offset_initialized {
+                *thumb_offset_initialized.write_silent() = true;
+            }
             target_thumb_offset
         } else {
             smooth_thumb_offset.follow(target_thumb_offset)

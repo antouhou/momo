@@ -13,7 +13,7 @@ use super::submenu_button::{
     submenu_button_leading_slot, submenu_button_surface_glyph, submenu_toggle_switch,
 };
 use crate::components::home::bluetooth::{
-    HomeBluetoothDevice, HomeBluetoothDeviceSection, bluetooth_handle, bluetooth_state,
+    BluetoothDeviceSection, BluetoothDeviceState, bluetooth_handle, bluetooth_state,
 };
 use daiko::component::{Component, ComponentContext};
 use daiko::navigation::{FocusEntryPolicy, FocusOrigin};
@@ -222,7 +222,7 @@ impl Component for BluetoothSettingsButton {
 
 #[derive(Clone)]
 struct BluetoothDeviceRow {
-    bluetooth_device: HomeBluetoothDevice,
+    bluetooth_device: BluetoothDeviceState,
     is_bluetooth_enabled: bool,
 }
 
@@ -291,7 +291,7 @@ impl Component for BluetoothDeviceRow {
 
 fn device_section(
     title: &'static str,
-    devices: &HomeBluetoothDeviceSection,
+    devices: &BluetoothDeviceSection,
     is_bluetooth_enabled: bool,
     empty_label: &'static str,
 ) -> Element {
@@ -304,7 +304,7 @@ fn device_section(
         );
 
     match devices {
-        HomeBluetoothDeviceSection::Loading => {
+        BluetoothDeviceSection::Loading => {
             section.add_content(BluetoothPlaceholderRow {
                 tag: match title {
                     "Recent" => "header-settings-bluetooth-recent-loading",
@@ -314,7 +314,7 @@ fn device_section(
                 label: "Loading devices...",
             });
         }
-        HomeBluetoothDeviceSection::Unavailable => {
+        BluetoothDeviceSection::Unavailable => {
             section.add_content(BluetoothPlaceholderRow {
                 tag: match title {
                     "Recent" => "header-settings-bluetooth-recent-unavailable",
@@ -324,7 +324,7 @@ fn device_section(
                 label: "Bluetooth unavailable",
             });
         }
-        HomeBluetoothDeviceSection::Ready(devices) if devices.is_empty() => {
+        BluetoothDeviceSection::Ready(devices) if devices.is_empty() => {
             section.add_content(BluetoothPlaceholderRow {
                 tag: match title {
                     "Recent" => "header-settings-bluetooth-recent-empty",
@@ -334,7 +334,7 @@ fn device_section(
                 label: empty_label,
             });
         }
-        HomeBluetoothDeviceSection::Ready(devices) => {
+        BluetoothDeviceSection::Ready(devices) => {
             for device in devices {
                 section.add_content(BluetoothDeviceRow {
                     bluetooth_device: device.clone(),
@@ -376,7 +376,7 @@ impl Component for BluetoothPlaceholderRow {
 }
 
 fn effective_device_availability(
-    bluetooth_device: &HomeBluetoothDevice,
+    bluetooth_device: &BluetoothDeviceState,
     is_bluetooth_enabled: bool,
 ) -> DeviceRowAvailability {
     if !is_bluetooth_enabled {
@@ -400,7 +400,7 @@ fn button_state_for_device(availability: DeviceRowAvailability) -> SubmenuButton
     }
 }
 
-fn glyph_for_device(device: &HomeBluetoothDevice) -> QuickSettingsGlyph {
+fn glyph_for_device(device: &BluetoothDeviceState) -> QuickSettingsGlyph {
     match device.category {
         BluetoothDeviceCategory::Audio => QuickSettingsGlyph::Asset(AUDIO_ICON),
         BluetoothDeviceCategory::Computer => QuickSettingsGlyph::Asset(BLUETOOTH_ICON),

@@ -11,33 +11,33 @@ use system_control::{
 };
 
 #[derive(Clone)]
-pub(crate) struct HomeBluetoothState {
+pub(crate) struct BluetoothState {
     pub(crate) is_enabled: bool,
     pub(crate) can_toggle_power: bool,
-    pub(crate) recent_devices: HomeBluetoothDeviceSection,
-    pub(crate) nearby_devices: HomeBluetoothDeviceSection,
+    pub(crate) recent_devices: BluetoothDeviceSection,
+    pub(crate) nearby_devices: BluetoothDeviceSection,
 }
 
-impl Default for HomeBluetoothState {
+impl Default for BluetoothState {
     fn default() -> Self {
         Self {
             is_enabled: false,
             can_toggle_power: false,
-            recent_devices: HomeBluetoothDeviceSection::Loading,
-            nearby_devices: HomeBluetoothDeviceSection::Loading,
+            recent_devices: BluetoothDeviceSection::Loading,
+            nearby_devices: BluetoothDeviceSection::Loading,
         }
     }
 }
 
 #[derive(Clone)]
-pub(crate) enum HomeBluetoothDeviceSection {
+pub(crate) enum BluetoothDeviceSection {
     Loading,
     Unavailable,
-    Ready(Vec<HomeBluetoothDevice>),
+    Ready(Vec<BluetoothDeviceState>),
 }
 
 #[derive(Clone)]
-pub(crate) struct HomeBluetoothDevice {
+pub(crate) struct BluetoothDeviceState {
     pub(crate) device_identifier: system_control::BluetoothDeviceId,
     pub(crate) tag: String,
     pub(crate) display_name: String,
@@ -53,7 +53,7 @@ pub(crate) fn initialize_bluetooth_state(
         app_context.peek_global_state(Id::new(HOME_BLUETOOTH_HANDLE_ID), move || bluetooth_handle);
     let bluetooth_state = app_context.peek_global_state(
         Id::new(HOME_BLUETOOTH_STATE_ID),
-        HomeBluetoothState::default,
+        BluetoothState::default,
     );
     let bluetooth_observation = app_context
         .peek_global_state(Id::new(HOME_BLUETOOTH_OBSERVATION_ID), || {
@@ -61,7 +61,7 @@ pub(crate) fn initialize_bluetooth_state(
         });
 
     *bluetooth_state.write_silent() =
-        build_home_bluetooth_state(bluetooth_handle_state.read().clone().current_state());
+        build_bluetooth_state(bluetooth_handle_state.read().clone().current_state());
 
     if bluetooth_observation.read().is_none() {
         let bluetooth_state_handle = bluetooth_state.clone();
@@ -69,7 +69,7 @@ pub(crate) fn initialize_bluetooth_state(
             .read()
             .clone()
             .observe(move |next_state| {
-                *bluetooth_state_handle.write() = build_home_bluetooth_state(next_state);
+                *bluetooth_state_handle.write() = build_bluetooth_state(next_state);
             });
         *bluetooth_observation.write_silent() = Some(observation);
     }
@@ -83,14 +83,11 @@ pub(crate) fn bluetooth_handle(ctx: &mut ComponentContext) -> BluetoothHandle {
     .clone()
 }
 
-pub(crate) fn bluetooth_state(ctx: &mut ComponentContext) -> StateHandle<HomeBluetoothState> {
-    ctx.use_global_state(
-        Id::new(HOME_BLUETOOTH_STATE_ID),
-        HomeBluetoothState::default,
-    )
+pub(crate) fn bluetooth_state(ctx: &mut ComponentContext) -> StateHandle<BluetoothState> {
+    ctx.use_global_state(Id::new(HOME_BLUETOOTH_STATE_ID), BluetoothState::default)
 }
 
-fn build_home_bluetooth_state(feature_state: BluetoothFeatureState) -> HomeBluetoothState {
+fn build_bluetooth_state(feature_state: BluetoothFeatureState) -> BluetoothState {
     match &feature_state {
         FeatureState::Ready(state) => {
             let is_enabled = matches!(
@@ -102,7 +99,7 @@ fn build_home_bluetooth_state(feature_state: BluetoothFeatureState) -> HomeBluet
                 .devices
                 .iter()
                 .filter(|device| device.is_paired || is_device_connected(device))
-                .map(build_home_bluetooth_device)
+                .map(build_bluetooth_device_state)
                 .collect();
             let nearby_devices = state
                 .devices
@@ -113,28 +110,28 @@ fn build_home_bluetooth_state(feature_state: BluetoothFeatureState) -> HomeBluet
                         && device.signal_strength_dbm.is_some()
                         && has_presentable_device_name(&device.display_name)
                 })
-                .map(build_home_bluetooth_device)
+                .map(build_bluetooth_device_state)
                 .collect();
 
-            HomeBluetoothState {
+            BluetoothState {
                 is_enabled,
                 can_toggle_power,
-                recent_devices: HomeBluetoothDeviceSection::Ready(recent_devices),
-                nearby_devices: HomeBluetoothDeviceSection::Ready(nearby_devices),
+                recent_devices: BluetoothDeviceSection::Ready(recent_devices),
+                nearby_devices: BluetoothDeviceSection::Ready(nearby_devices),
             }
         }
-        FeatureState::Loading => HomeBluetoothState::default(),
-        FeatureState::Unsupported(_) | FeatureState::Unavailable(_) => HomeBluetoothState {
+        FeatureState::Loading => BluetoothState::default(),
+        FeatureState::Unsupported(_) | FeatureState::Unavailable(_) => BluetoothState {
             is_enabled: false,
             can_toggle_power: false,
-            recent_devices: HomeBluetoothDeviceSection::Unavailable,
-            nearby_devices: HomeBluetoothDeviceSection::Unavailable,
+            recent_devices: BluetoothDeviceSection::Unavailable,
+            nearby_devices: BluetoothDeviceSection::Unavailable,
         },
     }
 }
 
-fn build_home_bluetooth_device(device: &BluetoothDevice) -> HomeBluetoothDevice {
-    HomeBluetoothDevice {
+fn build_bluetooth_device_state(device: &BluetoothDevice) -> BluetoothDeviceState {
+    BluetoothDeviceState {
         device_identifier: device.device_identifier.clone(),
         tag: bluetooth_device_tag(device),
         display_name: device.display_name.clone(),

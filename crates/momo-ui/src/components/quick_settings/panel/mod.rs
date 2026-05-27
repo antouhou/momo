@@ -79,10 +79,12 @@ impl Component for SettingsMenuPanel {
                     );
                 }
 
-                if should_close && state_snapshot.active_view == SettingsMenuView::Bluetooth
-                    && let Err(error) = bluetooth_handle(ctx).stop_discovery() {
-                        warn!("failed to stop Bluetooth discovery: {error:?}");
-                    }
+                if should_close
+                    && state_snapshot.active_view == SettingsMenuView::Bluetooth
+                    && let Err(error) = bluetooth_handle(ctx).stop_discovery()
+                {
+                    warn!("failed to stop Bluetooth discovery: {error:?}");
+                }
 
                 *state.write() = SettingsMenuState {
                     is_open: !should_close,

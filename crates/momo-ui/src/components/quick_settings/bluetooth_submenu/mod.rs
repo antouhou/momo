@@ -156,10 +156,13 @@ impl Component for BluetoothToggleRow {
             focusable.request_focus(FocusOrigin::Pointer);
         }
 
-        if is_active && toggle_enabled && (pointer.just_pressed() || focusable.just_activated())
-            && let Err(error) = bluetooth_handle(ctx).set_power_enabled(!toggle_value) {
-                warn!("failed to toggle bluetooth power: {error:?}");
-            }
+        if is_active
+            && toggle_enabled
+            && (pointer.just_pressed() || focusable.just_activated())
+            && let Err(error) = bluetooth_handle(ctx).set_power_enabled(!toggle_value)
+        {
+            warn!("failed to toggle bluetooth power: {error:?}");
+        }
 
         let control = QuickSettingsControlState {
             is_hovered: pointer.is_hovering(),

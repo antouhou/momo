@@ -32,10 +32,7 @@ impl Component for AppTile {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         let mut pointer = ctx.pointer();
         let focusable = ctx.focusable();
-        let layout = ctx
-            .peek_element_layout(&ctx.element_id())
-            .copied()
-            .or_else(|| ctx.layout());
+        let layout = ctx.layout();
 
         focusable.set_navigation_enabled(!self.interactions_disabled);
         focusable.set_focus_key(FocusKey::new(self.app.id));

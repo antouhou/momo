@@ -45,10 +45,12 @@ impl Component for HeaderSettingsTrigger {
 
         if (state_snapshot.is_open || !state_snapshot.is_animating) && just_activated {
             let next_is_open = !state_snapshot.is_open;
-            if !next_is_open && state_snapshot.active_view == SettingsMenuView::Bluetooth
-                && let Err(error) = bluetooth_handle(ctx).stop_discovery() {
-                    warn!("failed to stop Bluetooth discovery: {error:?}");
-                }
+            if !next_is_open
+                && state_snapshot.active_view == SettingsMenuView::Bluetooth
+                && let Err(error) = bluetooth_handle(ctx).stop_discovery()
+            {
+                warn!("failed to stop Bluetooth discovery: {error:?}");
+            }
             *state.write() = SettingsMenuState {
                 is_open: next_is_open,
                 just_opened: next_is_open,

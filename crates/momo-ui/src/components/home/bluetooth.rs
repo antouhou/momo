@@ -51,10 +51,8 @@ pub(crate) fn initialize_bluetooth_state(
 ) {
     let bluetooth_handle_state =
         app_context.peek_global_state(Id::new(HOME_BLUETOOTH_HANDLE_ID), move || bluetooth_handle);
-    let bluetooth_state = app_context.peek_global_state(
-        Id::new(HOME_BLUETOOTH_STATE_ID),
-        BluetoothState::default,
-    );
+    let bluetooth_state =
+        app_context.peek_global_state(Id::new(HOME_BLUETOOTH_STATE_ID), BluetoothState::default);
     let bluetooth_observation = app_context
         .peek_global_state(Id::new(HOME_BLUETOOTH_OBSERVATION_ID), || {
             None::<BluetoothObservation>

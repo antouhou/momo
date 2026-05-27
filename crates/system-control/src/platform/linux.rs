@@ -440,10 +440,9 @@ async fn handle_command(
             is_enabled,
         } => match adapter.set_powered(is_enabled).await {
             Ok(()) => {
-                if !is_enabled
-                    && let Some(task) = discovery_task.take() {
-                        task.abort();
-                    }
+                if !is_enabled && let Some(task) = discovery_task.take() {
+                    task.abort();
+                }
                 refresh_adapter_state(inner, adapter, Some(operation_id), None).await;
             }
             Err(error) => {

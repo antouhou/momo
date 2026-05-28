@@ -1,6 +1,7 @@
 mod app_grid;
 mod app_icon;
 mod app_tile;
+pub(crate) mod bluetooth;
 mod clock_chip;
 mod header;
 mod launch;
@@ -38,16 +39,8 @@ impl Home {
     }
 }
 
-impl Default for Home {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl Component for Home {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        ctx.app_context.set_fullscreen(false);
-
         if self.live_clock {
             let clock_thread_started =
                 ctx.peek_global_state(Id::new(HOME_CLOCK_THREAD_ID), || false);

@@ -6,6 +6,7 @@ edition.workspace = true
 [dependencies]
 daiko.workspace = true
 momo-app = { path = "../momo-app" }
+system-control = { path = "../system-control" }
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 tracing = "0.1.44"
 

@@ -12,35 +12,21 @@ use super::style::{
     SETTINGS_MENU_TOP_OFFSET,
 };
 use super::volume_control::VolumeControl;
+use crate::components::home::bluetooth::bluetooth_handle;
 use daiko::animation::AnimationParameters;
 use daiko::animation::easing::EasingFunction;
 use daiko::component::{Component, ComponentContext};
 use daiko::navigation::{FocusBoundary, FocusEntryPolicy, FocusOrigin, NavigationInputAction};
 use daiko::widgets::overlay::{Overlay, OverlayPositioning};
+use daiko::widgets::scrollable::Scrollable;
 use daiko::{Element, Id, Vec2};
 use std::time::Duration;
+use tracing::warn;
 
 const SETTINGS_MENU_ANIMATION_ID: &str = "momo_home_settings_menu_animation";
 const SETTINGS_MENU_SLIDE_DURATION_MS: u64 = 280;
 #[derive(Clone, Copy)]
 pub(super) struct SettingsMenuPanel {}
-
-#[derive(Clone, Copy, Default)]
-struct SettingsMenuMotionState {
-    previous_open: Option<bool>,
-}
-
-#[derive(Clone, Copy)]
-struct SettingsMenuVisibility {
-    progress: f32,
-    is_visible: bool,
-}
-
-#[derive(Clone, Copy)]
-struct SettingsMenuContent;
-
-#[derive(Clone, Copy)]
-struct MainSettingsView;
 
 impl Component for SettingsMenuPanel {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
@@ -93,6 +79,13 @@ impl Component for SettingsMenuPanel {
                     );
                 }
 
+                if should_close
+                    && state_snapshot.active_view == SettingsMenuView::Bluetooth
+                    && let Err(error) = bluetooth_handle(ctx).stop_discovery()
+                {
+                    warn!("failed to stop Bluetooth discovery: {error:?}");
+                }
+
                 *state.write() = SettingsMenuState {
                     is_open: !should_close,
                     just_opened: false,
@@ -104,7 +97,6 @@ impl Component for SettingsMenuPanel {
                     is_animating: true,
                     last_active_view: state_snapshot.last_active_view,
                     active_view: state_snapshot.active_view,
-                    bluetooth_enabled: state_snapshot.bluetooth_enabled,
                 };
             }
         }
@@ -122,6 +114,20 @@ impl Component for SettingsMenuPanel {
     }
 }
 
+#[derive(Clone, Copy, Default)]
+struct SettingsMenuMotionState {
+    previous_open: Option<bool>,
+}
+
+#[derive(Clone, Copy)]
+struct SettingsMenuVisibility {
+    progress: f32,
+    is_visible: bool,
+}
+
+#[derive(Clone, Copy)]
+struct SettingsMenuContent;
+
 impl Component for SettingsMenuContent {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         ctx.focus_scope()
@@ -138,13 +144,19 @@ impl Component for SettingsMenuContent {
     }
 }
 
+#[derive(Clone, Copy)]
+struct MainSettingsView;
+
 impl Component for MainSettingsView {
     fn to_element(&self, _ctx: &mut ComponentContext) -> Element {
         Element::new()
             .with_style(settings_content_style())
             .with_content(SettingsTopRow)
             .with_content(VolumeControl)
-            .with_content(SettingsTileGrid)
+            .with_content(
+                Scrollable::new(SettingsTileGrid, "quick_settings_scrollable")
+                    .size_to_content_with_clamp(Vec2::new(f32::INFINITY, f32::INFINITY)),
+            )
     }
 }
 

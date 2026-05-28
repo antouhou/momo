@@ -1,3 +1,4 @@
+use crate::components::home::bluetooth::bluetooth_handle;
 use crate::components::home::header::{
     HEADER_BUTTON_HEIGHT, HEADER_MENU_STATE_ID, HEADER_SETTINGS_BUTTON_WIDTH, HeaderButtonMetrics,
     HeaderButtonState, HeaderMenuState, HeaderMenuTarget, header_button_style,
@@ -11,6 +12,7 @@ use daiko::component::{Component, ComponentContext};
 use daiko::navigation::FocusOrigin;
 use daiko::style::{Color, Indent, Style};
 use daiko::widgets::image::{Image, ImageParams, ImageSource, ImageType};
+use tracing::warn;
 
 #[derive(Clone, Copy)]
 pub(super) struct HeaderSettingsTrigger;
@@ -43,6 +45,12 @@ impl Component for HeaderSettingsTrigger {
 
         if (state_snapshot.is_open || !state_snapshot.is_animating) && just_activated {
             let next_is_open = !state_snapshot.is_open;
+            if !next_is_open
+                && state_snapshot.active_view == SettingsMenuView::Bluetooth
+                && let Err(error) = bluetooth_handle(ctx).stop_discovery()
+            {
+                warn!("failed to stop Bluetooth discovery: {error:?}");
+            }
             *state.write() = SettingsMenuState {
                 is_open: next_is_open,
                 just_opened: next_is_open,
@@ -50,7 +58,6 @@ impl Component for HeaderSettingsTrigger {
                 is_animating: true,
                 last_active_view: SettingsMenuView::Main,
                 active_view: SettingsMenuView::Main,
-                bluetooth_enabled: state_snapshot.bluetooth_enabled,
             };
         }
 

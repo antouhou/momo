@@ -16,7 +16,6 @@ pub struct SettingsMenuState {
     pub is_animating: bool,
     pub last_active_view: SettingsMenuView,
     pub active_view: SettingsMenuView,
-    pub bluetooth_enabled: bool,
 }
 
 impl Default for SettingsMenuState {
@@ -28,7 +27,6 @@ impl Default for SettingsMenuState {
             is_animating: false,
             last_active_view: SettingsMenuView::Main,
             active_view: SettingsMenuView::Main,
-            bluetooth_enabled: true,
         }
     }
 }

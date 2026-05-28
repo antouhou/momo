@@ -48,7 +48,7 @@ impl Component for BluetoothSubmenu {
             .with_content(BluetoothBackButton)
             .with_content(BluetoothSettingsButton)
             .with_content(
-                Scrollable::new(BluetoothSubmenuBody, "pipa")
+                Scrollable::new(BluetoothSubmenuBody, "bluetooth_submenu_scrollable")
                     .size_to_content_with_clamp(Vec2::new(f32::INFINITY, f32::INFINITY)),
             )
     }

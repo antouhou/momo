@@ -52,10 +52,28 @@ pub struct BluetoothDevice {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum BluetoothDeviceCategory {
     Audio,
+    Camera,
+    CarAudio,
     Computer,
+    Display,
+    GameController,
+    Headphones,
+    Headset,
+    Health,
     Input,
+    Keyboard,
+    MediaPlayer,
+    Microphone,
+    Mouse,
+    Network,
     Peripheral,
     Phone,
+    Printer,
+    Scanner,
+    Sensor,
+    Speaker,
+    Tablet,
+    Wearable,
     Unknown,
 }
 

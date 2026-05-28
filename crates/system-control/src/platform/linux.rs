@@ -1,22 +1,25 @@
-use crate::SystemControlError;
-use crate::bluetooth::{
-    BluetoothAdapterState, BluetoothCapabilities, BluetoothConnectionState, BluetoothDevice,
-    BluetoothDeviceCategory, BluetoothDeviceId, BluetoothDiscoveryState, BluetoothFeatureState,
-    BluetoothOperationId, BluetoothOperationKind, BluetoothOperationReceipt,
-    BluetoothPendingOperation, BluetoothPowerState, BluetoothRequestError, BluetoothState,
-    BluetoothUnavailableReason, BluetoothUnsupportedReason, BluetoothUserVisibleError,
-    FeatureState,
-};
-use bluer::{Adapter, AdapterEvent, Device, DeviceEvent};
-use futures_util::StreamExt;
+mod device;
+
 use std::collections::BTreeMap;
-use std::str::FromStr;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, Weak};
 use std::thread::JoinHandle;
+
+use bluer::{Adapter, AdapterEvent, DeviceEvent};
+use futures_util::StreamExt;
 use tokio::runtime::Builder;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender, unbounded_channel};
 use tracing::{debug, warn};
+
+use self::device::{device_from_identifier, load_device, sort_devices};
+use crate::SystemControlError;
+use crate::bluetooth::{
+    BluetoothAdapterState, BluetoothCapabilities, BluetoothConnectionState, BluetoothDevice,
+    BluetoothDeviceId, BluetoothDiscoveryState, BluetoothFeatureState, BluetoothOperationId,
+    BluetoothOperationKind, BluetoothOperationReceipt, BluetoothPendingOperation,
+    BluetoothPowerState, BluetoothRequestError, BluetoothState, BluetoothUnavailableReason,
+    BluetoothUnsupportedReason, BluetoothUserVisibleError, FeatureState,
+};
 
 type ObserverCallback = Box<dyn Fn(BluetoothFeatureState) + Send + 'static>;
 
@@ -740,68 +743,6 @@ async fn refresh_device_from_identifier(
     refresh_device(adapter, inner, device_identifier, None, None).await;
 }
 
-async fn load_device(adapter: &Adapter, device_identifier: String) -> Option<BluetoothDevice> {
-    let device_identifier = BluetoothDeviceId(device_identifier);
-    let device = device_from_identifier(adapter, &device_identifier).ok()?;
-    let is_paired = device.is_paired().await.ok().unwrap_or(false);
-    let is_trusted = device.is_trusted().await.ok().unwrap_or(false);
-    let is_connected = device.is_connected().await.ok().unwrap_or(false);
-
-    let alias = device.alias().await.ok().filter(|alias| !alias.is_empty());
-    let remote_name = device
-        .name()
-        .await
-        .ok()
-        .flatten()
-        .filter(|name| !name.is_empty());
-    let display_name = if is_paired || is_trusted {
-        alias.or(remote_name)
-    } else {
-        remote_name.or(alias)
-    }
-    .unwrap_or_else(|| device_identifier.0.clone());
-    let signal_strength_dbm = device.rssi().await.ok().flatten();
-
-    Some(BluetoothDevice {
-        device_identifier,
-        display_name,
-        category: classify_device(&device).await,
-        is_paired,
-        is_trusted,
-        connection_state: if is_connected {
-            BluetoothConnectionState::Connected
-        } else {
-            BluetoothConnectionState::Disconnected
-        },
-        signal_strength_dbm,
-        battery_percentage: device.battery_percentage().await.ok().flatten(),
-    })
-}
-
-async fn classify_device(device: &Device) -> BluetoothDeviceCategory {
-    match device.icon().await.ok().flatten().as_deref() {
-        Some("audio-card") | Some("audio-headphones") | Some("audio-headset") => {
-            BluetoothDeviceCategory::Audio
-        }
-        Some("computer") | Some("input-gaming") => BluetoothDeviceCategory::Computer,
-        Some("input-keyboard") | Some("input-mouse") | Some("input-tablet") => {
-            BluetoothDeviceCategory::Input
-        }
-        Some("phone") | Some("smartphone") => BluetoothDeviceCategory::Phone,
-        Some("printer") | Some("camera-photo") => BluetoothDeviceCategory::Peripheral,
-        _ => BluetoothDeviceCategory::Unknown,
-    }
-}
-
-fn device_from_identifier(
-    adapter: &Adapter,
-    device_identifier: &BluetoothDeviceId,
-) -> Result<Device, String> {
-    let address =
-        bluer::Address::from_str(&device_identifier.0).map_err(|error| error.to_string())?;
-    adapter.device(address).map_err(|error| error.to_string())
-}
-
 fn apply_pending_operation(
     inner: &Arc<BackendState>,
     operation_id: BluetoothOperationId,
@@ -922,14 +863,6 @@ fn upsert_device(devices: &mut Vec<BluetoothDevice>, updated_device: BluetoothDe
         devices.push(updated_device);
     }
     sort_devices(devices);
-}
-
-fn sort_devices(devices: &mut [BluetoothDevice]) {
-    devices.sort_by(|left, right| {
-        left.display_name
-            .cmp(&right.display_name)
-            .then(left.device_identifier.cmp(&right.device_identifier))
-    });
 }
 
 trait IntoPendingOperation {

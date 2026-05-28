@@ -27,13 +27,23 @@ const BLUETOOTH_ICON: &[u8] = include_bytes!("../../../../assets/bluetooth-b.svg
 const CHEVRON_LEFT_ICON: &[u8] = include_bytes!("../../../../assets/chevron-left.svg");
 const KEYBOARD_ICON: &[u8] = include_bytes!("../../../../assets/keyboard.svg");
 const AUDIO_ICON: &[u8] = include_bytes!("../../../../assets/volume.svg");
+const AUDIO_FILE_ICON: &[u8] = include_bytes!("../../../../assets/file-audio.svg");
 const PHONE_ICON: &[u8] = include_bytes!("../../../../assets/mobile-screen.svg");
 const GEAR_ICON: &[u8] = include_bytes!("../../../../assets/gear-solid-full.svg");
 const CAMERA_ICON: &[u8] = include_bytes!("../../../../assets/camera.svg");
-const DISPLAY_ICON: &[u8] = include_bytes!("../../../../assets/window-maximize.svg");
-const GAME_CONTROLLER_ICON: &[u8] = include_bytes!("../../../../assets/chess-knight.svg");
+const COMPUTER_ICON: &[u8] = include_bytes!("../../../../assets/computer.svg");
+const DISPLAY_ICON: &[u8] = include_bytes!("../../../../assets/display.svg");
+const GAME_CONTROLLER_ICON: &[u8] = include_bytes!("../../../../assets/gamepad.svg");
 const HEALTH_ICON: &[u8] = include_bytes!("../../../../assets/heart.svg");
+const HEADPHONES_ICON: &[u8] = include_bytes!("../../../../assets/headphones.svg");
+const HEADSET_ICON: &[u8] = include_bytes!("../../../../assets/headset.svg");
 const MEDIA_PLAYER_ICON: &[u8] = include_bytes!("../../../../assets/play-circle.svg");
+const MICROPHONE_ICON: &[u8] = include_bytes!("../../../../assets/microphone.svg");
+const MOUSE_ICON: &[u8] = include_bytes!("../../../../assets/computer-mouse.svg");
+const NETWORK_ICON: &[u8] = include_bytes!("../../../../assets/network-wired.svg");
+const PRINTER_ICON: &[u8] = include_bytes!("../../../../assets/print.svg");
+const SENSOR_ICON: &[u8] = include_bytes!("../../../../assets/temperature-half.svg");
+const TABLET_ICON: &[u8] = include_bytes!("../../../../assets/tablet.svg");
 
 pub(super) const BLUETOOTH_BACK_BUTTON_TAG: &str = "header-settings-bluetooth-back-button";
 pub(super) const BLUETOOTH_TOGGLE_TAG: &str = "header-settings-bluetooth-toggle";
@@ -410,28 +420,28 @@ fn button_state_for_device(availability: DeviceRowAvailability) -> SubmenuButton
 
 fn glyph_for_device(device: &BluetoothDeviceState) -> QuickSettingsGlyph {
     match device.category {
-        BluetoothDeviceCategory::Audio
-        | BluetoothDeviceCategory::CarAudio
-        | BluetoothDeviceCategory::Headphones
-        | BluetoothDeviceCategory::Headset
-        | BluetoothDeviceCategory::Microphone
-        | BluetoothDeviceCategory::Speaker => QuickSettingsGlyph::Asset(AUDIO_ICON),
+        BluetoothDeviceCategory::Audio => QuickSettingsGlyph::Asset(AUDIO_FILE_ICON),
+        BluetoothDeviceCategory::CarAudio => QuickSettingsGlyph::Asset(AUDIO_ICON),
         BluetoothDeviceCategory::Camera => QuickSettingsGlyph::Asset(CAMERA_ICON),
-        BluetoothDeviceCategory::Computer => QuickSettingsGlyph::Asset(BLUETOOTH_ICON),
+        BluetoothDeviceCategory::Computer => QuickSettingsGlyph::Asset(COMPUTER_ICON),
         BluetoothDeviceCategory::Display => QuickSettingsGlyph::Asset(DISPLAY_ICON),
         BluetoothDeviceCategory::GameController => QuickSettingsGlyph::Asset(GAME_CONTROLLER_ICON),
         BluetoothDeviceCategory::Health => QuickSettingsGlyph::Asset(HEALTH_ICON),
-        BluetoothDeviceCategory::Input
-        | BluetoothDeviceCategory::Keyboard
-        | BluetoothDeviceCategory::Mouse
-        | BluetoothDeviceCategory::Tablet => QuickSettingsGlyph::Asset(KEYBOARD_ICON),
+        BluetoothDeviceCategory::Headphones => QuickSettingsGlyph::Asset(HEADPHONES_ICON),
+        BluetoothDeviceCategory::Headset => QuickSettingsGlyph::Asset(HEADSET_ICON),
+        BluetoothDeviceCategory::Input => QuickSettingsGlyph::Asset(KEYBOARD_ICON),
+        BluetoothDeviceCategory::Keyboard => QuickSettingsGlyph::Asset(KEYBOARD_ICON),
         BluetoothDeviceCategory::MediaPlayer => QuickSettingsGlyph::Asset(MEDIA_PLAYER_ICON),
+        BluetoothDeviceCategory::Microphone => QuickSettingsGlyph::Asset(MICROPHONE_ICON),
+        BluetoothDeviceCategory::Mouse => QuickSettingsGlyph::Asset(MOUSE_ICON),
+        BluetoothDeviceCategory::Network => QuickSettingsGlyph::Asset(NETWORK_ICON),
         BluetoothDeviceCategory::Phone => QuickSettingsGlyph::Asset(PHONE_ICON),
-        BluetoothDeviceCategory::Network
-        | BluetoothDeviceCategory::Peripheral
-        | BluetoothDeviceCategory::Printer
+        BluetoothDeviceCategory::Printer => QuickSettingsGlyph::Asset(PRINTER_ICON),
+        BluetoothDeviceCategory::Sensor => QuickSettingsGlyph::Asset(SENSOR_ICON),
+        BluetoothDeviceCategory::Speaker => QuickSettingsGlyph::Asset(AUDIO_ICON),
+        BluetoothDeviceCategory::Tablet => QuickSettingsGlyph::Asset(TABLET_ICON),
+        BluetoothDeviceCategory::Peripheral
         | BluetoothDeviceCategory::Scanner
-        | BluetoothDeviceCategory::Sensor
         | BluetoothDeviceCategory::Wearable
         | BluetoothDeviceCategory::Unknown => QuickSettingsGlyph::Asset(BLUETOOTH_ICON),
     }

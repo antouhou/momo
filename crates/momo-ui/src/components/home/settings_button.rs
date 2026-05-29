@@ -1,7 +1,8 @@
 use crate::components::home::bluetooth::bluetooth_handle;
 use crate::components::home::header::{
-    HEADER_BUTTON_HEIGHT, HEADER_MENU_STATE_ID, HEADER_SETTINGS_BUTTON_WIDTH, HeaderButtonMetrics,
-    HeaderButtonState, HeaderMenuState, HeaderMenuTarget, header_button_style,
+    HEADER_BUTTON_HEIGHT, HEADER_MENU_STATE_ID, HEADER_SETTINGS_BUTTON_WIDTH,
+    HeaderButtonMetrics, HeaderButtonState, HeaderMenuState, HeaderMenuTarget,
+    header_button_foreground_color, header_button_style,
 };
 use crate::components::home::model::home_top_row_settings_focus_key;
 use crate::components::quick_settings::SETTINGS_MENU_STATE_ID;
@@ -27,7 +28,7 @@ impl Component for HeaderSettingsTrigger {
         let just_activated = pointer.just_pressed() || focusable.just_activated();
         focusable.set_focus_key(home_top_row_settings_focus_key());
 
-        if pointer.just_entered() || pointer.just_pressed() {
+        if pointer.just_pressed() {
             focusable.request_focus(FocusOrigin::Pointer);
         }
 
@@ -66,12 +67,12 @@ impl Component for HeaderSettingsTrigger {
             is_hovered: pointer.is_hovering(),
             is_focused: focusable.is_focused(),
         };
-        let icon_color =
-            if trigger_state.is_pressed || trigger_state.is_hovered || trigger_state.is_focused {
-                Color::from_rgb(10, 13, 18)
-            } else {
-                Color::from_rgb(232, 238, 250)
-            };
+        let icon_color = header_button_foreground_color(HeaderButtonState {
+            is_active: false,
+            is_pressed: trigger_state.is_pressed,
+            is_hovered: trigger_state.is_hovered,
+            is_focused: trigger_state.is_focused,
+        });
 
         Element::new()
             .with_tag("header-settings-button")

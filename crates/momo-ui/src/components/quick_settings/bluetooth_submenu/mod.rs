@@ -134,7 +134,7 @@ impl Component for BluetoothToggleRow {
         let toggle_enabled = bluetooth_state.can_toggle_power;
         let toggle_value = bluetooth_state.is_enabled;
 
-        if pointer.just_entered() || pointer.just_pressed() {
+        if pointer.just_pressed() {
             focusable.request_focus(FocusOrigin::Pointer);
         }
 
@@ -188,7 +188,7 @@ impl Component for BluetoothSettingsButton {
         let mut pointer = ctx.pointer();
         let focusable = ctx.focusable();
 
-        if pointer.just_entered() || pointer.just_pressed() {
+        if pointer.just_pressed() {
             focusable.request_focus(FocusOrigin::Pointer);
         }
 
@@ -228,7 +228,7 @@ impl Component for BluetoothDeviceRow {
         let availability =
             effective_device_availability(&self.bluetooth_device, self.is_bluetooth_enabled);
 
-        if pointer.just_entered() || pointer.just_pressed() {
+        if pointer.just_pressed() {
             focusable.request_focus(FocusOrigin::Pointer);
         }
 

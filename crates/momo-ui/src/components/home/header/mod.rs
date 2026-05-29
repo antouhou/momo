@@ -268,7 +268,7 @@ impl Component for HeaderAppsButton {
 
         focusable.set_focus_key(home_top_row_apps_focus_key());
 
-        if pointer.just_entered() || pointer.just_pressed() {
+        if pointer.just_pressed() {
             focusable.request_focus(FocusOrigin::Pointer);
         }
 
@@ -331,14 +331,18 @@ fn header_indicator_surface(target: Option<HeaderMenuTarget>, is_focused: bool) 
     }
 }
 
-fn header_apps_button_text_color(state: HeaderButtonState) -> Color {
-    if state.is_pressed || state.is_hovered || state.is_focused {
+pub(super) fn header_button_foreground_color(state: HeaderButtonState) -> Color {
+    if state.is_pressed || state.is_focused {
         interactive_text_color()
-    } else if state.is_active {
+    } else if state.is_hovered || state.is_active {
         active_text_color()
     } else {
         inactive_text_color()
     }
+}
+
+fn header_apps_button_text_color(state: HeaderButtonState) -> Color {
+    header_button_foreground_color(state)
 }
 
 fn selected_indicator_color() -> Color {

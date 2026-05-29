@@ -136,7 +136,7 @@ impl Component for SettingsTileButton {
         focusable.set_preferred_focus(self.spec.is_preferred_focus);
         focusable.set_navigation_enabled(is_main_view);
 
-        if pointer.just_entered() || pointer.just_pressed() {
+        if pointer.just_pressed() {
             focusable.request_focus(FocusOrigin::Pointer);
         }
 

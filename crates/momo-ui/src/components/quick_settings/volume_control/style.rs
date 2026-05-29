@@ -1,13 +1,15 @@
 use super::super::common::QuickSettingsControlState;
 use super::super::style::{
-    CONTROL_TRANSITION_MS, SETTINGS_COMPACT_CONTENT_GAP, SETTINGS_ICON_FRAME_SIZE,
-    SETTINGS_MENU_GAP, SETTINGS_STATUS_CHIP_PADDING, SETTINGS_TILE_HEIGHT, SETTINGS_TILE_PADDING,
-    SETTINGS_VOLUME_SLIDER_ROW_HEIGHT, TILE_RADIUS, settings_label_text_style,
-    settings_surface_border_color, settings_surface_border_hover_color, settings_surface_color,
-    settings_surface_hover_color, settings_text_color,
+    settings_button_focus_transform, settings_label_text_style, settings_surface_border_color,
+    settings_surface_border_focus_color, settings_surface_border_hover_color,
+    settings_surface_color, settings_surface_focus_color, settings_surface_hover_color,
+    settings_text_color, CONTROL_TRANSITION_MS, SETTINGS_COMPACT_CONTENT_GAP,
+    SETTINGS_ICON_FRAME_SIZE, SETTINGS_MENU_GAP, SETTINGS_MENU_INNER_WIDTH,
+    SETTINGS_STATUS_CHIP_PADDING, SETTINGS_TILE_HEIGHT, SETTINGS_TILE_PADDING,
+    SETTINGS_VOLUME_SLIDER_ROW_HEIGHT, TILE_RADIUS,
 };
 use daiko::animation::easing::EasingFunction;
-use daiko::animation::{AnimationParameters, transition};
+use daiko::animation::{transition, AnimationParameters};
 use daiko::component::ComponentContext;
 use daiko::layout::{AlignItems, FlexDirection, ItemSize, JustifyContent};
 use daiko::style::{Border, BorderRadius, CursorIcon, Indent, Stroke, Style};
@@ -25,12 +27,16 @@ pub(crate) fn volume_control_style(
     state: QuickSettingsControlState,
     ctx: &mut ComponentContext,
 ) -> Style {
-    let background = if state.is_highlighted() {
+    let background = if state.is_focused {
+        settings_surface_focus_color()
+    } else if state.is_hovered {
         settings_surface_hover_color()
     } else {
         settings_surface_color()
     };
-    let border_color = if state.is_highlighted() {
+    let border_color = if state.is_focused {
+        settings_surface_border_focus_color()
+    } else if state.is_hovered {
         settings_surface_border_hover_color()
     } else {
         settings_surface_border_color()
@@ -43,6 +49,12 @@ pub(crate) fn volume_control_style(
         .with_justify_content(JustifyContent::Center)
         .with_padding(VOLUME_CONTROL_PADDING)
         .with_spacing((SETTINGS_COMPACT_CONTENT_GAP, SETTINGS_COMPACT_CONTENT_GAP))
+        .with_transform(Some(settings_button_focus_transform(
+            SETTINGS_MENU_INNER_WIDTH,
+            SETTINGS_TILE_HEIGHT,
+            state.is_focused,
+            ctx,
+        )))
         .with_background_color(transition(
             background,
             AnimationParameters::default()

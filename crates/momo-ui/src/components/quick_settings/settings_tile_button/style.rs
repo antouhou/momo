@@ -1,13 +1,14 @@
 use super::super::common::QuickSettingsControlState;
 use super::super::style::{
+    settings_button_focus_transform, settings_label_text_style, settings_surface_border_color,
+    settings_surface_border_focus_color, settings_surface_border_hover_color,
+    settings_surface_color, settings_surface_focus_color, settings_surface_hover_color,
+    settings_text_color, settings_tile_icon_background_color, settings_tile_icon_border_color,
     CONTROL_TRANSITION_MS, SETTINGS_TILE_CONTENT_GAP, SETTINGS_TILE_HEIGHT, SETTINGS_TILE_PADDING,
-    SETTINGS_TILE_TEXT_HEIGHT, SETTINGS_TILE_WIDTH, TILE_RADIUS, settings_label_text_style,
-    settings_surface_border_color, settings_surface_border_hover_color, settings_surface_color,
-    settings_surface_hover_color, settings_text_color, settings_tile_icon_background_color,
-    settings_tile_icon_border_color,
+    SETTINGS_TILE_TEXT_HEIGHT, SETTINGS_TILE_WIDTH, TILE_RADIUS,
 };
 use daiko::animation::easing::EasingFunction;
-use daiko::animation::{AnimationParameters, transition};
+use daiko::animation::{transition, AnimationParameters};
 use daiko::component::ComponentContext;
 use daiko::layout::{AlignItems, FlexDirection, ItemSize, JustifyContent};
 use daiko::style::{Border, BorderRadius, CursorIcon, Stroke, Style};
@@ -34,12 +35,16 @@ pub(crate) fn settings_tile_button_style(
     state: QuickSettingsControlState,
     ctx: &mut ComponentContext,
 ) -> Style {
-    let background = if state.is_highlighted() {
+    let background = if state.is_focused {
+        settings_surface_focus_color()
+    } else if state.is_hovered {
         settings_surface_hover_color()
     } else {
         settings_surface_color()
     };
-    let border_color = if state.is_highlighted() {
+    let border_color = if state.is_focused {
+        settings_surface_border_focus_color()
+    } else if state.is_hovered {
         settings_surface_border_hover_color()
     } else {
         settings_surface_border_color()
@@ -50,6 +55,12 @@ pub(crate) fn settings_tile_button_style(
         .with_direction(FlexDirection::Row)
         .with_align_items(AlignItems::Center)
         .with_padding(SETTINGS_TILE_PADDING)
+        .with_transform(Some(settings_button_focus_transform(
+            SETTINGS_TILE_WIDTH,
+            SETTINGS_TILE_HEIGHT,
+            state.is_focused,
+            ctx,
+        )))
         .with_background_color(transition(
             background,
             AnimationParameters::default()

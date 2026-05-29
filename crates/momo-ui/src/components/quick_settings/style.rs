@@ -1,5 +1,9 @@
-use daiko::style::{Color, Indent};
+use daiko::animation::easing::EasingFunction;
+use daiko::animation::{transition, AnimationParameters};
+use daiko::component::ComponentContext;
+use daiko::style::{Color, Indent, Transform};
 use daiko::widgets::text::{TextStyle, TextWrap, Weight};
+use std::time::Duration;
 
 pub(crate) const SETTINGS_MENU_WIDTH: f32 = 392.0;
 pub(crate) const SETTINGS_MENU_EDGE_MARGIN: f32 = 40.0;
@@ -56,6 +60,8 @@ pub(crate) const SETTINGS_SUBMENU_SWITCH_HEIGHT: f32 = 32.0;
 pub(crate) const SETTINGS_SUBMENU_SWITCH_KNOB_SIZE: f32 = 24.0;
 pub(crate) const SETTINGS_SUBMENU_SWITCH_INSET: f32 = 4.0;
 pub(crate) const SETTINGS_SUBMENU_SWITCH_KNOB_Y: f32 = 4.0;
+pub(crate) const SETTINGS_BUTTON_FOCUS_SCALE: f32 = 1.015;
+pub(crate) const SETTINGS_BUTTON_FOCUS_LIFT_Y: f32 = -1.0;
 pub(crate) const SETTINGS_SUBMENU_TOGGLE_PADDING: Indent =
     Indent::new(0.0, 0.0, SETTINGS_SUBMENU_TRAILING_CONTROL_PADDING, 0.0);
 pub(crate) const SETTINGS_SUBMENU_DEVICE_ICON_RING_SIZE: f32 = 32.0;
@@ -79,12 +85,20 @@ pub(crate) fn settings_surface_hover_color() -> Color {
     Color::from_rgb(38, 42, 46)
 }
 
+pub(crate) fn settings_surface_focus_color() -> Color {
+    Color::from_rgb(46, 51, 56)
+}
+
 pub(crate) fn settings_surface_border_color() -> Color {
     Color::from_rgba_unmultiplied(255, 255, 255, 28)
 }
 
 pub(crate) fn settings_surface_border_hover_color() -> Color {
     Color::from_rgba_unmultiplied(255, 255, 255, 92)
+}
+
+pub(crate) fn settings_surface_border_focus_color() -> Color {
+    Color::from_rgba_unmultiplied(255, 255, 255, 136)
 }
 
 pub(crate) fn settings_surface_muted_color() -> Color {
@@ -111,8 +125,16 @@ pub(crate) fn settings_bright_surface_color() -> Color {
     Color::from_rgb(236, 240, 243)
 }
 
+pub(crate) fn settings_bright_surface_focus_color() -> Color {
+    Color::from_rgb(244, 246, 249)
+}
+
 pub(crate) fn settings_bright_surface_border_color() -> Color {
     Color::from_rgba_unmultiplied(255, 255, 255, 138)
+}
+
+pub(crate) fn settings_bright_surface_border_focus_color() -> Color {
+    Color::from_rgba_unmultiplied(255, 255, 255, 196)
 }
 
 pub(crate) fn settings_label_text_style(color: Color) -> TextStyle {
@@ -155,6 +177,14 @@ pub(crate) fn settings_warning_text_color() -> Color {
     Color::from_rgb(255, 232, 153)
 }
 
+pub(crate) fn settings_danger_surface_focus_color() -> Color {
+    Color::from_rgb(108, 37, 50)
+}
+
+pub(crate) fn settings_danger_surface_border_focus_color() -> Color {
+    Color::from_rgba_unmultiplied(255, 189, 198, 220)
+}
+
 pub(crate) fn settings_emphasized_surface_color() -> Color {
     Color::from_rgb(56, 61, 68)
 }
@@ -163,12 +193,16 @@ pub(crate) fn settings_emphasized_surface_hover_color() -> Color {
     Color::from_rgb(72, 78, 86)
 }
 
+pub(crate) fn settings_emphasized_surface_focus_color() -> Color {
+    Color::from_rgb(82, 88, 97)
+}
+
 pub(crate) fn settings_emphasized_surface_border_color() -> Color {
     Color::from_rgba_unmultiplied(255, 255, 255, 52)
 }
 
-pub(crate) fn settings_emphasized_surface_border_hover_color() -> Color {
-    Color::from_rgba_unmultiplied(255, 255, 255, 132)
+pub(crate) fn settings_emphasized_surface_border_focus_color() -> Color {
+    Color::from_rgba_unmultiplied(255, 255, 255, 176)
 }
 
 pub(crate) fn settings_tile_icon_background_color(is_active: bool) -> Color {
@@ -217,4 +251,41 @@ pub(crate) fn settings_danger_text_color() -> Color {
 
 pub(crate) fn settings_volume_thumb_border_color() -> Color {
     Color::from_rgba_unmultiplied(255, 255, 255, 110)
+}
+
+pub(crate) fn settings_button_focus_transform(
+    width: f32,
+    height: f32,
+    is_focused: bool,
+    ctx: &mut ComponentContext,
+) -> Transform {
+    let scale = transition(
+        if is_focused {
+            SETTINGS_BUTTON_FOCUS_SCALE
+        } else {
+            1.0
+        },
+        AnimationParameters::default()
+            .with_duration(Duration::from_millis(CONTROL_TRANSITION_MS))
+            .with_easing(EasingFunction::EaseOut)
+            .to_transition_options(),
+        ctx,
+    );
+    let lift_y = transition(
+        if is_focused {
+            SETTINGS_BUTTON_FOCUS_LIFT_Y
+        } else {
+            0.0
+        },
+        AnimationParameters::default()
+            .with_duration(Duration::from_millis(CONTROL_TRANSITION_MS))
+            .with_easing(EasingFunction::EaseOut)
+            .to_transition_options(),
+        ctx,
+    );
+
+    Transform::new()
+        .with_origin(width * 0.5, height * 0.5)
+        .then_scale(scale, scale)
+        .then_translate(0.0, lift_y)
 }

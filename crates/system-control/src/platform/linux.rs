@@ -502,7 +502,7 @@ async fn handle_command(
                 }
             },
             Err(error) => {
-                finish_operation_with_error(inner, Some(operation_id), error);
+                finish_operation_with_error(inner, Some(operation_id), error.to_string());
             }
         },
         BluetoothCommand::DisconnectDevice {
@@ -519,7 +519,7 @@ async fn handle_command(
                 }
             },
             Err(error) => {
-                finish_operation_with_error(inner, Some(operation_id), error);
+                finish_operation_with_error(inner, Some(operation_id), error.to_string());
             }
         },
     }

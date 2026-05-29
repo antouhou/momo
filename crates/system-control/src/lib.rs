@@ -1,6 +1,8 @@
 mod bluetooth;
 mod platform;
 
+use thiserror::Error;
+
 pub use bluetooth::{
     BluetoothAdapterState, BluetoothCapabilities, BluetoothConnectionState, BluetoothDevice,
     BluetoothDeviceCategory, BluetoothDeviceId, BluetoothDiscoveryState, BluetoothFeatureState,
@@ -27,22 +29,8 @@ impl SystemControl {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum SystemControlError {
+    #[error("failed to spawn system control runtime thread: {message}")]
     RuntimeThreadSpawnFailed { message: String },
 }
-
-impl std::fmt::Display for SystemControlError {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::RuntimeThreadSpawnFailed { message } => {
-                write!(
-                    formatter,
-                    "failed to spawn system control runtime thread: {message}"
-                )
-            }
-        }
-    }
-}
-
-impl std::error::Error for SystemControlError {}

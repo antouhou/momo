@@ -1,6 +1,15 @@
 This is a set of guidelines and rules for contributing to the project. They are intended to make collaboration easier 
 by standardizing code conventions and such.
 
+## General rules to follow when writing code:
+
+1. Use `thiserror` for error handling.
+2. Don't make files too large. If a file exceeds around 500 lines, consider splitting it into smaller modules.
+3. Create tests in a separate `tests` file. Writing tests in the same file makes it a bit harder to review.
+4. Run cargo clippy and cargo fmt before commiting.
+
+## Rules for UI development:
+
 1. When working on UI, always put new components in a separate module and create a style.rs file for it.
 2. Reuse colors and constants as much as possible. If you notice that a particular constant would benefit from
 lifting it up in the module tree, do so.

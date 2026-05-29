@@ -1,10 +1,25 @@
 use std::str::FromStr;
 
 use bluer::{Adapter, Device};
+use thiserror::Error;
 
 use crate::bluetooth::{
     BluetoothConnectionState, BluetoothDevice, BluetoothDeviceCategory, BluetoothDeviceId,
 };
+
+#[derive(Debug, Error)]
+pub(super) enum LinuxBluetoothDeviceError {
+    #[error("invalid Bluetooth device identifier {device_identifier}: {message}")]
+    InvalidIdentifier {
+        device_identifier: String,
+        message: String,
+    },
+    #[error("failed to access Bluetooth device {device_identifier}: {message}")]
+    OpenDevice {
+        device_identifier: String,
+        message: String,
+    },
+}
 
 pub(super) async fn load_device(
     adapter: &Adapter,
@@ -50,10 +65,19 @@ pub(super) async fn load_device(
 pub(super) fn device_from_identifier(
     adapter: &Adapter,
     device_identifier: &BluetoothDeviceId,
-) -> Result<Device, String> {
-    let address =
-        bluer::Address::from_str(&device_identifier.0).map_err(|error| error.to_string())?;
-    adapter.device(address).map_err(|error| error.to_string())
+) -> Result<Device, LinuxBluetoothDeviceError> {
+    let address = bluer::Address::from_str(&device_identifier.0).map_err(|error| {
+        LinuxBluetoothDeviceError::InvalidIdentifier {
+            device_identifier: device_identifier.0.clone(),
+            message: error.to_string(),
+        }
+    })?;
+    adapter
+        .device(address)
+        .map_err(|error| LinuxBluetoothDeviceError::OpenDevice {
+            device_identifier: device_identifier.0.clone(),
+            message: error.to_string(),
+        })
 }
 
 pub(super) fn sort_devices(devices: &mut [BluetoothDevice]) {

@@ -39,11 +39,8 @@ pub(super) fn submenu_button_style(
         .with_padding(padding)
 }
 
-pub(super) fn submenu_button_label_style(
-    surface: SubmenuButtonSurface,
-    state: SubmenuButtonState,
-) -> TextStyle {
-    settings_label_text_style(submenu_button_foreground_color(surface, state))
+pub(super) fn submenu_button_label_style(foreground_color: Color) -> TextStyle {
+    settings_label_text_style(foreground_color)
 }
 
 pub(super) fn submenu_button_foreground_color(

@@ -2,8 +2,8 @@ mod style;
 
 use self::style::{
     DeviceRowAvailability, bluetooth_submenu_body_style, bluetooth_submenu_style,
-    submenu_device_icon_color, submenu_device_icon_ring_style, submenu_section_label_style,
-    submenu_section_style, submenu_section_title_style,
+    submenu_device_icon_color, submenu_device_icon_ring_style, submenu_device_label_color,
+    submenu_section_label_style, submenu_section_style, submenu_section_title_style,
 };
 use super::common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_element};
 use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuView};
@@ -63,7 +63,10 @@ impl Component for BluetoothSubmenu {
             ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
         let snapshot = *state.read();
         let should_go_back = focus_scope.drain_captured_actions().any(|action| {
-            matches!(action, NavigationInputAction::Cancel | NavigationInputAction::Back)
+            matches!(
+                action,
+                NavigationInputAction::Cancel | NavigationInputAction::Back
+            )
         });
 
         if snapshot.active_view == SettingsMenuView::Bluetooth && should_go_back {
@@ -159,6 +162,7 @@ impl Component for BluetoothToggleRow {
         SubmenuButton {
             tag: BLUETOOTH_TOGGLE_TAG.to_string(),
             label: "Bluetooth".to_string(),
+            label_color: None,
             control,
             surface: SubmenuButtonSurface::Standard,
             state: if toggle_enabled {
@@ -196,6 +200,7 @@ impl Component for BluetoothSettingsButton {
         SubmenuButton {
             tag: BLUETOOTH_SETTINGS_BUTTON_TAG.to_string(),
             label: "Settings".to_string(),
+            label_color: None,
             control,
             surface: SubmenuButtonSurface::Emphasized,
             state: SubmenuButtonState::Enabled,
@@ -260,9 +265,10 @@ impl Component for BluetoothDeviceRow {
         SubmenuButton {
             tag: self.bluetooth_device.tag.clone(),
             label: self.bluetooth_device.display_name.clone(),
+            label_color: Some(submenu_device_label_color(availability)),
             control,
             surface: SubmenuButtonSurface::Standard,
-            state: button_state_for_device(availability),
+            state: button_state_for_device(self.is_bluetooth_enabled),
             leading: submenu_button_leading_slot(
                 Element::new()
                     .with_style(submenu_device_icon_ring_style(availability, ctx))
@@ -348,6 +354,7 @@ impl Component for BluetoothPlaceholderRow {
         SubmenuButton {
             tag: self.tag.to_string(),
             label: self.label.to_string(),
+            label_color: None,
             control: QuickSettingsControlState {
                 is_hovered: false,
                 is_focused: false,
@@ -373,20 +380,19 @@ fn effective_device_availability(
         DeviceRowAvailability::Unavailable
     } else {
         match bluetooth_device.connection_state {
-            BluetoothConnectionState::Connected
-            | BluetoothConnectionState::Connecting { .. }
-            | BluetoothConnectionState::Disconnecting { .. } => DeviceRowAvailability::Connected,
+            BluetoothConnectionState::Connected => DeviceRowAvailability::Connected,
+            BluetoothConnectionState::Connecting { .. } => DeviceRowAvailability::Connecting,
+            BluetoothConnectionState::Disconnecting { .. } => DeviceRowAvailability::Disconnecting,
             BluetoothConnectionState::Disconnected => DeviceRowAvailability::Available,
         }
     }
 }
 
-fn button_state_for_device(availability: DeviceRowAvailability) -> SubmenuButtonState {
-    match availability {
-        DeviceRowAvailability::Connected | DeviceRowAvailability::Available => {
-            SubmenuButtonState::Enabled
-        }
-        DeviceRowAvailability::Unavailable => SubmenuButtonState::Disabled,
+fn button_state_for_device(is_bluetooth_enabled: bool) -> SubmenuButtonState {
+    if is_bluetooth_enabled {
+        SubmenuButtonState::Enabled
+    } else {
+        SubmenuButtonState::Disabled
     }
 }
 

@@ -42,7 +42,7 @@ impl Component for VolumeControl {
 
         focusable.set_navigation_enabled(is_active);
 
-        if pointer.just_entered() || pointer.just_pressed() {
+        if pointer.just_pressed() {
             focusable.request_focus(FocusOrigin::Pointer);
         }
 

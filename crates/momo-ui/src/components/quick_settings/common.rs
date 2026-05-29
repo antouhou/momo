@@ -46,7 +46,7 @@ pub(super) fn control_state(ctx: &mut ComponentContext) -> QuickSettingsControlS
     let mut pointer = ctx.pointer();
     let focusable = ctx.focusable();
 
-    if pointer.just_entered() || pointer.just_pressed() {
+    if pointer.just_pressed() {
         focusable.request_focus(FocusOrigin::Pointer);
     }
 

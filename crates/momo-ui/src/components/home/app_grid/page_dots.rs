@@ -156,6 +156,9 @@ impl Component for PageDot {
 
         if !self.interactions_disabled && pointer.just_entered() {
             *hovered_page.write_silent() = Some(self.page_index);
+        }
+
+        if !self.interactions_disabled && pointer.just_pressed() {
             focusable.request_focus(FocusOrigin::Pointer);
         }
 

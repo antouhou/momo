@@ -1,3 +1,5 @@
+use std::cmp::Reverse;
+
 use crate::components::home::model::{
     HOME_BLUETOOTH_HANDLE_ID, HOME_BLUETOOTH_OBSERVATION_ID, HOME_BLUETOOTH_STATE_ID,
 };
@@ -93,21 +95,12 @@ fn build_bluetooth_state(feature_state: BluetoothFeatureState) -> BluetoothState
                 BluetoothPowerState::On | BluetoothPowerState::TurningOn { .. }
             );
             let can_toggle_power = state.adapter.capabilities.can_change_power;
-            let recent_devices = state
-                .devices
-                .iter()
-                .filter(|device| device.is_paired || is_device_connected(device))
+            let recent_devices = sorted_recent_devices(&state.devices)
+                .into_iter()
                 .map(build_bluetooth_device_state)
                 .collect();
-            let nearby_devices = state
-                .devices
-                .iter()
-                .filter(|device| {
-                    !device.is_paired
-                        && !is_device_connected(device)
-                        && device.signal_strength_dbm.is_some()
-                        && has_presentable_device_name(&device.display_name)
-                })
+            let nearby_devices = sorted_nearby_devices(&state.devices)
+                .into_iter()
                 .map(build_bluetooth_device_state)
                 .collect();
 
@@ -154,6 +147,24 @@ fn bluetooth_device_tag(device: &BluetoothDevice) -> String {
     )
 }
 
+fn sorted_recent_devices(devices: &[BluetoothDevice]) -> Vec<&BluetoothDevice> {
+    let mut recent_devices = devices
+        .iter()
+        .filter(|device| is_recent_device(device))
+        .collect::<Vec<_>>();
+    recent_devices.sort_by_key(|device| !is_device_connected(device));
+    recent_devices
+}
+
+fn sorted_nearby_devices(devices: &[BluetoothDevice]) -> Vec<&BluetoothDevice> {
+    let mut nearby_devices = devices
+        .iter()
+        .filter(|device| is_nearby_device(device))
+        .collect::<Vec<_>>();
+    nearby_devices.sort_by_key(|device| Reverse(device.signal_strength_dbm));
+    nearby_devices
+}
+
 fn is_device_connected(device: &BluetoothDevice) -> bool {
     matches!(
         device.connection_state,
@@ -161,6 +172,17 @@ fn is_device_connected(device: &BluetoothDevice) -> bool {
             | BluetoothConnectionState::Connecting { .. }
             | BluetoothConnectionState::Disconnecting { .. }
     )
+}
+
+fn is_recent_device(device: &BluetoothDevice) -> bool {
+    device.is_paired || is_device_connected(device)
+}
+
+fn is_nearby_device(device: &BluetoothDevice) -> bool {
+    !device.is_paired
+        && !is_device_connected(device)
+        && device.signal_strength_dbm.is_some()
+        && has_presentable_device_name(&device.display_name)
 }
 
 fn has_presentable_device_name(display_name: &str) -> bool {

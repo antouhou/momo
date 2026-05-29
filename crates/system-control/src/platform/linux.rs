@@ -8,6 +8,7 @@ use std::thread::JoinHandle;
 use bluer::{Adapter, AdapterEvent, DeviceEvent};
 use futures_util::StreamExt;
 use tokio::runtime::Builder;
+use tokio::sync::Mutex as AsyncMutex;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender, unbounded_channel};
 use tracing::{debug, warn};
 
@@ -44,6 +45,11 @@ struct BackendState {
     current_state: Mutex<BluetoothFeatureState>,
     observers: Mutex<BTreeMap<u64, Arc<Mutex<ObserverCallback>>>>,
     next_observer_id: AtomicU64,
+}
+
+struct RuntimeTaskState {
+    device_watchers: AsyncMutex<BTreeMap<BluetoothDeviceId, tokio::task::JoinHandle<()>>>,
+    discovery_task: AsyncMutex<Option<tokio::task::JoinHandle<()>>>,
 }
 
 enum RuntimeMessage {
@@ -91,7 +97,8 @@ impl PlatformBluetoothHandle {
         let runtime_thread = std::thread::Builder::new()
             .name("system-control-linux-bluetooth".to_string())
             .spawn(move || {
-                let runtime = Builder::new_current_thread()
+                let runtime = Builder::new_multi_thread()
+                    .worker_threads(2)
                     .enable_all()
                     .build()
                     .expect("failed to build tokio runtime");
@@ -347,10 +354,13 @@ async fn run_linux_bluetooth_runtime(
         }
     };
 
-    let mut device_watchers = BTreeMap::<BluetoothDeviceId, tokio::task::JoinHandle<()>>::new();
-    let mut discovery_task: Option<tokio::task::JoinHandle<()>> = None;
+    let adapter = Arc::new(adapter);
+    let runtime_state = Arc::new(RuntimeTaskState {
+        device_watchers: AsyncMutex::new(BTreeMap::new()),
+        discovery_task: AsyncMutex::new(None),
+    });
 
-    let initial_state = match load_full_state(&adapter, 0, Vec::new(), None).await {
+    let initial_state = match load_current_state(adapter.as_ref()).await {
         Ok(state) => state,
         Err(error) => {
             inner.publish(FeatureState::Unavailable(
@@ -361,47 +371,71 @@ async fn run_linux_bluetooth_runtime(
             return;
         }
     };
+    let mut device_watchers = runtime_state.device_watchers.lock().await;
     for device in &initial_state.devices {
         spawn_device_watcher(
-            &adapter,
+            adapter.as_ref(),
             &runtime_sender,
             &mut device_watchers,
             device.device_identifier.clone(),
-        )
-        .await;
+        );
     }
-    inner.publish(FeatureState::Ready(initial_state));
+    drop(device_watchers);
+    inner.publish(FeatureState::Ready(BluetoothState {
+        revision: 1,
+        ..initial_state
+    }));
 
-    spawn_adapter_watcher(&adapter, &runtime_sender).await;
+    spawn_adapter_watcher(adapter.as_ref(), &runtime_sender).await;
 
     while let Some(message) = command_receiver.recv().await {
         match message {
             RuntimeMessage::Command(command) => {
-                handle_command(
-                    &inner,
-                    &adapter,
-                    &runtime_sender,
-                    &mut device_watchers,
-                    &mut discovery_task,
-                    command,
-                )
-                .await;
+                let inner = inner.clone();
+                let adapter = adapter.clone();
+                let runtime_sender = runtime_sender.clone();
+                let runtime_state = runtime_state.clone();
+                tokio::spawn(async move {
+                    handle_command(
+                        &inner,
+                        adapter.as_ref(),
+                        &runtime_sender,
+                        &runtime_state,
+                        command,
+                    )
+                    .await;
+                });
             }
             RuntimeMessage::AdapterEvent(event) | RuntimeMessage::DiscoveryEvent(event) => {
-                handle_adapter_event(
-                    &inner,
-                    &adapter,
-                    &runtime_sender,
-                    &mut device_watchers,
-                    event,
-                )
-                .await;
+                let inner = inner.clone();
+                let adapter = adapter.clone();
+                let runtime_sender = runtime_sender.clone();
+                let runtime_state = runtime_state.clone();
+                tokio::spawn(async move {
+                    handle_adapter_event(
+                        &inner,
+                        adapter.as_ref(),
+                        &runtime_sender,
+                        &runtime_state,
+                        event,
+                    )
+                    .await;
+                });
             }
             RuntimeMessage::DeviceEvent { device_identifier } => {
-                refresh_device_from_identifier(&inner, &adapter, device_identifier).await;
+                let inner = inner.clone();
+                let adapter = adapter.clone();
+                tokio::spawn(async move {
+                    refresh_device_from_identifier(&inner, adapter.as_ref(), device_identifier)
+                        .await;
+                });
             }
             RuntimeMessage::DeviceEventsEnded { device_identifier } => {
-                device_watchers.remove(&device_identifier);
+                runtime_state
+                    .device_watchers
+                    .lock()
+                    .await
+                    .remove(&device_identifier);
             }
             RuntimeMessage::AdapterEventsEnded => {
                 warn!("bluetooth adapter event stream ended");
@@ -415,9 +449,11 @@ async fn run_linux_bluetooth_runtime(
                 debug!("bluetooth discovery task ended");
             }
             RuntimeMessage::Shutdown => {
-                if let Some(task) = discovery_task.take() {
+                if let Some(task) = runtime_state.discovery_task.lock().await.take() {
                     task.abort();
                 }
+                let device_watchers =
+                    std::mem::take(&mut *runtime_state.device_watchers.lock().await);
                 for watcher in device_watchers.into_values() {
                     watcher.abort();
                 }
@@ -431,8 +467,7 @@ async fn handle_command(
     inner: &Arc<BackendState>,
     adapter: &Adapter,
     runtime_sender: &UnboundedSender<RuntimeMessage>,
-    device_watchers: &mut BTreeMap<BluetoothDeviceId, tokio::task::JoinHandle<()>>,
-    discovery_task: &mut Option<tokio::task::JoinHandle<()>>,
+    runtime_state: &Arc<RuntimeTaskState>,
     command: BluetoothCommand,
 ) {
     apply_pending_operation(inner, command.operation_id(), command.pending_operation());
@@ -443,7 +478,8 @@ async fn handle_command(
             is_enabled,
         } => match adapter.set_powered(is_enabled).await {
             Ok(()) => {
-                if !is_enabled && let Some(task) = discovery_task.take() {
+                if !is_enabled && let Some(task) = runtime_state.discovery_task.lock().await.take()
+                {
                     task.abort();
                 }
                 refresh_adapter_state(inner, adapter, Some(operation_id), None).await;
@@ -453,6 +489,7 @@ async fn handle_command(
             }
         },
         BluetoothCommand::StartDiscovery { operation_id } => {
+            let mut discovery_task = runtime_state.discovery_task.lock().await;
             if discovery_task.is_none() {
                 match adapter.discover_devices_with_changes().await {
                     Ok(mut discovery_stream) => {
@@ -465,18 +502,21 @@ async fn handle_command(
                             }
                             let _ = sender.send(RuntimeMessage::DiscoveryEnded);
                         }));
+                        drop(discovery_task);
                         refresh_adapter_state(inner, adapter, Some(operation_id), None).await;
                     }
                     Err(error) => {
+                        drop(discovery_task);
                         finish_operation_with_error(inner, Some(operation_id), error.to_string());
                     }
                 }
             } else {
+                drop(discovery_task);
                 refresh_adapter_state(inner, adapter, Some(operation_id), None).await;
             }
         }
         BluetoothCommand::StopDiscovery { operation_id } => {
-            if let Some(task) = discovery_task.take() {
+            if let Some(task) = runtime_state.discovery_task.lock().await.take() {
                 task.abort();
             }
             refresh_adapter_state(inner, adapter, Some(operation_id), None).await;
@@ -487,13 +527,13 @@ async fn handle_command(
         } => match device_from_identifier(adapter, &device_identifier) {
             Ok(device) => match device.connect().await {
                 Ok(()) => {
+                    let mut device_watchers = runtime_state.device_watchers.lock().await;
                     spawn_device_watcher(
                         adapter,
                         runtime_sender,
-                        device_watchers,
+                        &mut device_watchers,
                         device_identifier.clone(),
-                    )
-                    .await;
+                    );
                     refresh_device(adapter, inner, device_identifier, Some(operation_id), None)
                         .await;
                 }
@@ -529,7 +569,7 @@ async fn handle_adapter_event(
     inner: &Arc<BackendState>,
     adapter: &Adapter,
     runtime_sender: &UnboundedSender<RuntimeMessage>,
-    device_watchers: &mut BTreeMap<BluetoothDeviceId, tokio::task::JoinHandle<()>>,
+    runtime_state: &Arc<RuntimeTaskState>,
     event: AdapterEvent,
 ) {
     match event {
@@ -538,22 +578,37 @@ async fn handle_adapter_event(
         }
         AdapterEvent::DeviceAdded(address) => {
             let device_identifier = BluetoothDeviceId(address.to_string());
+            let mut device_watchers = runtime_state.device_watchers.lock().await;
             spawn_device_watcher(
                 adapter,
                 runtime_sender,
-                device_watchers,
+                &mut device_watchers,
                 device_identifier.clone(),
-            )
-            .await;
+            );
+            drop(device_watchers);
             refresh_device(adapter, inner, device_identifier, None, None).await;
         }
         AdapterEvent::DeviceRemoved(address) => {
             let device_identifier = BluetoothDeviceId(address.to_string());
-            if let Some(task) = device_watchers.remove(&device_identifier) {
+            if let Some(task) = runtime_state
+                .device_watchers
+                .lock()
+                .await
+                .remove(&device_identifier)
+            {
                 task.abort();
             }
-            refresh_device(adapter, inner, device_identifier.clone(), None, None).await;
-            spawn_device_watcher(adapter, runtime_sender, device_watchers, device_identifier).await;
+            let is_device_present =
+                refresh_device(adapter, inner, device_identifier.clone(), None, None).await;
+            if is_device_present {
+                let mut device_watchers = runtime_state.device_watchers.lock().await;
+                spawn_device_watcher(
+                    adapter,
+                    runtime_sender,
+                    &mut device_watchers,
+                    device_identifier,
+                );
+            }
         }
     }
 }
@@ -580,7 +635,7 @@ async fn spawn_adapter_watcher(
     }
 }
 
-async fn spawn_device_watcher(
+fn spawn_device_watcher(
     adapter: &Adapter,
     runtime_sender: &UnboundedSender<RuntimeMessage>,
     device_watchers: &mut BTreeMap<BluetoothDeviceId, tokio::task::JoinHandle<()>>,
@@ -630,12 +685,7 @@ async fn spawn_device_watcher(
     device_watchers.insert(device_identifier, watcher_task);
 }
 
-async fn load_full_state(
-    adapter: &Adapter,
-    previous_revision: u64,
-    pending_operations: Vec<BluetoothPendingOperation>,
-    last_error: Option<BluetoothUserVisibleError>,
-) -> bluer::Result<BluetoothState> {
+async fn load_current_state(adapter: &Adapter) -> bluer::Result<BluetoothState> {
     let adapter_identifier = adapter.name().to_string();
     let adapter_name = Some(adapter.name().to_string());
     let is_powered = adapter.is_powered().await?;
@@ -649,7 +699,7 @@ async fn load_full_state(
     }
     sort_devices(&mut devices);
 
-    let mut state = BluetoothState {
+    Ok(BluetoothState {
         adapter: BluetoothAdapterState {
             adapter_identifier,
             adapter_name,
@@ -670,13 +720,10 @@ async fn load_full_state(
             },
         },
         devices,
-        pending_operations,
-        last_error,
-        revision: previous_revision.saturating_add(1),
-    };
-    apply_pending_states(&mut state);
-
-    Ok(state)
+        pending_operations: Vec::new(),
+        last_error: None,
+        revision: 0,
+    })
 }
 
 async fn refresh_adapter_state(
@@ -685,26 +732,21 @@ async fn refresh_adapter_state(
     completed_operation_id: Option<BluetoothOperationId>,
     last_error: Option<BluetoothUserVisibleError>,
 ) {
-    let current_state = inner.current_state();
-    let FeatureState::Ready(current_ready_state) = current_state else {
-        return;
-    };
+    match load_current_state(adapter).await {
+        Ok(mut next_state) => {
+            let current_state = inner.current_state();
+            let FeatureState::Ready(current_ready_state) = current_state else {
+                return;
+            };
 
-    let pending_operations = current_ready_state
-        .pending_operations
-        .into_iter()
-        .filter(|operation| Some(operation.operation_id) != completed_operation_id)
-        .collect::<Vec<_>>();
-
-    match load_full_state(
-        adapter,
-        current_ready_state.revision,
-        pending_operations,
-        last_error.or(current_ready_state.last_error),
-    )
-    .await
-    {
-        Ok(next_state) => inner.publish(FeatureState::Ready(next_state)),
+            finalize_ready_state(
+                &mut next_state,
+                &current_ready_state,
+                completed_operation_id,
+                last_error,
+            );
+            inner.publish(FeatureState::Ready(next_state));
+        }
         Err(error) => {
             finish_operation_with_error(inner, completed_operation_id, error.to_string());
         }
@@ -717,23 +759,83 @@ async fn refresh_device(
     device_identifier: BluetoothDeviceId,
     completed_operation_id: Option<BluetoothOperationId>,
     next_error: Option<BluetoothUserVisibleError>,
-) {
+) -> bool {
+    let updated_device = load_device(adapter, device_identifier.0.clone()).await;
     let current_state = inner.current_state();
     let FeatureState::Ready(mut ready_state) = current_state else {
-        return;
+        return false;
     };
 
-    if let Some(updated_device) = load_device(adapter, device_identifier.0.clone()).await {
+    let is_device_present = apply_device_refresh_result(
+        &mut ready_state,
+        &device_identifier,
+        updated_device,
+        completed_operation_id,
+    );
+
+    let current_ready_state = ready_state.clone();
+    finalize_ready_state(
+        &mut ready_state,
+        &current_ready_state,
+        completed_operation_id,
+        next_error,
+    );
+    inner.publish(FeatureState::Ready(ready_state));
+
+    is_device_present
+}
+
+fn apply_device_refresh_result(
+    ready_state: &mut BluetoothState,
+    device_identifier: &BluetoothDeviceId,
+    updated_device: Option<BluetoothDevice>,
+    completed_operation_id: Option<BluetoothOperationId>,
+) -> bool {
+    let completed_operation_kind = completed_operation_id.and_then(|operation_id| {
+        ready_state
+            .pending_operations
+            .iter()
+            .find(|operation| operation.operation_id == operation_id)
+            .map(|operation| operation.kind.clone())
+    });
+
+    if let Some(updated_device) = updated_device {
         upsert_device(&mut ready_state.devices, updated_device);
+        return true;
     }
 
-    ready_state
+    if matches!(
+        completed_operation_kind,
+        Some(BluetoothOperationKind::DisconnectDevice {
+            device_identifier: ref pending_device_identifier,
+        }) if pending_device_identifier == device_identifier
+    ) && let Some(device) = ready_state
+        .devices
+        .iter_mut()
+        .find(|device| &device.device_identifier == device_identifier)
+    {
+        device.connection_state = BluetoothConnectionState::Disconnected;
+        device.signal_strength_dbm = None;
+    }
+
+    false
+}
+
+fn finalize_ready_state(
+    next_state: &mut BluetoothState,
+    current_ready_state: &BluetoothState,
+    completed_operation_id: Option<BluetoothOperationId>,
+    next_error: Option<BluetoothUserVisibleError>,
+) {
+    next_state.pending_operations = current_ready_state
         .pending_operations
-        .retain(|operation| Some(operation.operation_id) != completed_operation_id);
-    ready_state.last_error = next_error.or(ready_state.last_error);
-    ready_state.revision = ready_state.revision.saturating_add(1);
-    apply_pending_states(&mut ready_state);
-    inner.publish(FeatureState::Ready(ready_state));
+        .iter()
+        .filter(|operation| Some(operation.operation_id) != completed_operation_id)
+        .cloned()
+        .collect();
+    next_state.last_error = next_error.or(current_ready_state.last_error.clone());
+    next_state.revision = current_ready_state.revision.saturating_add(1);
+    apply_pending_states(next_state);
 }
 
 async fn refresh_device_from_identifier(

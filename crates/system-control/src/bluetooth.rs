@@ -1,5 +1,6 @@
 use crate::SystemControlError;
 use crate::platform;
+use thiserror::Error;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum FeatureState<T, UnsupportedReason, UnavailableReason> {
@@ -134,12 +135,14 @@ pub enum BluetoothUnsupportedReason {
     NoBluetoothAdapterPresent,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Error, PartialEq, Eq)]
 pub enum BluetoothUnavailableReason {
+    #[error("Bluetooth backend is unavailable: {message}")]
     BackendUnavailable { message: String },
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Error, PartialEq, Eq)]
+#[error("{message}")]
 pub struct BluetoothUserVisibleError {
     pub operation_id: Option<BluetoothOperationId>,
     pub message: String,
@@ -150,10 +153,13 @@ pub struct BluetoothOperationReceipt {
     pub operation_id: BluetoothOperationId,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Error, PartialEq, Eq)]
 pub enum BluetoothRequestError {
+    #[error("Bluetooth feature is not ready")]
     FeatureNotReady,
+    #[error("Bluetooth device was not found")]
     DeviceNotFound,
+    #[error("Bluetooth runtime is unavailable")]
     RuntimeUnavailable,
 }
 

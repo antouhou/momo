@@ -143,6 +143,18 @@ pub(crate) fn settings_accent_text_color() -> Color {
     Color::from_rgb(248, 241, 255)
 }
 
+pub(crate) fn settings_warning_surface_color() -> Color {
+    Color::from_rgb(92, 74, 18)
+}
+
+pub(crate) fn settings_warning_border_color() -> Color {
+    Color::from_rgba_unmultiplied(255, 215, 96, 138)
+}
+
+pub(crate) fn settings_warning_text_color() -> Color {
+    Color::from_rgb(255, 232, 153)
+}
+
 pub(crate) fn settings_emphasized_surface_color() -> Color {
     Color::from_rgb(56, 61, 68)
 }

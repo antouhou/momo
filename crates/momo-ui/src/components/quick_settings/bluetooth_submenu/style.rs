@@ -8,7 +8,8 @@ use super::super::style::{
     settings_submenu_device_available_surface_color,
     settings_submenu_device_unavailable_border_color,
     settings_submenu_device_unavailable_surface_color, settings_surface_muted_color,
-    settings_text_color,
+    settings_text_color, settings_warning_border_color, settings_warning_surface_color,
+    settings_warning_text_color,
 };
 use daiko::animation::easing::EasingFunction;
 use daiko::animation::{AnimationParameters, transition};
@@ -21,6 +22,8 @@ use std::time::Duration;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum DeviceRowAvailability {
     Connected,
+    Connecting,
+    Disconnecting,
     Available,
     Unavailable,
 }
@@ -71,6 +74,13 @@ pub(super) fn submenu_device_icon_ring_style(
         DeviceRowAvailability::Connected => {
             (settings_accent_color(), settings_accent_border_color())
         }
+        DeviceRowAvailability::Connecting => (
+            settings_warning_surface_color(),
+            settings_warning_border_color(),
+        ),
+        DeviceRowAvailability::Disconnecting => {
+            (settings_accent_color(), settings_warning_border_color())
+        }
         DeviceRowAvailability::Available => (
             settings_submenu_device_available_surface_color(),
             settings_submenu_device_available_border_color(),
@@ -113,11 +123,28 @@ pub(super) fn submenu_device_icon_ring_style(
         ))
 }
 
+pub(super) fn submenu_device_label_color(
+    availability: DeviceRowAvailability,
+) -> daiko::style::Color {
+    match availability {
+        DeviceRowAvailability::Connected | DeviceRowAvailability::Available => {
+            settings_text_color()
+        }
+        DeviceRowAvailability::Connecting | DeviceRowAvailability::Disconnecting => {
+            settings_warning_text_color()
+        }
+        DeviceRowAvailability::Unavailable => settings_surface_muted_color(),
+    }
+}
+
 pub(super) fn submenu_device_icon_color(
     availability: DeviceRowAvailability,
 ) -> daiko::style::Color {
     match availability {
         DeviceRowAvailability::Connected => settings_accent_text_color(),
+        DeviceRowAvailability::Connecting | DeviceRowAvailability::Disconnecting => {
+            settings_warning_text_color()
+        }
         DeviceRowAvailability::Available => settings_text_color(),
         DeviceRowAvailability::Unavailable => settings_surface_muted_color(),
     }

@@ -552,7 +552,8 @@ async fn handle_adapter_event(
             if let Some(task) = device_watchers.remove(&device_identifier) {
                 task.abort();
             }
-            remove_device(inner, device_identifier);
+            refresh_device(adapter, inner, device_identifier.clone(), None, None).await;
+            spawn_device_watcher(adapter, runtime_sender, device_watchers, device_identifier).await;
         }
     }
 }
@@ -834,20 +835,6 @@ fn finish_operation_with_error(
         operation_id,
         message,
     });
-    ready_state.revision = ready_state.revision.saturating_add(1);
-    apply_pending_states(&mut ready_state);
-    inner.publish(FeatureState::Ready(ready_state));
-}
-
-fn remove_device(inner: &Arc<BackendState>, device_identifier: BluetoothDeviceId) {
-    let current_state = inner.current_state();
-    let FeatureState::Ready(mut ready_state) = current_state else {
-        return;
-    };
-
-    ready_state
-        .devices
-        .retain(|device| device.device_identifier != device_identifier);
     ready_state.revision = ready_state.revision.saturating_add(1);
     apply_pending_states(&mut ready_state);
     inner.publish(FeatureState::Ready(ready_state));

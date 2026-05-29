@@ -16,7 +16,7 @@ use crate::components::home::bluetooth::{
     BluetoothDeviceSection, BluetoothDeviceState, bluetooth_handle, bluetooth_state,
 };
 use daiko::component::{Component, ComponentContext};
-use daiko::navigation::{FocusEntryPolicy, FocusOrigin};
+use daiko::navigation::{FocusEntryPolicy, FocusOrigin, NavigationInputAction};
 use daiko::widgets::scrollable::Scrollable;
 use daiko::widgets::text::Text;
 use daiko::{Element, Id, Vec2};
@@ -24,7 +24,6 @@ use system_control::{BluetoothConnectionState, BluetoothDeviceCategory};
 use tracing::warn;
 
 const BLUETOOTH_ICON: &[u8] = include_bytes!("../../../../assets/bluetooth-b.svg");
-const CHEVRON_LEFT_ICON: &[u8] = include_bytes!("../../../../assets/chevron-left.svg");
 const KEYBOARD_ICON: &[u8] = include_bytes!("../../../../assets/keyboard.svg");
 const AUDIO_ICON: &[u8] = include_bytes!("../../../../assets/volume.svg");
 const AUDIO_FILE_ICON: &[u8] = include_bytes!("../../../../assets/file-audio.svg");
@@ -45,7 +44,6 @@ const PRINTER_ICON: &[u8] = include_bytes!("../../../../assets/print.svg");
 const SENSOR_ICON: &[u8] = include_bytes!("../../../../assets/temperature-half.svg");
 const TABLET_ICON: &[u8] = include_bytes!("../../../../assets/tablet.svg");
 
-pub(super) const BLUETOOTH_BACK_BUTTON_TAG: &str = "header-settings-bluetooth-back-button";
 pub(super) const BLUETOOTH_TOGGLE_TAG: &str = "header-settings-bluetooth-toggle";
 pub(super) const BLUETOOTH_SETTINGS_BUTTON_TAG: &str = "header-settings-bluetooth-settings-button";
 
@@ -54,18 +52,41 @@ pub(super) struct BluetoothSubmenu;
 
 impl Component for BluetoothSubmenu {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        ctx.focus_scope()
-            .set_entry_policy(FocusEntryPolicy::Remembered);
+        let focus_scope = ctx.focus_scope();
+        focus_scope.set_entry_policy(FocusEntryPolicy::Remembered);
+        focus_scope.capture_when_contains_focus(&[
+            NavigationInputAction::Cancel,
+            NavigationInputAction::Back,
+        ]);
+
+        let state =
+            ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
+        let snapshot = *state.read();
+        let should_go_back = focus_scope.drain_captured_actions().any(|action| {
+            matches!(action, NavigationInputAction::Cancel | NavigationInputAction::Back)
+        });
+
+        if snapshot.active_view == SettingsMenuView::Bluetooth && should_go_back {
+            if let Err(error) = bluetooth_handle(ctx).stop_discovery() {
+                warn!("failed to stop bluetooth discovery: {error:?}");
+            }
+
+            *state.write() = SettingsMenuState {
+                last_active_view: snapshot.active_view,
+                active_view: SettingsMenuView::Main,
+                ..snapshot
+            };
+        }
 
         Element::new()
             .with_tag("header-settings-bluetooth-submenu")
             .with_style(bluetooth_submenu_style())
-            .with_content(BluetoothBackButton)
-            .with_content(BluetoothSettingsButton)
+            .with_content(BluetoothToggleRow)
             .with_content(
                 Scrollable::new(BluetoothSubmenuBody, "bluetooth_submenu_scrollable")
                     .size_to_content_with_clamp(Vec2::new(f32::INFINITY, f32::INFINITY)),
             )
+            .with_content(BluetoothSettingsButton)
     }
 }
 
@@ -79,7 +100,6 @@ impl Component for BluetoothSubmenuBody {
 
         Element::new()
             .with_style(bluetooth_submenu_body_style())
-            .with_content(BluetoothToggleRow)
             .with_content(device_section(
                 "Recent",
                 &bluetooth_state.recent_devices,
@@ -92,62 +112,6 @@ impl Component for BluetoothSubmenuBody {
                 bluetooth_state.is_enabled,
                 "No nearby devices",
             ))
-    }
-}
-
-#[derive(Clone, Copy)]
-struct BluetoothBackButton;
-
-impl Component for BluetoothBackButton {
-    fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        let mut pointer = ctx.pointer();
-        let focusable = ctx.focusable();
-        let state =
-            ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
-        let snapshot = *state.read();
-        let is_active = snapshot.active_view == SettingsMenuView::Bluetooth;
-
-        if pointer.just_entered() || pointer.just_pressed() {
-            focusable.request_focus(FocusOrigin::Pointer);
-        }
-
-        if snapshot.last_active_view == SettingsMenuView::Main
-            && snapshot.active_view == SettingsMenuView::Bluetooth
-        {
-            focusable.request_focus(FocusOrigin::Programmatic);
-            let mut menu_state = state.write_silent();
-            menu_state.last_active_view = menu_state.active_view;
-        }
-
-        if is_active && (pointer.just_pressed() || focusable.just_activated()) {
-            if let Err(error) = bluetooth_handle(ctx).stop_discovery() {
-                warn!("failed to stop bluetooth discovery: {error:?}");
-            }
-            *state.write() = SettingsMenuState {
-                last_active_view: snapshot.active_view,
-                active_view: SettingsMenuView::Main,
-                ..snapshot
-            };
-        }
-
-        let control = QuickSettingsControlState {
-            is_hovered: pointer.is_hovering(),
-            is_focused: focusable.is_focused(),
-        };
-
-        SubmenuButton {
-            tag: BLUETOOTH_BACK_BUTTON_TAG.to_string(),
-            label: "Bluetooth".to_string(),
-            control,
-            surface: SubmenuButtonSurface::Standard,
-            state: SubmenuButtonState::Enabled,
-            leading: submenu_button_glyph(
-                QuickSettingsGlyph::Asset(CHEVRON_LEFT_ICON),
-                settings_text_color(),
-            ),
-            trailing: None,
-        }
-        .to_element(ctx)
     }
 }
 
@@ -169,6 +133,14 @@ impl Component for BluetoothToggleRow {
 
         if pointer.just_entered() || pointer.just_pressed() {
             focusable.request_focus(FocusOrigin::Pointer);
+        }
+
+        if snapshot.last_active_view == SettingsMenuView::Main
+            && snapshot.active_view == SettingsMenuView::Bluetooth
+        {
+            focusable.request_focus(FocusOrigin::Programmatic);
+            let mut menu_state = state.write_silent();
+            menu_state.last_active_view = menu_state.active_view;
         }
 
         if is_active

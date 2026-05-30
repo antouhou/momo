@@ -1,7 +1,8 @@
 use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuView};
+use super::style::{SETTINGS_MENU_VERTICAL_PADDING, settings_inset_section_style};
 use daiko::Element;
 use daiko::Id;
-use daiko::component::ComponentContext;
+use daiko::component::{Component, ComponentContext};
 use daiko::navigation::FocusOrigin;
 use daiko::style::{Color, Style};
 use daiko::widgets::image::{Image, ImageParams, ImageSource, ImageType};
@@ -40,6 +41,28 @@ pub(super) fn glyph_element(
             .fill_color(Some(icon_color)),
         ),
     }
+}
+
+pub(super) fn settings_row(content: impl Component) -> Element {
+    settings_row_with_padding(content, SETTINGS_MENU_VERTICAL_PADDING, 0.0)
+}
+
+pub(super) fn settings_middle_row(content: impl Component) -> Element {
+    settings_row_with_padding(content, 0.0, 0.0)
+}
+
+pub(super) fn settings_bottom_row(content: impl Component) -> Element {
+    settings_row_with_padding(content, 0.0, SETTINGS_MENU_VERTICAL_PADDING)
+}
+
+fn settings_row_with_padding(
+    content: impl Component,
+    top_padding: f32,
+    bottom_padding: f32,
+) -> Element {
+    Element::new()
+        .with_style(settings_inset_section_style(top_padding, bottom_padding))
+        .with_content(content)
 }
 
 pub(super) fn control_state(ctx: &mut ComponentContext) -> QuickSettingsControlState {

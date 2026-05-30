@@ -1,7 +1,8 @@
 use daiko::animation::easing::EasingFunction;
 use daiko::animation::{AnimationParameters, transition};
 use daiko::component::ComponentContext;
-use daiko::style::{Color, Indent, Transform};
+use daiko::layout::{FlexDirection, SizeConstraint};
+use daiko::style::{Color, Indent, Style, Transform};
 use daiko::widgets::text::{TextStyle, TextWrap, Weight};
 use std::time::Duration;
 
@@ -13,9 +14,10 @@ pub(crate) const SETTINGS_MENU_GAP: f32 = 12.0;
 pub(crate) const SETTINGS_MENU_HORIZONTAL_PADDING: f32 = 16.0;
 pub(crate) const SETTINGS_MENU_VERTICAL_PADDING: f32 = 18.0;
 pub(crate) const SETTINGS_PANEL_BORDER_WIDTH: f32 = 1.0;
-pub(crate) const SETTINGS_MENU_INNER_WIDTH: f32 = SETTINGS_MENU_WIDTH
-    - SETTINGS_MENU_HORIZONTAL_PADDING * 2.0
-    - SETTINGS_PANEL_BORDER_WIDTH * 2.0;
+pub(crate) const SETTINGS_MENU_CONTENT_WIDTH: f32 =
+    SETTINGS_MENU_WIDTH - SETTINGS_PANEL_BORDER_WIDTH * 2.0;
+pub(crate) const SETTINGS_MENU_INNER_WIDTH: f32 =
+    SETTINGS_MENU_CONTENT_WIDTH - SETTINGS_MENU_HORIZONTAL_PADDING * 2.0;
 pub(crate) const SETTINGS_MENU_SLIDE_DISTANCE: f32 =
     SETTINGS_MENU_WIDTH + SETTINGS_MENU_EDGE_MARGIN + 36.0;
 pub(crate) const SETTINGS_ROUND_BUTTON_SIZE: f32 = 44.0;
@@ -28,12 +30,6 @@ pub(crate) const PANEL_RADIUS: f32 = 30.0;
 pub(crate) const CONTROL_RADIUS: f32 = 22.0;
 pub(crate) const TILE_RADIUS: f32 = 20.0;
 pub(crate) const CONTROL_TRANSITION_MS: u64 = 120;
-pub(crate) const SETTINGS_MENU_PADDING: Indent = Indent::new(
-    SETTINGS_MENU_HORIZONTAL_PADDING,
-    SETTINGS_MENU_VERTICAL_PADDING,
-    SETTINGS_MENU_HORIZONTAL_PADDING,
-    SETTINGS_MENU_VERTICAL_PADDING,
-);
 pub(crate) const SETTINGS_TOP_ACTIONS_GAP: f32 = SETTINGS_MENU_GAP;
 pub(crate) const SETTINGS_COMPACT_CONTENT_GAP: f32 = 8.0;
 pub(crate) const SETTINGS_STATUS_CHIP_PADDING: Indent = Indent::uniform(10.0);
@@ -62,12 +58,27 @@ pub(crate) const SETTINGS_SUBMENU_SWITCH_INSET: f32 = 4.0;
 pub(crate) const SETTINGS_SUBMENU_SWITCH_KNOB_Y: f32 = 4.0;
 pub(crate) const SETTINGS_BUTTON_FOCUS_SCALE: f32 = 1.015;
 pub(crate) const SETTINGS_BUTTON_FOCUS_LIFT_Y: f32 = -1.0;
+pub(crate) const SETTINGS_SCROLLABLE_FOCUS_PADDING: f32 = 4.0;
 pub(crate) const SETTINGS_SUBMENU_TOGGLE_PADDING: Indent =
     Indent::new(0.0, 0.0, SETTINGS_SUBMENU_TRAILING_CONTROL_PADDING, 0.0);
 pub(crate) const SETTINGS_SUBMENU_DEVICE_ICON_RING_SIZE: f32 = 32.0;
 pub(crate) const SETTINGS_VOLUME_TRACK_HEIGHT: f32 = 22.0;
 pub(crate) const SETTINGS_VOLUME_THUMB_SIZE: f32 = 24.0;
 pub(crate) const SETTINGS_VOLUME_SLIDER_ROW_HEIGHT: f32 = SETTINGS_VOLUME_THUMB_SIZE;
+
+pub(crate) fn settings_inset_section_style(top_padding: f32, bottom_padding: f32) -> Style {
+    Style::new()
+        .with_size_constraint(
+            SizeConstraint::exact_content_height().with_exact_width(SETTINGS_MENU_CONTENT_WIDTH),
+        )
+        .with_direction(FlexDirection::Column)
+        .with_padding(Indent::new(
+            SETTINGS_MENU_HORIZONTAL_PADDING,
+            top_padding,
+            SETTINGS_MENU_HORIZONTAL_PADDING,
+            bottom_padding,
+        ))
+}
 
 pub(crate) fn settings_panel_color() -> Color {
     Color::from_rgb(12, 16, 18)

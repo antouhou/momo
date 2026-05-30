@@ -3,9 +3,8 @@ mod style;
 use self::style::{slider_fill_style, slider_root_style, slider_thumb_style, slider_track_style};
 use daiko::animation::SmoothFollowConfig;
 use daiko::component::{Component, ComponentContext};
-use daiko::lyon::path::Winding;
 use daiko::style::Color;
-use daiko::{BorderRadii, Element, Id, Path, Pos2, Rect, Vec2};
+use daiko::{Element, Id, Pos2, Rect};
 use std::hash::Hash;
 use std::time::Duration;
 
@@ -201,7 +200,6 @@ impl Component for Slider {
             .with_content(
                 Element::new()
                     .with_style(slider_track_style(rendered_track_width, *self))
-                    .with_clip_path(slider_track_clip_path(rendered_track_width, *self))
                     .with_content(Element::new().with_style(slider_fill_style(
                         rendered_track_width,
                         *self,
@@ -229,7 +227,7 @@ fn slider_thumb_offset(current_value: u8, track_width: f32, slider: Slider) -> f
 }
 
 fn slider_fill_width(thumb_offset: f32, slider: Slider) -> f32 {
-    thumb_offset + slider.thumb_size * 0.5
+    thumb_offset + slider.thumb_size
 }
 
 fn slider_track_area(layout: daiko::layout::Layout) -> Rect {
@@ -268,25 +266,6 @@ fn slider_value_from_track_position(
 
 fn normalized_bounds(min: u8, max: u8) -> (u8, u8) {
     if min <= max { (min, max) } else { (max, min) }
-}
-
-fn slider_track_clip_path(track_width: f32, slider: Slider) -> Path {
-    let mut path_builder = Path::builder();
-    let radius = slider.track_height * 0.5;
-    path_builder.add_rounded_rectangle(
-        &Rect::from_origin_and_size(
-            Pos2::new(0.0, 0.0),
-            Vec2::new(track_width, slider.track_height).to_size(),
-        ),
-        &BorderRadii {
-            top_left: radius,
-            top_right: radius,
-            bottom_right: radius,
-            bottom_left: radius,
-        },
-        Winding::Positive,
-    );
-    path_builder.build()
 }
 
 fn slider_track_width(slider: Slider, track_area: Option<Rect>) -> f32 {

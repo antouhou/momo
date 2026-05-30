@@ -36,6 +36,7 @@ pub(super) fn slider_fill_style(track_width: f32, slider: Slider, width: f32) ->
         .with_absolute_position(Vec2::new(0.0, 0.0))
         .with_fixed_size(width.min(track_width), slider.track_height)
         .with_background_color(slider.fill_color)
+        .with_border_radius(BorderRadius::all(slider.track_height / 2.0))
 }
 
 pub(super) fn slider_thumb_style(slider: Slider, offset: f32, ctx: &mut ComponentContext) -> Style {

@@ -3,19 +3,18 @@ mod style;
 use crate::components::home::app_icon::{
     mock_app_icon, mock_app_icon_background_color, mock_app_icon_foreground_color,
 };
-use crate::components::home::app_tile::style::tile_style;
+use crate::components::home::app_tile::style::{tile_style, tile_title_style};
 use crate::components::home::model::{
-    HOME_LAUNCH_CHANNEL_ID, LaunchRequest, MockApp, TILE_HEIGHT, TILE_ICON_GLYPH_SIZE,
-    TILE_ICON_SIZE, TILE_WIDTH, color, tile_focus_transform, tile_icon_origin,
-    transformed_local_rect,
+    color, tile_focus_transform, tile_icon_origin, transformed_local_rect, LaunchRequest, MockApp,
+    HOME_LAUNCH_CHANNEL_ID, TILE_HEIGHT, TILE_ICON_GLYPH_SIZE, TILE_ICON_SIZE, TILE_WIDTH,
 };
-use daiko::Element;
-use daiko::Vec2;
 use daiko::component::{Component, ComponentContext};
 use daiko::navigation::{FocusKey, FocusOrigin, NavigationDirection};
 use daiko::style::{BorderRadius, Color, CursorIcon, Style};
 use daiko::widgets::container::{Container, Fit};
-use daiko::widgets::text::{Text, TextStyle, TextWrap};
+use daiko::widgets::text::Text;
+use daiko::Element;
+use daiko::Vec2;
 
 #[derive(Clone)]
 pub(super) struct AppTile {
@@ -64,16 +63,17 @@ impl Component for AppTile {
         }
 
         let is_hovering = !self.interactions_disabled && pointer.is_hovering();
+        let is_focus_visible = focusable.is_focus_visible();
         let _is_pressed = !self.interactions_disabled && pointer.is_pressed();
-        let paint_decorations = focusable.is_focus_visible() || is_hovering;
+        let paint_decorations = is_focus_visible || is_hovering;
         let accent = color(self.app.accent);
         let icon_background = mock_app_icon_background_color(accent);
         let icon_text_color = mock_app_icon_foreground_color(accent);
 
         let tile_transform =
-            tile_focus_transform(Vec2::new(TILE_WIDTH, TILE_HEIGHT), paint_decorations, ctx);
+            tile_focus_transform(Vec2::new(TILE_WIDTH, TILE_HEIGHT), is_focus_visible, ctx);
 
-        let mut style = tile_style(ctx, accent, &tile_transform, paint_decorations);
+        let mut style = tile_style(ctx, accent, &tile_transform, is_hovering, is_focus_visible);
 
         if just_activated {
             if let Some(layout) = layout {
@@ -124,15 +124,7 @@ impl Component for AppTile {
             .align_items_center()
             .with_spacing((4.0, 4.0))
             .build()
-            .with_content(
-                Text::new(self.app.name).with_style(
-                    TextStyle::default()
-                        .with_font_size(18.0)
-                        .with_font_color(Color::from_rgb(240, 245, 255))
-                        .with_center_alignment()
-                        .with_wrap(TextWrap::NoWrap),
-                ),
-            );
+            .with_content(Text::new(self.app.name).with_style(tile_title_style()));
 
         // TODO: better focus ring
         // if is_focus_visible

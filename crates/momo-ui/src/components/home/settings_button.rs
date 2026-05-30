@@ -1,8 +1,8 @@
 use crate::components::home::bluetooth::bluetooth_handle;
 use crate::components::home::header::{
-    HEADER_BUTTON_HEIGHT, HEADER_MENU_STATE_ID, HEADER_SETTINGS_BUTTON_WIDTH,
-    HeaderButtonMetrics, HeaderButtonState, HeaderMenuState, HeaderMenuTarget,
-    header_button_foreground_color, header_button_style,
+    HEADER_BUTTON_HEIGHT, HEADER_MENU_STATE_ID, HEADER_SETTINGS_BUTTON_WIDTH, HeaderButtonMetrics,
+    HeaderButtonState, HeaderMenuState, HeaderMenuTarget, header_button_foreground_color,
+    header_button_style,
 };
 use crate::components::home::model::home_top_row_settings_focus_key;
 use crate::components::quick_settings::SETTINGS_MENU_STATE_ID;

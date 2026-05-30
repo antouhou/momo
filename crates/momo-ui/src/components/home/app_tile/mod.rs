@@ -5,16 +5,17 @@ use crate::components::home::app_icon::{
 };
 use crate::components::home::app_tile::style::{tile_style, tile_title_style};
 use crate::components::home::model::{
-    color, tile_focus_transform, tile_icon_origin, transformed_local_rect, LaunchRequest, MockApp,
-    HOME_LAUNCH_CHANNEL_ID, TILE_HEIGHT, TILE_ICON_GLYPH_SIZE, TILE_ICON_SIZE, TILE_WIDTH,
+    HOME_LAUNCH_CHANNEL_ID, LaunchRequest, MockApp, TILE_HEIGHT, TILE_ICON_GLYPH_SIZE,
+    TILE_ICON_SIZE, TILE_WIDTH, color, tile_focus_transform, tile_icon_origin,
+    transformed_local_rect,
 };
+use daiko::Element;
+use daiko::Vec2;
 use daiko::component::{Component, ComponentContext};
 use daiko::navigation::{FocusKey, FocusOrigin, NavigationDirection};
 use daiko::style::{BorderRadius, Color, CursorIcon, Style};
 use daiko::widgets::container::{Container, Fit};
 use daiko::widgets::text::Text;
-use daiko::Element;
-use daiko::Vec2;
 
 #[derive(Clone)]
 pub(super) struct AppTile {

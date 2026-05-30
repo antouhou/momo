@@ -1,14 +1,14 @@
 use super::super::common::QuickSettingsControlState;
 use super::super::style::{
-    settings_button_focus_transform, settings_label_text_style, settings_surface_border_color,
-    settings_surface_border_focus_color, settings_surface_border_hover_color,
-    settings_surface_color, settings_surface_focus_color, settings_surface_hover_color,
-    settings_text_color, settings_tile_icon_background_color, settings_tile_icon_border_color,
     CONTROL_TRANSITION_MS, SETTINGS_TILE_CONTENT_GAP, SETTINGS_TILE_HEIGHT, SETTINGS_TILE_PADDING,
-    SETTINGS_TILE_TEXT_HEIGHT, SETTINGS_TILE_WIDTH, TILE_RADIUS,
+    SETTINGS_TILE_TEXT_HEIGHT, SETTINGS_TILE_WIDTH, TILE_RADIUS, settings_button_focus_transform,
+    settings_label_text_style, settings_surface_border_color, settings_surface_border_focus_color,
+    settings_surface_border_hover_color, settings_surface_color, settings_surface_focus_color,
+    settings_surface_hover_color, settings_text_color, settings_tile_icon_background_color,
+    settings_tile_icon_border_color,
 };
 use daiko::animation::easing::EasingFunction;
-use daiko::animation::{transition, AnimationParameters};
+use daiko::animation::{AnimationParameters, transition};
 use daiko::component::ComponentContext;
 use daiko::layout::{AlignItems, FlexDirection, ItemSize, JustifyContent};
 use daiko::style::{Border, BorderRadius, CursorIcon, Stroke, Style};

@@ -1,16 +1,16 @@
 use super::super::common::QuickSettingsControlState;
 use super::super::style::{
+    CONTROL_RADIUS, CONTROL_TRANSITION_MS, SETTINGS_ROUND_BUTTON_SIZE,
     settings_bright_surface_border_color, settings_bright_surface_border_focus_color,
     settings_bright_surface_color, settings_bright_surface_focus_color,
     settings_button_focus_transform, settings_danger_surface_border_color,
     settings_danger_surface_border_focus_color, settings_danger_surface_border_hover_color,
     settings_danger_surface_color, settings_danger_surface_focus_color,
     settings_danger_surface_hover_color, settings_surface_border_color, settings_surface_color,
-    CONTROL_RADIUS, CONTROL_TRANSITION_MS, SETTINGS_ROUND_BUTTON_SIZE,
 };
 use crate::components::quick_settings::style::settings_accent_color;
 use daiko::animation::easing::EasingFunction;
-use daiko::animation::{transition, AnimationParameters};
+use daiko::animation::{AnimationParameters, transition};
 use daiko::component::ComponentContext;
 use daiko::layout::{AlignItems, FlexDirection, JustifyContent};
 use daiko::style::{Border, BorderRadius, CursorIcon, Stroke, Style};

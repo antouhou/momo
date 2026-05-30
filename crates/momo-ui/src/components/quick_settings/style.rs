@@ -1,5 +1,5 @@
 use daiko::animation::easing::EasingFunction;
-use daiko::animation::{transition, AnimationParameters};
+use daiko::animation::{AnimationParameters, transition};
 use daiko::component::ComponentContext;
 use daiko::style::{Color, Indent, Transform};
 use daiko::widgets::text::{TextStyle, TextWrap, Weight};

@@ -3,7 +3,7 @@ use crate::components::home::model::{
     TILE_HEIGHT, TILE_PADDING, TILE_WIDTH,
 };
 use daiko::animation::easing::EasingFunction;
-use daiko::animation::{transition, AnimationParameters};
+use daiko::animation::{AnimationParameters, transition};
 use daiko::component::ComponentContext;
 use daiko::layout::AlignItems;
 use daiko::style::{Border, BorderRadius, Color, Stroke, Style, Transform};

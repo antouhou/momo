@@ -6,6 +6,7 @@ use self::style::{settings_content_style, settings_menu_style};
 use self::tile_grid::SettingsTileGrid;
 use self::top_row::SettingsTopRow;
 use super::bluetooth_submenu::BluetoothSubmenu;
+use super::common::{settings_middle_row, settings_row};
 use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuView};
 use super::style::{
     SETTINGS_MENU_EDGE_MARGIN, SETTINGS_MENU_MIN_HEIGHT, SETTINGS_MENU_SLIDE_DISTANCE,
@@ -151,8 +152,8 @@ impl Component for MainSettingsView {
     fn to_element(&self, _ctx: &mut ComponentContext) -> Element {
         Element::new()
             .with_style(settings_content_style())
-            .with_content(SettingsTopRow)
-            .with_content(VolumeControl)
+            .with_content(settings_row(SettingsTopRow))
+            .with_content(settings_middle_row(VolumeControl))
             .with_content(
                 Scrollable::new(SettingsTileGrid, "quick_settings_scrollable")
                     .size_to_content_with_clamp(Vec2::new(f32::INFINITY, f32::INFINITY)),

@@ -5,7 +5,9 @@ use self::style::{
     submenu_device_icon_color, submenu_device_icon_ring_style, submenu_device_label_color,
     submenu_section_label_style, submenu_section_style, submenu_section_title_style,
 };
-use super::common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_element};
+use super::common::{
+    QuickSettingsControlState, QuickSettingsGlyph, glyph_element, settings_bottom_row, settings_row,
+};
 use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuView};
 use super::style::{SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_text_color};
 use super::submenu_button::{
@@ -84,12 +86,12 @@ impl Component for BluetoothSubmenu {
         Element::new()
             .with_tag("header-settings-bluetooth-submenu")
             .with_style(bluetooth_submenu_style())
-            .with_content(BluetoothToggleRow)
+            .with_content(settings_row(BluetoothToggleRow))
             .with_content(
                 Scrollable::new(BluetoothSubmenuBody, "bluetooth_submenu_scrollable")
                     .size_to_content_with_clamp(Vec2::new(f32::INFINITY, f32::INFINITY)),
             )
-            .with_content(BluetoothSettingsButton)
+            .with_content(settings_bottom_row(BluetoothSettingsButton))
     }
 }
 

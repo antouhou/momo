@@ -1,15 +1,16 @@
 use super::super::common::QuickSettingsControlState;
 use super::super::style::{
-    CONTROL_RADIUS, CONTROL_TRANSITION_MS, SETTINGS_COMPACT_CONTENT_GAP,
+    CONTROL_RADIUS, CONTROL_TRANSITION_MS, SETTINGS_COMPACT_CONTENT_GAP, SETTINGS_MENU_INNER_WIDTH,
     SETTINGS_ROUND_BUTTON_SIZE, SETTINGS_SUBMENU_BUTTON_PADDING, SETTINGS_SUBMENU_SWITCH_HEIGHT,
     SETTINGS_SUBMENU_SWITCH_INSET, SETTINGS_SUBMENU_SWITCH_KNOB_SIZE,
     SETTINGS_SUBMENU_SWITCH_KNOB_Y, SETTINGS_SUBMENU_SWITCH_WIDTH, SETTINGS_SUBMENU_TOGGLE_PADDING,
     settings_accent_border_color, settings_accent_color, settings_bright_surface_color,
-    settings_emphasized_surface_border_color, settings_emphasized_surface_border_hover_color,
-    settings_emphasized_surface_color, settings_emphasized_surface_hover_color,
-    settings_label_text_style, settings_surface_border_color, settings_surface_border_hover_color,
-    settings_surface_color, settings_surface_hover_color, settings_surface_muted_color,
-    settings_text_color,
+    settings_button_focus_transform, settings_emphasized_surface_border_color,
+    settings_emphasized_surface_border_focus_color, settings_emphasized_surface_color,
+    settings_emphasized_surface_focus_color, settings_emphasized_surface_hover_color,
+    settings_label_text_style, settings_surface_border_color, settings_surface_border_focus_color,
+    settings_surface_border_hover_color, settings_surface_color, settings_surface_focus_color,
+    settings_surface_hover_color, settings_surface_muted_color, settings_text_color,
 };
 use super::{SubmenuButtonState, SubmenuButtonSurface};
 use daiko::animation::easing::EasingFunction;
@@ -140,23 +141,20 @@ fn menu_button_surface_style(
     ctx: &mut ComponentContext,
     is_emphasized: bool,
 ) -> Style {
-    let background = if is_emphasized && state.is_highlighted() {
-        settings_emphasized_surface_hover_color()
-    } else if is_emphasized {
-        settings_emphasized_surface_color()
-    } else if state.is_highlighted() {
-        settings_surface_hover_color()
-    } else {
-        settings_surface_color()
+    let background = match (is_emphasized, state.is_focused, state.is_hovered) {
+        (true, true, _) => settings_emphasized_surface_focus_color(),
+        (true, false, true) => settings_emphasized_surface_hover_color(),
+        (true, false, false) => settings_emphasized_surface_color(),
+        (false, true, _) => settings_surface_focus_color(),
+        (false, false, true) => settings_surface_hover_color(),
+        (false, false, false) => settings_surface_color(),
     };
-    let border_color = if is_emphasized && state.is_focused {
-        settings_emphasized_surface_border_hover_color()
-    } else if is_emphasized {
-        settings_emphasized_surface_border_color()
-    } else if state.is_highlighted() {
-        settings_surface_border_hover_color()
-    } else {
-        settings_surface_border_color()
+    let border_color = match (is_emphasized, state.is_focused, state.is_hovered) {
+        (true, true, _) => settings_emphasized_surface_border_focus_color(),
+        (true, false, _) => settings_emphasized_surface_border_color(),
+        (false, true, _) => settings_surface_border_focus_color(),
+        (false, false, true) => settings_surface_border_hover_color(),
+        (false, false, false) => settings_surface_border_color(),
     };
 
     Style::new()
@@ -164,6 +162,12 @@ fn menu_button_surface_style(
         .with_direction(FlexDirection::Row)
         .with_align_items(AlignItems::Center)
         .with_justify_content(JustifyContent::SpaceBetween)
+        .with_transform(Some(settings_button_focus_transform(
+            SETTINGS_MENU_INNER_WIDTH,
+            SETTINGS_ROUND_BUTTON_SIZE,
+            state.is_focused,
+            ctx,
+        )))
         .with_background_color(transition(
             background,
             AnimationParameters::default()

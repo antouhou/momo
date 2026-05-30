@@ -7,29 +7,64 @@ use daiko::animation::{AnimationParameters, transition};
 use daiko::component::ComponentContext;
 use daiko::layout::AlignItems;
 use daiko::style::{Border, BorderRadius, Color, Stroke, Style, Transform};
+use daiko::widgets::text::{TextStyle, TextWrap};
 use std::time::Duration;
+
+const TILE_TITLE_TEXT_SIZE: f32 = 18.0;
+
+pub fn tile_surface_color() -> Color {
+    Color::from_rgb(14, 18, 27)
+}
+
+pub fn tile_surface_hover_color() -> Color {
+    Color::from_rgb(18, 23, 32)
+}
+
+pub fn tile_surface_focus_color() -> Color {
+    Color::from_rgb(20, 25, 35)
+}
+
+pub fn tile_border_color() -> Color {
+    Color::from_rgb(52, 65, 89)
+}
+
+pub fn tile_border_hover_color() -> Color {
+    Color::from_rgb(98, 112, 140)
+}
+
+pub fn tile_title_color() -> Color {
+    Color::from_rgb(240, 245, 255)
+}
+
+pub fn tile_title_style() -> TextStyle {
+    TextStyle::default()
+        .with_font_size(TILE_TITLE_TEXT_SIZE)
+        .with_font_color(tile_title_color())
+        .with_center_alignment()
+        .with_wrap(TextWrap::NoWrap)
+}
 
 pub fn tile_style(
     ctx: &mut ComponentContext,
     accent: Color,
     transform: &Transform,
-    paint_decorations: bool,
+    is_hovering: bool,
+    is_focus_visible: bool,
 ) -> Style {
-    let background = Color::from_rgb(14, 18, 27);
-    // let background = if is_pressed {
-    //     Color::from_rgb(38, 47, 68)
-    // } else if is_focus_visible {
-    //     Color::from_rgb(30, 41, 60)
-    // } else {
-    //     Color::from_rgb(20, 26, 38)
-    // };
-
-    let border_color = if paint_decorations {
-        accent
-        // Color::from_hex("#4fc3f7").unwrap_or(accent)
+    let background = if is_focus_visible {
+        tile_surface_focus_color()
+    } else if is_hovering {
+        tile_surface_hover_color()
     } else {
-        Color::from_rgb(52, 65, 89)
-        // Color::from_rgba_unmultiplied(79, 195, 247, 76)
+        tile_surface_color()
+    };
+
+    let border_color = if is_focus_visible {
+        accent
+    } else if is_hovering {
+        tile_border_hover_color()
+    } else {
+        tile_border_color()
     };
 
     Style::new()

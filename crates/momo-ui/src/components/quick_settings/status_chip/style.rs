@@ -2,8 +2,9 @@ use super::super::common::QuickSettingsControlState;
 use super::super::style::{
     CONTROL_RADIUS, CONTROL_TRANSITION_MS, SETTINGS_COMPACT_CONTENT_GAP,
     SETTINGS_STATUS_CHIP_HEIGHT, SETTINGS_STATUS_CHIP_PADDING, SETTINGS_STATUS_CHIP_WIDTH,
-    settings_emphasized_surface_border_color, settings_emphasized_surface_border_hover_color,
-    settings_emphasized_surface_color, settings_emphasized_surface_hover_color,
+    settings_button_focus_transform, settings_emphasized_surface_border_color,
+    settings_emphasized_surface_border_focus_color, settings_emphasized_surface_color,
+    settings_emphasized_surface_focus_color, settings_emphasized_surface_hover_color,
     settings_label_text_style, settings_text_color,
 };
 use daiko::animation::easing::EasingFunction;
@@ -26,13 +27,15 @@ pub(crate) fn settings_status_chip_style(
     state: QuickSettingsControlState,
     ctx: &mut ComponentContext,
 ) -> Style {
-    let background = if state.is_highlighted() {
+    let background = if state.is_focused {
+        settings_emphasized_surface_focus_color()
+    } else if state.is_hovered {
         settings_emphasized_surface_hover_color()
     } else {
         settings_emphasized_surface_color()
     };
     let border_color = if state.is_focused {
-        settings_emphasized_surface_border_hover_color()
+        settings_emphasized_surface_border_focus_color()
     } else {
         settings_emphasized_surface_border_color()
     };
@@ -43,6 +46,12 @@ pub(crate) fn settings_status_chip_style(
         .with_align_items(AlignItems::Center)
         .with_justify_content(JustifyContent::Center)
         .with_padding(SETTINGS_STATUS_CHIP_PADDING)
+        .with_transform(Some(settings_button_focus_transform(
+            SETTINGS_STATUS_CHIP_WIDTH,
+            SETTINGS_STATUS_CHIP_HEIGHT,
+            state.is_focused,
+            ctx,
+        )))
         .with_background_color(transition(
             background,
             AnimationParameters::default()

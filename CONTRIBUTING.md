@@ -6,7 +6,7 @@ by standardizing code conventions and such.
 1. Use `thiserror` for error handling.
 2. Don't make files too large. If a file exceeds around 500 lines, consider splitting it into smaller modules.
 3. Create tests in a separate `tests` file. Writing tests in the same file makes it a bit harder to review.
-4. Run cargo clippy and cargo fmt before commiting.
+4. Run `cargo clippy` and `cargo fmt --fix` before commiting.
 
 ## Rules for UI development:
 

@@ -27,6 +27,7 @@ pub(super) const TILE_HEIGHT: f32 = 176.0;
 pub(super) const TILE_BORDER_RADIUS: f32 = 18.0;
 pub(super) const TILE_BORDER_WIDTH: f32 = 2.0;
 pub(super) const TILE_FOCUS_SCALE: f32 = 1.05;
+pub(super) const TILE_FOCUS_LIFT_Y: f32 = -3.0;
 pub(super) const TILE_FOCUS_ANIMATION_DURATION_MS: u64 = 100;
 pub(super) const TILE_ICON_SIZE: f32 = 96.0;
 pub(super) const TILE_ICON_GLYPH_SIZE: usize = 64;
@@ -284,35 +285,28 @@ pub(super) fn tile_icon_origin() -> Vec2 {
 
 pub(super) fn tile_focus_transform(
     size: Vec2,
-    paint_decorations: bool,
+    is_focused: bool,
     ctx: &mut ComponentContext,
 ) -> Transform {
+    let scale = transition(
+        if is_focused { TILE_FOCUS_SCALE } else { 1.0 },
+        AnimationParameters::default()
+            .with_duration(Duration::from_millis(TILE_FOCUS_ANIMATION_DURATION_MS))
+            .to_transition_options(),
+        ctx,
+    );
+    let lift_y = transition(
+        if is_focused { TILE_FOCUS_LIFT_Y } else { 0.0 },
+        AnimationParameters::default()
+            .with_duration(Duration::from_millis(TILE_FOCUS_ANIMATION_DURATION_MS))
+            .to_transition_options(),
+        ctx,
+    );
+
     Transform::new()
         .with_origin(size.x * 0.5, size.y * 0.5)
-        .then_scale(
-            transition(
-                if paint_decorations {
-                    TILE_FOCUS_SCALE
-                } else {
-                    1.0
-                },
-                AnimationParameters::default()
-                    .with_duration(Duration::from_millis(TILE_FOCUS_ANIMATION_DURATION_MS))
-                    .to_transition_options(),
-                ctx,
-            ),
-            transition(
-                if paint_decorations {
-                    TILE_FOCUS_SCALE
-                } else {
-                    1.0
-                },
-                AnimationParameters::default()
-                    .with_duration(Duration::from_millis(TILE_FOCUS_ANIMATION_DURATION_MS))
-                    .to_transition_options(),
-                ctx,
-            ),
-        )
+        .then_scale(scale, scale)
+        .then_translate(0.0, lift_y)
 }
 
 pub(super) fn transformed_local_rect(

@@ -6,8 +6,7 @@ use self::style::{
     submenu_section_label_style, submenu_section_style, submenu_section_title_style,
 };
 use super::common::{
-    QuickSettingsControlState, QuickSettingsGlyph, glyph_element, settings_bottom_row,
-    settings_row,
+    QuickSettingsControlState, QuickSettingsGlyph, glyph_element, settings_bottom_row, settings_row,
 };
 use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuView};
 use super::style::{SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_text_color};

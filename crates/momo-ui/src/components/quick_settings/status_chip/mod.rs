@@ -4,6 +4,7 @@ use self::style::{settings_status_chip_style, status_chip_content_style, status_
 use super::common::{QuickSettingsGlyph, control_state, glyph_element, is_menu_view_active};
 use super::state::SettingsMenuView;
 use super::style::{SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_text_color};
+use crate::components::home::system_status::battery_state;
 use daiko::Element;
 use daiko::component::{Component, ComponentContext};
 use daiko::widgets::text::Text;
@@ -25,11 +26,17 @@ impl Component for StatusChip {
         Element::new()
             .with_tag(SETTINGS_STATUS_CHIP_TAG)
             .with_style(settings_status_chip_style(state, ctx))
-            .with_content(status_chip_content())
+            .with_content(status_chip_content(ctx))
     }
 }
 
-fn status_chip_content() -> Element {
+fn status_chip_content(ctx: &mut ComponentContext) -> Element {
+    let label = battery_state(ctx)
+        .read()
+        .percentage
+        .map(|percentage| format!("{percentage}%"))
+        .unwrap_or_else(|| "--%".to_string());
+
     Element::new()
         .with_style(status_chip_content_style())
         .with_content(glyph_element(
@@ -38,5 +45,5 @@ fn status_chip_content() -> Element {
             SETTINGS_ICON_FRAME_SIZE,
             settings_text_color(),
         ))
-        .with_content(Text::new("96%").with_style(status_value_style()))
+        .with_content(Text::new(label).with_style(status_value_style()))
 }

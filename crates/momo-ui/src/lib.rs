@@ -2,6 +2,7 @@ mod components;
 
 use crate::components::home::Home;
 use crate::components::home::bluetooth::initialize_bluetooth_state;
+use crate::components::home::system_status::initialize_system_status_state;
 use daiko::{App, AppContext};
 use momo_app::ShellViewModel;
 use std::sync::Once;
@@ -59,6 +60,11 @@ impl App for MomoUi {
         app_context.set_vsync_enabled(true);
         app_context.set_fullscreen(true);
         initialize_bluetooth_state(app_context, self.system_control.bluetooth());
+        initialize_system_status_state(
+            app_context,
+            self.system_control.volume(),
+            self.system_control.battery(),
+        );
         Home::new()
     }
 

@@ -2,6 +2,7 @@ use super::Home;
 use super::app_grid::AppGrid;
 use super::bluetooth::initialize_bluetooth_state;
 use super::model::{MOCK_APPS, SCREEN_PADDING, TILE_HEIGHT, columns_for_width};
+use super::system_status::initialize_system_status_state;
 use daiko::component::{Component, ComponentContext};
 use daiko::integration::input::{InputEvent, InputEventModifiers};
 use daiko::layout::{AlignItems, FlexDirection, ItemSize};
@@ -19,12 +20,10 @@ impl App for HomeTestApp {
     type RootComponent = Home;
 
     fn create(&mut self, ctx: &mut AppContext) -> Self::RootComponent {
-        initialize_bluetooth_state(
-            ctx,
-            SystemControl::new()
-                .expect("failed to initialize system control for tests")
-                .bluetooth(),
-        );
+        let system_control =
+            SystemControl::new().expect("failed to initialize system control for tests");
+        initialize_bluetooth_state(ctx, system_control.bluetooth());
+        initialize_system_status_state(ctx, system_control.volume(), system_control.battery());
         Home::for_testing()
     }
 
@@ -37,12 +36,10 @@ impl App for FixedWidthGridTestApp {
     type RootComponent = FixedWidthGridRoot;
 
     fn create(&mut self, ctx: &mut AppContext) -> Self::RootComponent {
-        initialize_bluetooth_state(
-            ctx,
-            SystemControl::new()
-                .expect("failed to initialize system control for tests")
-                .bluetooth(),
-        );
+        let system_control =
+            SystemControl::new().expect("failed to initialize system control for tests");
+        initialize_bluetooth_state(ctx, system_control.bluetooth());
+        initialize_system_status_state(ctx, system_control.volume(), system_control.battery());
         FixedWidthGridRoot
     }
 

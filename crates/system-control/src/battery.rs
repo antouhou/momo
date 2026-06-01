@@ -26,6 +26,7 @@ pub enum BatteryChargingState {
     Charging,
     Discharging,
     Full,
+    NotCharging,
     Unknown,
 }
 

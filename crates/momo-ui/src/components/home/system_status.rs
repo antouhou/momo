@@ -7,8 +7,8 @@ use daiko::Id;
 use daiko::component::ComponentContext;
 use daiko::state_management::StateHandle;
 use system_control::{
-    BatteryFeatureState, BatteryHandle, BatteryObservation, FeatureState, VolumeFeatureState,
-    VolumeHandle, VolumeObservation,
+    BatteryChargingState, BatteryFeatureState, BatteryHandle, BatteryObservation, FeatureState,
+    VolumeFeatureState, VolumeHandle, VolumeObservation,
 };
 
 const FALLBACK_VOLUME_PERCENTAGE: u8 = 40;
@@ -29,6 +29,7 @@ impl Default for UiVolumeState {
 #[derive(Clone, Copy, Default)]
 pub(crate) struct UiBatteryState {
     pub(crate) percentage: Option<u8>,
+    pub(crate) charging_state: Option<BatteryChargingState>,
 }
 
 pub(crate) fn initialize_system_status_state(
@@ -107,9 +108,13 @@ fn build_battery_state(feature_state: BatteryFeatureState) -> UiBatteryState {
     match feature_state {
         FeatureState::Ready(state) => UiBatteryState {
             percentage: Some(state.percentage),
+            charging_state: Some(state.charging_state),
         },
         FeatureState::Loading | FeatureState::Unsupported(_) | FeatureState::Unavailable(_) => {
-            UiBatteryState { percentage: None }
+            UiBatteryState {
+                percentage: None,
+                charging_state: None,
+            }
         }
     }
 }

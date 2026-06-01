@@ -552,6 +552,7 @@ fn parse_battery_charging_state(status: &str) -> BatteryChargingState {
         "Charging" => BatteryChargingState::Charging,
         "Discharging" => BatteryChargingState::Discharging,
         "Full" => BatteryChargingState::Full,
+        "Not charging" => BatteryChargingState::NotCharging,
         _ => BatteryChargingState::Unknown,
     }
 }

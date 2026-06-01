@@ -10,12 +10,15 @@ use crate::components::home::system_status::battery_state;
 use daiko::Element;
 use daiko::component::{Component, ComponentContext};
 use daiko::widgets::text::Text;
+use system_control::BatteryChargingState;
 
 const BATTERY_0_ICON: &[u8] = include_bytes!("../../../../assets/battery-0.svg");
 const BATTERY_2_ICON: &[u8] = include_bytes!("../../../../assets/battery-2.svg");
 const BATTERY_3_ICON: &[u8] = include_bytes!("../../../../assets/battery-3.svg");
 const BATTERY_4_ICON: &[u8] = include_bytes!("../../../../assets/battery-4.svg");
 const BATTERY_5_ICON: &[u8] = include_bytes!("../../../../assets/battery-5.svg");
+const PLUG_ICON: &[u8] = include_bytes!("../../../../assets/plug.svg");
+const PLUG_BOLT_ICON: &[u8] = include_bytes!("../../../../assets/plug-circle-bolt.svg");
 const LOW_BATTERY_THRESHOLD_PERCENTAGE: u8 = 20;
 pub(super) const SETTINGS_STATUS_CHIP_TAG: &str = "header-settings-status-chip";
 
@@ -38,7 +41,10 @@ impl Component for StatusChip {
 }
 
 fn status_chip_content(ctx: &mut ComponentContext) -> Element {
-    let battery_percentage = battery_state(ctx).read().percentage;
+    let battery_state = battery_state(ctx);
+    let battery_state = battery_state.read();
+    let battery_percentage = battery_state.percentage;
+    let charging_state = battery_state.charging_state;
     let label = battery_percentage
         .map(|percentage| format!("{percentage}%"))
         .unwrap_or_else(|| "--%".to_string());
@@ -51,7 +57,7 @@ fn status_chip_content(ctx: &mut ComponentContext) -> Element {
     Element::new()
         .with_style(status_chip_content_style())
         .with_content(glyph_element(
-            QuickSettingsGlyph::Asset(battery_icon(battery_percentage)),
+            QuickSettingsGlyph::Asset(battery_icon(battery_percentage, charging_state)),
             SETTINGS_ICON_SIZE,
             SETTINGS_ICON_FRAME_SIZE,
             content_color,
@@ -59,9 +65,22 @@ fn status_chip_content(ctx: &mut ComponentContext) -> Element {
         .with_content(Text::new(label).with_style(status_value_style(content_color)))
 }
 
-fn battery_icon(battery_percentage: Option<u8>) -> &'static [u8] {
+fn battery_icon(
+    battery_percentage: Option<u8>,
+    charging_state: Option<BatteryChargingState>,
+) -> &'static [u8] {
+    match charging_state {
+        Some(BatteryChargingState::Charging) => PLUG_BOLT_ICON,
+        Some(BatteryChargingState::Full | BatteryChargingState::NotCharging) => PLUG_ICON,
+        Some(BatteryChargingState::Discharging) | Some(BatteryChargingState::Unknown) | None => {
+            battery_percentage_icon(battery_percentage)
+        }
+    }
+}
+
+fn battery_percentage_icon(battery_percentage: Option<u8>) -> &'static [u8] {
     match battery_percentage {
-        Some(percentage) if percentage < 20 => BATTERY_0_ICON,
+        Some(percentage) if percentage < LOW_BATTERY_THRESHOLD_PERCENTAGE => BATTERY_0_ICON,
         Some(20..=39) => BATTERY_2_ICON,
         Some(40..=59) => BATTERY_3_ICON,
         Some(60..=79) => BATTERY_4_ICON,

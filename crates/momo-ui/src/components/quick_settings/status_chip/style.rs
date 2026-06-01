@@ -5,7 +5,7 @@ use super::super::style::{
     settings_button_focus_transform, settings_emphasized_surface_border_color,
     settings_emphasized_surface_border_focus_color, settings_emphasized_surface_color,
     settings_emphasized_surface_focus_color, settings_emphasized_surface_hover_color,
-    settings_label_text_style, settings_text_color,
+    settings_label_text_style,
 };
 use daiko::animation::easing::EasingFunction;
 use daiko::animation::{AnimationParameters, transition};
@@ -75,6 +75,6 @@ pub(crate) fn settings_status_chip_style(
         .with_cursor(CursorIcon::PointingHand)
 }
 
-pub(crate) fn status_value_style() -> TextStyle {
-    settings_label_text_style(settings_text_color())
+pub(crate) fn status_value_style(color: daiko::style::Color) -> TextStyle {
+    settings_label_text_style(color)
 }

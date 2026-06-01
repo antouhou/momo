@@ -13,14 +13,15 @@ use super::style::{
     settings_bright_surface_color, settings_surface_muted_color, settings_text_color,
     settings_volume_thumb_border_color,
 };
+use crate::components::home::system_status::{volume_handle, volume_state};
 use crate::components::slider::{Slider, clamp_slider_value};
 use daiko::component::{Component, ComponentContext};
 use daiko::navigation::{FocusOrigin, NavigationDirection, NavigationInputAction};
 use daiko::widgets::text::Text;
 use daiko::{Element, Id};
+use tracing::warn;
 
 const AUDIO_ICON: &[u8] = include_bytes!("../../../../assets/volume.svg");
-const DEFAULT_VOLUME: u8 = 40;
 const VOLUME_STEP: i16 = 10;
 const VOLUME_MIN: u8 = 0;
 const VOLUME_MAX: u8 = 100;
@@ -34,11 +35,16 @@ pub(super) struct VolumeControl;
 
 impl Component for VolumeControl {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        let volume = ctx.use_shared_state(Id::new(SETTINGS_VOLUME_STATE_ID), || DEFAULT_VOLUME);
-        let mut current_volume = *volume.read();
+        let volume = volume_state(ctx).read().output_percentage;
+        let slider_volume = ctx.use_shared_state(Id::new(SETTINGS_VOLUME_STATE_ID), move || volume);
+        let current_slider_volume = *slider_volume.read();
         let mut pointer = ctx.pointer();
         let focusable = ctx.focusable();
         let is_active = is_menu_view_active(ctx, SettingsMenuView::Main);
+
+        if current_slider_volume != volume {
+            *slider_volume.write_silent() = volume;
+        }
 
         focusable.set_navigation_enabled(is_active);
 
@@ -64,12 +70,9 @@ impl Component for VolumeControl {
                     _ => delta,
                 });
         if volume_delta != 0 {
-            current_volume = clamp_slider_value(
-                i16::from(current_volume) + volume_delta,
-                VOLUME_MIN,
-                VOLUME_MAX,
-            );
-            *volume.write_silent() = current_volume;
+            let next_volume =
+                clamp_slider_value(i16::from(volume) + volume_delta, VOLUME_MIN, VOLUME_MAX);
+            request_volume_change(ctx, next_volume);
         }
 
         let state = QuickSettingsControlState {
@@ -85,11 +88,17 @@ impl Component for VolumeControl {
                     .with_style(volume_label_container_style())
                     .with_content(Text::new("Sound").with_style(volume_label_style())),
             )
-            .with_content(volume_slider_row(state))
+            .with_content(volume_slider_row(state, volume))
     }
 }
 
-fn volume_slider_row(state: QuickSettingsControlState) -> Element {
+fn request_volume_change(ctx: &mut ComponentContext, volume: u8) {
+    if let Err(error) = volume_handle(ctx).set_output_volume_percentage(volume) {
+        warn!("failed to set output volume: {error:?}");
+    }
+}
+
+fn volume_slider_row(state: QuickSettingsControlState, volume: u8) -> Element {
     Element::new()
         .with_style(volume_slider_row_style())
         .with_content(glyph_element(
@@ -104,7 +113,8 @@ fn volume_slider_row(state: QuickSettingsControlState) -> Element {
                 .with_style(volume_slider_track_style())
                 .with_content(
                     Slider::new(SETTINGS_VOLUME_STATE_ID)
-                        .default_value(DEFAULT_VOLUME)
+                        .default_value(volume)
+                        .on_change(request_volume_change)
                         .range(VOLUME_MIN, VOLUME_MAX)
                         .track_height(SETTINGS_VOLUME_TRACK_HEIGHT)
                         .thumb_size(SETTINGS_VOLUME_THUMB_SIZE)

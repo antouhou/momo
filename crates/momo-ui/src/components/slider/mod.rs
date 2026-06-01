@@ -30,10 +30,10 @@ struct SliderLocalState {
     is_thumb_offset_initialized: bool,
 }
 
-#[derive(Clone, Copy)]
 pub(crate) struct Slider {
     id: Id,
     default_value: u8,
+    on_change: Option<fn(&mut ComponentContext, u8)>,
     min: u8,
     max: u8,
     track_width: Option<f32>,
@@ -52,6 +52,7 @@ impl Slider {
         Self {
             id: Id::new(id),
             default_value: DEFAULT_MIN_VALUE,
+            on_change: None,
             min: DEFAULT_MIN_VALUE,
             max: DEFAULT_MAX_VALUE,
             track_width: None,
@@ -68,6 +69,11 @@ impl Slider {
 
     pub(crate) fn default_value(mut self, default_value: u8) -> Self {
         self.default_value = default_value;
+        self
+    }
+
+    pub(crate) fn on_change(mut self, on_change: fn(&mut ComponentContext, u8)) -> Self {
+        self.on_change = Some(on_change);
         self
     }
 
@@ -118,11 +124,11 @@ impl Slider {
         self
     }
 
-    fn clamp_value(self, value: i16) -> u8 {
+    fn clamp_value(&self, value: i16) -> u8 {
         clamp_slider_value(value, self.min, self.max)
     }
 
-    fn clamped_default_value(self) -> u8 {
+    fn clamped_default_value(&self) -> u8 {
         self.clamp_value(i16::from(self.default_value))
     }
 }
@@ -152,7 +158,7 @@ impl Component for Slider {
         let layout = ctx.layout();
         let track_area = layout.map(slider_track_area);
         let has_resolved_track_width = layout.is_some() || self.track_width.is_some();
-        let rendered_track_width = slider_track_width(*self, track_area);
+        let rendered_track_width = slider_track_width(self, track_area);
         let pressed_inside_track = just_pressed
             && pointer_position
                 .zip(track_area)
@@ -167,9 +173,13 @@ impl Component for Slider {
             && (is_pressed || is_dragging || just_released_anywhere)
             && let Some(position) = pointer_position
         {
-            current_value =
-                slider_value_from_track_position(position, track_area, rendered_track_width, *self);
-            *value.write_silent() = current_value;
+            let next_value =
+                slider_value_from_track_position(position, track_area, rendered_track_width, self);
+            if next_value != current_value {
+                current_value = next_value;
+                *value.write_silent() = current_value;
+                notify_slider_change(ctx, self, current_value);
+            }
         }
 
         if is_drag_active && (just_released_anywhere || !is_pressed && !is_dragging) {
@@ -177,7 +187,7 @@ impl Component for Slider {
             local_state.write_silent().is_drag_active = is_drag_active;
         }
 
-        let target_thumb_offset = slider_thumb_offset(current_value, rendered_track_width, *self);
+        let target_thumb_offset = slider_thumb_offset(current_value, rendered_track_width, self);
         let mut smooth_thumb_offset = ctx.smooth_follow_with_id::<f32>(
             self.id.with(THUMB_OFFSET_SMOOTH_FOLLOW_SUFFIX),
             slider_smooth_follow_config(),
@@ -196,21 +206,27 @@ impl Component for Slider {
         };
 
         Element::new()
-            .with_style(slider_root_style(*self))
+            .with_style(slider_root_style(self))
             .with_content(
                 Element::new()
-                    .with_style(slider_track_style(rendered_track_width, *self))
+                    .with_style(slider_track_style(rendered_track_width, self))
                     .with_content(Element::new().with_style(slider_fill_style(
                         rendered_track_width,
-                        *self,
-                        slider_fill_width(rendered_thumb_offset, *self),
+                        self,
+                        slider_fill_width(rendered_thumb_offset, self),
                     ))),
             )
             .with_content(Element::new().with_style(slider_thumb_style(
-                *self,
+                self,
                 rendered_thumb_offset,
                 ctx,
             )))
+    }
+}
+
+fn notify_slider_change(ctx: &mut ComponentContext, slider: &Slider, value: u8) {
+    if let Some(on_change) = slider.on_change {
+        on_change(ctx, value);
     }
 }
 
@@ -219,14 +235,14 @@ pub(crate) fn clamp_slider_value(value: i16, min: u8, max: u8) -> u8 {
     value.clamp(i16::from(min), i16::from(max)) as u8
 }
 
-fn slider_thumb_offset(current_value: u8, track_width: f32, slider: Slider) -> f32 {
+fn slider_thumb_offset(current_value: u8, track_width: f32, slider: &Slider) -> f32 {
     let max_offset = (track_width - slider.thumb_size).max(0.0);
     let range_span = f32::from(slider.max.saturating_sub(slider.min).max(1));
     let normalized_value = f32::from(current_value.saturating_sub(slider.min)) / range_span;
     max_offset * normalized_value
 }
 
-fn slider_fill_width(thumb_offset: f32, slider: Slider) -> f32 {
+fn slider_fill_width(thumb_offset: f32, slider: &Slider) -> f32 {
     thumb_offset + slider.thumb_size
 }
 
@@ -245,7 +261,7 @@ fn slider_value_from_track_position(
     pointer_position: Pos2,
     track_area: Option<Rect>,
     track_width: f32,
-    slider: Slider,
+    slider: &Slider,
 ) -> u8 {
     let Some(track_area) = track_area else {
         return slider.clamped_default_value();
@@ -268,7 +284,7 @@ fn normalized_bounds(min: u8, max: u8) -> (u8, u8) {
     if min <= max { (min, max) } else { (max, min) }
 }
 
-fn slider_track_width(slider: Slider, track_area: Option<Rect>) -> f32 {
+fn slider_track_width(slider: &Slider, track_area: Option<Rect>) -> f32 {
     track_area
         .map(|area| area.width())
         .or(slider.track_width)
@@ -290,7 +306,7 @@ mod tests {
     use daiko::layout::ItemSize;
     use daiko::style::Style;
     use daiko::testing::TestRunner;
-    use daiko::{App, AppContext};
+    use daiko::{App, AppContext, Vec2};
 
     const TEST_SLIDER_STATE_ID: &str = "test-slider-state";
     const TEST_SLIDER_DEFAULT_VALUE: u8 = 40;

@@ -25,3 +25,6 @@ on the spatial navigation, scopes, and such. Build a correct topology first.
 the rest of the project. There should be multiple levels/layers of spacings and paddings, of course, but they all should
 rhythm nonetheless.
 8. NEVER manually calculate sizes of ANYTHING outside the most basic components, such as buttons.
+9. Never block UI thread or do any system calls in it. If you need to do something that may block in the UI code, just
+pass a state handle to the thread that does the blocking work, and let it update the state when needed. Communicate
+with that thread over usual std channels.

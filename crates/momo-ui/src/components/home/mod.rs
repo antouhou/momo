@@ -7,6 +7,7 @@ mod header;
 mod launch;
 pub(crate) mod model;
 pub(crate) mod settings_button;
+pub(crate) mod system_status;
 #[cfg(test)]
 mod tests;
 mod time;

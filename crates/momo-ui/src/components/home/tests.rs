@@ -4,7 +4,7 @@ use super::bluetooth::initialize_bluetooth_state;
 use super::model::{MOCK_APPS, SCREEN_PADDING, TILE_HEIGHT, columns_for_width};
 use super::system_status::initialize_system_status_state;
 use daiko::component::{Component, ComponentContext};
-use daiko::integration::input::{InputEvent, InputEventModifiers};
+use daiko::integration::input::{InputEvent, InputEventModifiers, Key};
 use daiko::layout::{AlignItems, FlexDirection, ItemSize};
 use daiko::navigation::{FocusKey, FocusOrigin};
 use daiko::style::Style;
@@ -263,6 +263,55 @@ fn settings_menu_closes_from_cancel_navigation() {
 
     assert!(runner.find_element_by_tag("header-settings-menu").is_none());
     runner.assert_focused("header-settings-button");
+}
+
+#[test]
+fn settings_menu_back_from_bluetooth_returns_to_main_without_closing() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+
+    runner.click_element("header-settings-button");
+    runner.run_frame();
+    runner.run_frame();
+    thread::sleep(Duration::from_millis(320));
+    runner.run_frame();
+
+    runner.click_element("header-settings-tile-bluetooth");
+    runner.run_frame();
+    assert!(
+        runner
+            .find_element_by_tag("header-settings-bluetooth-submenu")
+            .is_some()
+    );
+
+    thread::sleep(Duration::from_millis(220));
+    runner.run_frame();
+    assert!(runner.find_element_by_tag("header-settings-menu").is_some());
+    assert!(
+        runner
+            .find_element_by_tag("header-settings-bluetooth-submenu")
+            .is_some()
+    );
+
+    runner.press_key_and_run_frame(Key::BrowserBack);
+    runner.run_frame();
+
+    assert!(runner.find_element_by_tag("header-settings-menu").is_some());
+    assert!(
+        runner
+            .find_element_by_tag("header-settings-tile-bluetooth")
+            .is_some()
+    );
+
+    thread::sleep(Duration::from_millis(1220));
+    runner.run_frame();
+
+    assert!(
+        runner
+            .find_element_by_tag("header-settings-bluetooth-submenu")
+            .is_none()
+    );
 }
 
 #[test]

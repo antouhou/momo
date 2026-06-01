@@ -146,8 +146,10 @@ impl Component for SettingsTileButton {
             && is_main_view
         {
             focusable.request_focus(FocusOrigin::Programmatic);
-            let mut state = shared_state.write_silent();
-            state.last_active_view = state.active_view;
+            if focusable.is_focused() {
+                let mut state = shared_state.write_silent();
+                state.last_active_view = state.active_view;
+            }
         }
 
         let state = QuickSettingsControlState {

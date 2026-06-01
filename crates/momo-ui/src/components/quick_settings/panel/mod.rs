@@ -9,11 +9,12 @@ use super::bluetooth_submenu::BluetoothSubmenu;
 use super::common::{settings_middle_row, settings_row};
 use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuView};
 use super::style::{
-    SETTINGS_MENU_EDGE_MARGIN, SETTINGS_MENU_MIN_HEIGHT, SETTINGS_MENU_SLIDE_DISTANCE,
-    SETTINGS_MENU_TOP_OFFSET,
+    SETTINGS_MENU_CONTENT_WIDTH, SETTINGS_MENU_EDGE_MARGIN, SETTINGS_MENU_MIN_HEIGHT,
+    SETTINGS_MENU_SLIDE_DISTANCE, SETTINGS_MENU_TOP_OFFSET,
 };
 use super::volume_control::VolumeControl;
 use crate::components::home::bluetooth::bluetooth_handle;
+use crate::components::view_transition::{ViewTransition, ViewTransitionDirection};
 use daiko::animation::AnimationParameters;
 use daiko::animation::easing::EasingFunction;
 use daiko::component::{Component, ComponentContext};
@@ -45,10 +46,14 @@ impl Component for SettingsMenuPanel {
 
         if state_snapshot.is_open {
             focus_scope.set_boundary(FocusBoundary::Stop);
-            focus_scope.capture_when_contains_focus(&[
-                NavigationInputAction::Cancel,
-                NavigationInputAction::Back,
-            ]);
+            if state_snapshot.active_view == SettingsMenuView::Main {
+                focus_scope.capture_when_contains_focus(&[
+                    NavigationInputAction::Cancel,
+                    NavigationInputAction::Back,
+                ]);
+            } else {
+                focus_scope.capture_when_contains_focus(&[NavigationInputAction::Cancel]);
+            }
 
             if just_opened {
                 focus_scope.request_focus(FocusOrigin::Navigation);
@@ -136,12 +141,26 @@ impl Component for SettingsMenuContent {
 
         let state =
             ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
-        let active_view = state.read().active_view;
+        let snapshot = *state.read();
+        let active_view = snapshot.active_view;
+        let previous_active_view = snapshot.last_active_view;
 
-        match active_view {
-            SettingsMenuView::Main => Element::new().with_content(MainSettingsView),
-            SettingsMenuView::Bluetooth => Element::new().with_content(BluetoothSubmenu),
-        }
+        let direction = match (previous_active_view, active_view) {
+            (SettingsMenuView::Bluetooth, SettingsMenuView::Main) => {
+                ViewTransitionDirection::Backward
+            }
+            _ => ViewTransitionDirection::Forward,
+        };
+
+        let view_transition = ViewTransition::new(match active_view {
+            SettingsMenuView::Main => MainSettingsView.into_child(),
+            SettingsMenuView::Bluetooth => BluetoothSubmenu.into_child(),
+        })
+        .with_transition_key(active_view)
+        .with_direction(direction)
+        .with_slide_distance(SETTINGS_MENU_CONTENT_WIDTH);
+
+        Element::new().with_content(view_transition)
     }
 }
 

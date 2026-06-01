@@ -144,8 +144,10 @@ impl Component for BluetoothToggleRow {
             && snapshot.active_view == SettingsMenuView::Bluetooth
         {
             focusable.request_focus(FocusOrigin::Programmatic);
-            let mut menu_state = state.write_silent();
-            menu_state.last_active_view = menu_state.active_view;
+            if focusable.is_focused() {
+                let mut menu_state = state.write_silent();
+                menu_state.last_active_view = menu_state.active_view;
+            }
         }
 
         if is_active

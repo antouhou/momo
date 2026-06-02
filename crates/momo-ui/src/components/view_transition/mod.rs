@@ -59,8 +59,7 @@ impl Component for ViewTransition {
         let measurements = ctx.use_shared_state(view_transition_measurements_id(self.id), || {
             ViewTransitionMeasurements::default()
         });
-        let mut snapshot = transition_state.read().clone();
-        let measurement_snapshot = *measurements.read();
+        let measurement = *measurements.read();
         let layout_size = ctx.layout().map(|layout| layout.size());
         let key = self.transition_key.unwrap_or(Id::NULL);
         let mut completed_outgoing_key = None;
@@ -69,37 +68,38 @@ impl Component for ViewTransition {
                 .with_duration(Duration::from_millis(VIEW_TRANSITION_DURATION_MS))
                 .with_easing(EasingFunction::EaseInOut),
         );
+        let mut next_state = transition_state.read().clone();
 
-        if snapshot.current_key.is_none() {
-            snapshot.current_key = Some(key);
-            snapshot.current_view = Some(self.current_view.clone());
-            *transition_state.write_silent() = snapshot.clone();
+        if next_state.current_key.is_none() {
+            next_state.current_key = Some(key);
+            next_state.current_view = Some(self.current_view.clone());
+            *transition_state.write_silent() = next_state.clone();
         }
 
-        let key_changed = self.transition_key.is_some() && snapshot.current_key != Some(key);
+        let key_changed = self.transition_key.is_some() && next_state.current_key != Some(key);
         let mut started_transition_this_run = false;
 
         if key_changed {
             let progress_before_key_change =
-                if snapshot.previous_view.is_some() && snapshot.target_size.is_some() {
+                if next_state.previous_view.is_some() && next_state.target_size.is_some() {
                     animation.progress()
-                } else if snapshot.previous_view.is_some() {
+                } else if next_state.previous_view.is_some() {
                     0.0
                 } else {
                     1.0
                 };
 
-            let mut measurement_update = measurement_snapshot;
+            let mut measurement_update = measurement;
             measurement_update.incoming_key = None;
             measurement_update.incoming_size = None;
             *measurements.write_silent() = measurement_update;
 
-            let from_size = if snapshot.previous_view.is_some() {
-                current_viewport_size(&snapshot, progress_before_key_change)
+            let from_size = if next_state.previous_view.is_some() {
+                current_viewport_size(&next_state, progress_before_key_change)
             } else {
-                layout_size.or(measurement_snapshot.stable_size)
+                layout_size.or(measurement.stable_size)
             }
-            .or(snapshot.viewport_size)
+            .or(next_state.viewport_size)
             .unwrap_or(Vec2::new(self.slide_distance, 0.0));
 
             let incoming_motion =
@@ -109,19 +109,19 @@ impl Component for ViewTransition {
             let mut current_motion = incoming_motion;
             let mut previous_motion = outgoing_motion;
             let mut current_view = self.current_view.clone();
-            let mut previous_key = snapshot.current_key;
-            let mut previous_view = snapshot
+            let mut previous_key = next_state.current_key;
+            let mut previous_view = next_state
                 .current_view
                 .clone()
                 .or_else(|| Some(self.current_view.clone()));
 
-            if snapshot.previous_view.is_some() {
+            if next_state.previous_view.is_some() {
                 let current_offset = view_transition_slot_motion_offset(
-                    snapshot.current_motion,
+                    next_state.current_motion,
                     progress_before_key_change,
                 );
                 let previous_offset = view_transition_slot_motion_offset(
-                    snapshot.previous_motion,
+                    next_state.previous_motion,
                     progress_before_key_change,
                 );
                 let outgoing_target_offset = outgoing_view_transition_slot_target_offset(
@@ -129,111 +129,112 @@ impl Component for ViewTransition {
                     self.slide_distance,
                 );
 
-                if snapshot.previous_key == Some(key) {
-                    if let Some(returning_view) = snapshot.previous_view.clone() {
+                if next_state.previous_key == Some(key) {
+                    if let Some(returning_view) = next_state.previous_view.clone() {
                         current_view = returning_view;
                     }
-                    previous_key = snapshot.current_key;
-                    previous_view = snapshot.current_view.clone();
+                    previous_key = next_state.current_key;
+                    previous_view = next_state.current_view.clone();
                     current_motion = ViewTransitionSlotMotion::new(previous_offset, 0.0);
                     previous_motion =
                         ViewTransitionSlotMotion::new(current_offset, outgoing_target_offset);
                 } else {
-                    previous_view = snapshot.current_view.clone();
+                    previous_view = next_state.current_view.clone();
                     previous_motion =
                         ViewTransitionSlotMotion::new(current_offset, outgoing_target_offset);
                 }
             }
 
-            snapshot.viewport_size = Some(from_size);
-            snapshot.from_size = Some(from_size);
-            snapshot.target_size = None;
-            snapshot.previous_view = previous_view;
-            snapshot.previous_key = previous_key;
-            snapshot.current_key = Some(key);
-            snapshot.current_view = Some(current_view);
-            snapshot.current_motion = current_motion;
-            snapshot.previous_motion = previous_motion;
+            next_state.viewport_size = Some(from_size);
+            next_state.from_size = Some(from_size);
+            next_state.target_size = None;
+            next_state.previous_view = previous_view;
+            next_state.previous_key = previous_key;
+            next_state.current_key = Some(key);
+            next_state.current_view = Some(current_view);
+            next_state.current_motion = current_motion;
+            next_state.previous_motion = previous_motion;
             animation.reset();
             started_transition_this_run = true;
-            *transition_state.write_silent() = snapshot.clone();
+            *transition_state.write_silent() = next_state.clone();
         }
 
-        if snapshot.previous_view.is_some()
+        if next_state.previous_view.is_some()
             && !started_transition_this_run
-            && measurement_snapshot.incoming_key == Some(key)
-            && let Some(target_size) = measurement_snapshot.incoming_size
-            && (snapshot.target_size.is_none()
-                || (snapshot.target_size != Some(target_size)
+            && measurement.incoming_key == Some(key)
+            && let Some(target_size) = measurement.incoming_size
+            && (next_state.target_size.is_none()
+                || (next_state.target_size != Some(target_size)
                     && animation.progress_linear() == 0.0))
         {
-            snapshot.target_size = Some(target_size);
+            next_state.target_size = Some(target_size);
             animation.restart_reset();
-            *transition_state.write_silent() = snapshot.clone();
+            *transition_state.write_silent() = next_state.clone();
         }
 
-        let progress = if snapshot.previous_view.is_some() && snapshot.target_size.is_some() {
+        let progress = if next_state.previous_view.is_some() && next_state.target_size.is_some() {
             animation.progress()
-        } else if snapshot.previous_view.is_some() {
+        } else if next_state.previous_view.is_some() {
             0.0
         } else {
             1.0
         };
 
-        if snapshot.previous_view.is_some()
-            && snapshot.target_size.is_some()
+        if next_state.previous_view.is_some()
+            && next_state.target_size.is_some()
             && !animation.is_running()
             && animation.progress_linear() >= 1.0
         {
-            snapshot.previous_view = None;
-            completed_outgoing_key = snapshot.previous_key;
-            snapshot.current_view = Some(self.current_view.clone());
-            snapshot.viewport_size = snapshot.target_size;
-            snapshot.from_size = None;
-            snapshot.target_size = None;
-            snapshot.previous_key = None;
-            snapshot.current_motion = stable_view_transition_slot_motion();
-            snapshot.previous_motion = stable_view_transition_slot_motion();
-            *transition_state.write_silent() = snapshot.clone();
-        } else if snapshot.previous_view.is_none() && !animation.is_running() {
+            next_state.previous_view = None;
+            completed_outgoing_key = next_state.previous_key;
+            next_state.current_view = Some(self.current_view.clone());
+            next_state.viewport_size = next_state.target_size;
+            next_state.from_size = None;
+            next_state.target_size = None;
+            next_state.previous_key = None;
+            next_state.current_motion = stable_view_transition_slot_motion();
+            next_state.previous_motion = stable_view_transition_slot_motion();
+            *transition_state.write_silent() = next_state.clone();
+        } else if next_state.previous_view.is_none() && !animation.is_running() {
             // Keep the next outgoing child fresh without requesting another render.
-            snapshot.current_view = Some(self.current_view.clone());
-            let measured_size = layout_size.or(measurement_snapshot.stable_size);
+            next_state.current_view = Some(self.current_view.clone());
+            let measured_size = layout_size.or(measurement.stable_size);
             if let Some(measured_size) = measured_size
-                && snapshot.viewport_size != Some(measured_size)
+                && next_state.viewport_size != Some(measured_size)
             {
-                snapshot.viewport_size = Some(measured_size);
+                next_state.viewport_size = Some(measured_size);
             }
-            *transition_state.write_silent() = snapshot.clone();
+            *transition_state.write_silent() = next_state.clone();
         }
 
-        let is_transitioning = snapshot.previous_view.is_some();
-        publish_view_transition_status(ctx, self.id, is_transitioning, completed_outgoing_key);
-
+        let is_transitioning = next_state.previous_view.is_some();
         let viewport_size = if is_transitioning {
-            match (snapshot.from_size, snapshot.target_size) {
+            match (next_state.from_size, next_state.target_size) {
                 (Some(from_size), Some(target_size)) => {
                     Some(lerp_vec2(from_size, target_size, progress))
                 }
-                _ => snapshot.viewport_size,
+                _ => next_state.viewport_size,
             }
         } else {
             None
         };
-
-        let mut el =
-            Element::new().with_style(view_transition_style(self.slide_distance, viewport_size));
-
-        let current_phase = if snapshot.previous_view.is_some() {
+        let current_phase = if next_state.previous_view.is_some() {
             ViewTransitionPhase::Incoming
         } else {
             ViewTransitionPhase::Stable
         };
-        let current_motion = if snapshot.previous_view.is_some() {
-            snapshot.current_motion
+        let current_motion = if next_state.previous_view.is_some() {
+            next_state.current_motion
         } else {
             stable_view_transition_slot_motion()
         };
+        let previous_view = next_state.previous_view.clone();
+        let previous_motion = next_state.previous_motion;
+
+        publish_view_transition_status(ctx, self.id, is_transitioning, completed_outgoing_key);
+
+        let mut el =
+            Element::new().with_style(view_transition_style(self.slide_distance, viewport_size));
 
         el.add_content(ViewTransitionSlot {
             measurements_id: view_transition_measurements_id(self.id),
@@ -250,14 +251,14 @@ impl Component for ViewTransition {
             content: self.current_view.clone(),
         });
 
-        if let Some(previous_view) = snapshot.previous_view {
+        if let Some(previous_view) = previous_view {
             el.add_content(ViewTransitionSlot {
                 measurements_id: view_transition_measurements_id(self.id),
                 report_key: None,
                 report_kind: ViewTransitionSlotReportKind::None,
                 phase: ViewTransitionPhase::Outgoing,
                 progress,
-                motion: snapshot.previous_motion,
+                motion: previous_motion,
                 slide_distance: self.slide_distance,
                 content: previous_view,
             });
@@ -304,25 +305,27 @@ impl Component for ViewTransitionSlot {
         if let Some(layout) = ctx.layout() {
             let measurements =
                 ctx.use_shared_state(self.measurements_id, ViewTransitionMeasurements::default);
-            let mut snapshot = *measurements.read();
+            let mut measurement = *measurements.read();
             let size = layout.size();
             let mut changed = false;
 
             match self.report_kind {
-                ViewTransitionSlotReportKind::Stable if snapshot.stable_size != Some(size) => {
-                    snapshot.stable_size = Some(size);
+                ViewTransitionSlotReportKind::Stable if measurement.stable_size != Some(size) => {
+                    measurement.stable_size = Some(size);
                     changed = true;
                 }
-                ViewTransitionSlotReportKind::Incoming if snapshot.incoming_size != Some(size) => {
-                    snapshot.incoming_key = self.report_key;
-                    snapshot.incoming_size = Some(size);
+                ViewTransitionSlotReportKind::Incoming
+                    if measurement.incoming_size != Some(size) =>
+                {
+                    measurement.incoming_key = self.report_key;
+                    measurement.incoming_size = Some(size);
                     changed = true;
                 }
                 _ => {}
             }
 
             if changed {
-                *measurements.write() = snapshot;
+                *measurements.write() = measurement;
             }
         }
 
@@ -382,20 +385,20 @@ fn publish_view_transition_status(
     completed_outgoing_key: Option<Id>,
 ) {
     let status = ctx.use_shared_state(view_transition_status_id(id), ViewTransitionStatus::default);
-    let snapshot = *status.read();
+    let previous_status = *status.read();
     let completed = completed_outgoing_key.is_some();
 
-    if snapshot.is_transitioning != is_transitioning
+    if previous_status.is_transitioning != is_transitioning
         || completed
-        || snapshot.completed_outgoing_key.is_some()
+        || previous_status.completed_outgoing_key.is_some()
     {
         *status.write() = ViewTransitionStatus {
             is_transitioning,
             completed_outgoing_key,
             completion_serial: if completed {
-                snapshot.completion_serial + 1
+                previous_status.completion_serial + 1
             } else {
-                snapshot.completion_serial
+                previous_status.completion_serial
             },
         };
     }
@@ -413,9 +416,9 @@ fn lerp_vec2(from: Vec2, to: Vec2, progress: f32) -> Vec2 {
     from + (to - from) * progress
 }
 
-fn current_viewport_size(snapshot: &ViewTransitionState, progress: f32) -> Option<Vec2> {
-    match (snapshot.from_size, snapshot.target_size) {
+fn current_viewport_size(state: &ViewTransitionState, progress: f32) -> Option<Vec2> {
+    match (state.from_size, state.target_size) {
         (Some(from_size), Some(target_size)) => Some(lerp_vec2(from_size, target_size, progress)),
-        _ => snapshot.viewport_size,
+        _ => state.viewport_size,
     }
 }

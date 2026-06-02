@@ -65,7 +65,6 @@ impl Component for BluetoothSubmenu {
 
         let state =
             ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
-        let snapshot = *state.read();
         let should_go_back = focus_scope.drain_captured_actions().any(|action| {
             matches!(
                 action,
@@ -73,12 +72,8 @@ impl Component for BluetoothSubmenu {
             )
         });
 
-        if snapshot.active_view == SettingsMenuView::Bluetooth && should_go_back {
-            *state.write() = SettingsMenuState {
-                last_active_view: snapshot.active_view,
-                active_view: SettingsMenuView::Main,
-                ..snapshot
-            };
+        if should_go_back && state.read().active_view == SettingsMenuView::Bluetooth {
+            state.write().set_active_view(SettingsMenuView::Main);
         }
         let transition_status = crate::components::view_transition::view_transition_status(
             ctx,
@@ -132,8 +127,14 @@ impl Component for BluetoothToggleRow {
         let focusable = ctx.focusable();
         let state =
             ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
-        let snapshot = *state.read();
-        let is_active = snapshot.active_view == SettingsMenuView::Bluetooth;
+        let (is_active, should_receive_handoff_focus) = {
+            let state = state.read();
+            (
+                state.active_view == SettingsMenuView::Bluetooth,
+                state.last_active_view == SettingsMenuView::Main
+                    && state.active_view == SettingsMenuView::Bluetooth,
+            )
+        };
         let bluetooth_state = bluetooth_state(ctx);
         let bluetooth_state = bluetooth_state.read();
         let toggle_enabled = bluetooth_state.can_toggle_power;
@@ -143,13 +144,10 @@ impl Component for BluetoothToggleRow {
             focusable.request_focus(FocusOrigin::Pointer);
         }
 
-        if snapshot.last_active_view == SettingsMenuView::Main
-            && snapshot.active_view == SettingsMenuView::Bluetooth
-        {
+        if should_receive_handoff_focus {
             focusable.request_focus(FocusOrigin::Programmatic);
             if focusable.is_focused() {
-                let mut menu_state = state.write_silent();
-                menu_state.last_active_view = menu_state.active_view;
+                state.write_silent().complete_view_focus_handoff();
             }
         }
 

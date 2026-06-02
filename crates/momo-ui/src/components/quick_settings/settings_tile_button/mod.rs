@@ -131,7 +131,6 @@ impl Component for SettingsTileButton {
         let is_main_view = is_menu_view_active(ctx, SettingsMenuView::Main);
         let shared_state =
             ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
-        let menu_state = *shared_state.read();
 
         focusable.set_preferred_focus(self.spec.is_preferred_focus);
         focusable.set_navigation_enabled(is_main_view);
@@ -141,14 +140,16 @@ impl Component for SettingsTileButton {
         }
 
         if matches!(self.spec.action, SettingsTileAction::OpenBluetoothSubmenu)
-            && menu_state.last_active_view == SettingsMenuView::Bluetooth
-            && menu_state.active_view == SettingsMenuView::Main
+            && {
+                let menu_state = shared_state.read();
+                menu_state.last_active_view == SettingsMenuView::Bluetooth
+                    && menu_state.active_view == SettingsMenuView::Main
+            }
             && is_main_view
         {
             focusable.request_focus(FocusOrigin::Programmatic);
             if focusable.is_focused() {
-                let mut state = shared_state.write_silent();
-                state.last_active_view = state.active_view;
+                shared_state.write_silent().complete_view_focus_handoff();
             }
         }
 
@@ -167,11 +168,9 @@ impl Component for SettingsTileButton {
                     {
                         warn!("failed to start Bluetooth discovery: {error:?}");
                     }
-                    *shared_state.write() = SettingsMenuState {
-                        last_active_view: menu_state.active_view,
-                        active_view: SettingsMenuView::Bluetooth,
-                        ..menu_state
-                    };
+                    shared_state
+                        .write()
+                        .set_active_view(SettingsMenuView::Bluetooth);
                 }
                 SettingsTileAction::None => {}
             }

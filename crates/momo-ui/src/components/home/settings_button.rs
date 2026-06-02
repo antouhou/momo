@@ -24,7 +24,6 @@ impl Component for HeaderSettingsTrigger {
         let focusable = ctx.focusable();
         let state =
             ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
-        let state_snapshot = *state.read();
         let just_activated = pointer.just_pressed() || focusable.just_activated();
         focusable.set_focus_key(home_top_row_settings_focus_key());
 
@@ -44,22 +43,24 @@ impl Component for HeaderSettingsTrigger {
             };
         }
 
-        if (state_snapshot.is_open || !state_snapshot.is_animating) && just_activated {
-            let next_is_open = !state_snapshot.is_open;
+        let (is_open, is_animating) = {
+            let state = state.read();
+            (state.is_open, state.is_animating)
+        };
+        if (is_open || !is_animating) && just_activated {
+            let next_is_open = !is_open;
             if !next_is_open
-                && state_snapshot.active_view == SettingsMenuView::Bluetooth
+                && state.read().active_view == SettingsMenuView::Bluetooth
                 && let Err(error) = bluetooth_handle(ctx).stop_discovery()
             {
                 warn!("failed to stop Bluetooth discovery: {error:?}");
             }
-            *state.write() = SettingsMenuState {
-                is_open: next_is_open,
-                just_opened: next_is_open,
-                opened_from_trigger_press: next_is_open,
-                is_animating: true,
-                last_active_view: SettingsMenuView::Main,
-                active_view: SettingsMenuView::Main,
-            };
+            let mut state = state.write();
+            state.is_open = next_is_open;
+            state.just_opened = next_is_open;
+            state.opened_from_trigger_press = next_is_open;
+            state.is_animating = true;
+            state.reset_active_view_to_main();
         }
 
         let trigger_state = HeaderSettingsTriggerState {

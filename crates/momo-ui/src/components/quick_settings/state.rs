@@ -31,11 +31,27 @@ impl Default for SettingsMenuState {
     }
 }
 
+impl SettingsMenuState {
+    pub(crate) fn set_active_view(&mut self, active_view: SettingsMenuView) {
+        self.last_active_view = self.active_view;
+        self.active_view = active_view;
+    }
+
+    pub(crate) fn complete_view_focus_handoff(&mut self) {
+        self.last_active_view = self.active_view;
+    }
+
+    pub(crate) fn reset_active_view_to_main(&mut self) {
+        self.last_active_view = SettingsMenuView::Main;
+        self.active_view = SettingsMenuView::Main;
+    }
+}
+
 pub(crate) const SETTINGS_MENU_STATE_ID: &str = "momo_home_settings_menu_state";
 pub(crate) const SETTINGS_VIEW_TRANSITION_ID: &str = "momo_home_settings_view_transition";
 
 pub fn should_render_settings_menu(ctx: &mut ComponentContext) -> bool {
     let state = ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
-    let snapshot = *state.read();
-    snapshot.is_open || snapshot.is_animating
+    let guard = state.read();
+    guard.is_open || guard.is_animating
 }

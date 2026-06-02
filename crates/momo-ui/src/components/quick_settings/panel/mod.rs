@@ -38,19 +38,25 @@ impl Component for SettingsMenuPanel {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         let state =
             ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
-        let state_snapshot = *state.read();
+        let should_render = {
+            let state = state.read();
+            state.is_open || state.is_animating
+        };
 
-        if !state_snapshot.is_open && !state_snapshot.is_animating {
+        if !should_render {
             return Element::new();
         }
 
-        let just_opened = state_snapshot.just_opened;
+        let (is_open, just_opened, active_view) = {
+            let state = state.read();
+            (state.is_open, state.just_opened, state.active_view)
+        };
         let mut pointer = ctx.pointer();
         let focus_scope = ctx.focus_scope();
 
-        if state_snapshot.is_open {
+        if is_open {
             focus_scope.set_boundary(FocusBoundary::Stop);
-            if state_snapshot.active_view == SettingsMenuView::Main {
+            if active_view == SettingsMenuView::Main {
                 focus_scope.capture_when_contains_focus(&[
                     NavigationInputAction::Cancel,
                     NavigationInputAction::Back,
@@ -64,9 +70,11 @@ impl Component for SettingsMenuPanel {
             }
         }
 
-        if state_snapshot.is_open {
-            let is_view_transition_pending =
-                state_snapshot.last_active_view != state_snapshot.active_view;
+        if is_open {
+            let is_view_transition_pending = {
+                let state = state.read();
+                state.last_active_view != state.active_view
+            };
             let close_from_navigation = focus_scope.drain_captured_actions().any(|action| {
                 matches!(
                     action,
@@ -82,7 +90,8 @@ impl Component for SettingsMenuPanel {
                 || close_from_focus_leave;
 
             if should_close || just_opened {
-                if close_from_navigation && state_snapshot.opened_from_trigger_press {
+                let opened_from_trigger_press = state.read().opened_from_trigger_press;
+                if close_from_navigation && opened_from_trigger_press {
                     ctx.navigation().request_focus_by_key(
                         crate::components::home::model::home_top_row_settings_focus_key(),
                         FocusOrigin::Navigation,
@@ -90,24 +99,19 @@ impl Component for SettingsMenuPanel {
                 }
 
                 if should_close
-                    && state_snapshot.active_view == SettingsMenuView::Bluetooth
+                    && state.read().active_view == SettingsMenuView::Bluetooth
                     && let Err(error) = bluetooth_handle(ctx).stop_discovery()
                 {
                     warn!("failed to stop Bluetooth discovery: {error:?}");
                 }
 
-                *state.write() = SettingsMenuState {
-                    is_open: !should_close,
-                    just_opened: false,
-                    opened_from_trigger_press: if should_close {
-                        false
-                    } else {
-                        state_snapshot.opened_from_trigger_press
-                    },
-                    is_animating: true,
-                    last_active_view: state_snapshot.last_active_view,
-                    active_view: state_snapshot.active_view,
-                };
+                let mut state = state.write();
+                state.is_open = !should_close;
+                state.just_opened = false;
+                if should_close {
+                    state.opened_from_trigger_press = false;
+                }
+                state.is_animating = true;
             }
         }
 
@@ -146,8 +150,7 @@ impl Component for SettingsMenuContent {
 
         let state =
             ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
-        let snapshot = *state.read();
-        let active_view = snapshot.active_view;
+        let active_view = state.read().active_view;
         let direction = settings_view_transition_direction(ctx, active_view);
 
         let view_transition = ViewTransition::new(match active_view {
@@ -174,25 +177,25 @@ fn settings_view_transition_direction(
     active_view: SettingsMenuView,
 ) -> ViewTransitionDirection {
     let state = ctx.use_local_state(SettingsMenuViewTransitionDirectionState::default);
-    let mut snapshot = *state.read();
+    let mut view_state = *state.read();
 
-    match snapshot.observed_active_view {
+    match view_state.observed_active_view {
         None => {
-            snapshot.observed_active_view = Some(active_view);
-            *state.write_silent() = snapshot;
+            view_state.observed_active_view = Some(active_view);
+            *state.write_silent() = view_state;
         }
         Some(previous_active_view) if previous_active_view != active_view => {
-            snapshot.observed_active_view = Some(active_view);
-            snapshot.direction = Some(settings_menu_view_transition_direction(
+            view_state.observed_active_view = Some(active_view);
+            view_state.direction = Some(settings_menu_view_transition_direction(
                 previous_active_view,
                 active_view,
             ));
-            *state.write_silent() = snapshot;
+            *state.write_silent() = view_state;
         }
         _ => {}
     }
 
-    snapshot
+    view_state
         .direction
         .unwrap_or(ViewTransitionDirection::Forward)
 }
@@ -219,8 +222,11 @@ fn stop_bluetooth_discovery_after_submenu_transition(ctx: &mut ComponentContext)
     }
 
     let content_state = ctx.use_local_state(SettingsMenuContentState::default);
-    let snapshot = *content_state.read();
-    if snapshot.last_handled_transition_completion_serial == transition_status.completion_serial {
+    if content_state
+        .read()
+        .last_handled_transition_completion_serial
+        == transition_status.completion_serial
+    {
         return;
     }
 
@@ -257,10 +263,10 @@ impl Component for MainSettingsView {
 
 pub(crate) fn settings_overlay(ctx: &mut ComponentContext) -> Overlay {
     let state = ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
-    let state_snapshot = *state.read();
-    let visibility = settings_menu_visibility(ctx, state_snapshot.is_open);
+    let is_open = state.read().is_open;
+    let visibility = settings_menu_visibility(ctx, is_open);
 
-    if !visibility.is_visible && state_snapshot.is_animating {
+    if !visibility.is_visible && state.read().is_animating {
         *state.write() = SettingsMenuState::default();
     }
 
@@ -276,7 +282,7 @@ pub(crate) fn settings_overlay(ctx: &mut ComponentContext) -> Overlay {
 
 fn settings_menu_visibility(ctx: &mut ComponentContext, is_open: bool) -> SettingsMenuVisibility {
     let motion_state = ctx.use_local_state(SettingsMenuMotionState::default);
-    let mut snapshot = *motion_state.read();
+    let mut motion = *motion_state.read();
     let animation = ctx.animation_with_id(
         Id::new(SETTINGS_MENU_ANIMATION_ID),
         AnimationParameters::default()
@@ -284,7 +290,7 @@ fn settings_menu_visibility(ctx: &mut ComponentContext, is_open: bool) -> Settin
             .with_easing(EasingFunction::EaseOut),
     );
 
-    match snapshot.previous_open {
+    match motion.previous_open {
         None => {
             if is_open {
                 animation.set_progress(0.0);
@@ -292,17 +298,17 @@ fn settings_menu_visibility(ctx: &mut ComponentContext, is_open: bool) -> Settin
             } else {
                 animation.set_progress(0.0);
             }
-            snapshot.previous_open = Some(is_open);
-            *motion_state.write_silent() = snapshot;
+            motion.previous_open = Some(is_open);
+            *motion_state.write_silent() = motion;
         }
         Some(previous_open) if previous_open != is_open => {
-            snapshot.previous_open = Some(is_open);
+            motion.previous_open = Some(is_open);
             if is_open {
                 animation.play_forward();
             } else {
                 animation.play_backward();
             }
-            *motion_state.write_silent() = snapshot;
+            *motion_state.write_silent() = motion;
         }
         _ => {}
     }

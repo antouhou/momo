@@ -17,7 +17,8 @@ use super::style::{
 use super::volume_control::VolumeControl;
 use crate::components::home::bluetooth::bluetooth_handle;
 use crate::components::view_transition::{
-    ViewTransition, ViewTransitionDirection, view_transition_status,
+    ViewTransition, ViewTransitionDirection, ViewTransitionEvent, view_transition_events,
+    view_transition_status,
 };
 use daiko::animation::AnimationParameters;
 use daiko::animation::easing::EasingFunction;
@@ -210,33 +211,18 @@ fn settings_menu_view_transition_direction(
     }
 }
 
-#[derive(Clone, Copy, Default)]
-struct SettingsMenuContentState {
-    last_handled_transition_completion_serial: u64,
-}
-
 fn stop_bluetooth_discovery_after_submenu_transition(ctx: &mut ComponentContext) {
-    let transition_status = view_transition_status(ctx, SETTINGS_VIEW_TRANSITION_ID);
-    if transition_status.completed_outgoing_key != Some(Id::new(SettingsMenuView::Bluetooth)) {
-        return;
+    for event in view_transition_events(ctx, SETTINGS_VIEW_TRANSITION_ID).iter() {
+        if matches!(
+            event,
+            ViewTransitionEvent::Completed {
+                outgoing_key
+            } if outgoing_key == Id::new(SettingsMenuView::Bluetooth)
+        ) && let Err(error) = bluetooth_handle(ctx).stop_discovery()
+        {
+            warn!("failed to stop Bluetooth discovery: {error:?}");
+        }
     }
-
-    let content_state = ctx.use_local_state(SettingsMenuContentState::default);
-    if content_state
-        .read()
-        .last_handled_transition_completion_serial
-        == transition_status.completion_serial
-    {
-        return;
-    }
-
-    if let Err(error) = bluetooth_handle(ctx).stop_discovery() {
-        warn!("failed to stop Bluetooth discovery: {error:?}");
-    }
-
-    *content_state.write_silent() = SettingsMenuContentState {
-        last_handled_transition_completion_serial: transition_status.completion_serial,
-    };
 }
 
 #[derive(Clone, Copy)]
@@ -244,10 +230,7 @@ struct MainSettingsView;
 
 impl Component for MainSettingsView {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        let transition_status = crate::components::view_transition::view_transition_status(
-            ctx,
-            SETTINGS_VIEW_TRANSITION_ID,
-        );
+        let transition_status = view_transition_status(ctx, SETTINGS_VIEW_TRANSITION_ID);
 
         Element::new()
             .with_style(settings_content_style())

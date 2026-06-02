@@ -8,6 +8,7 @@ use self::style::{
 };
 use daiko::animation::AnimationParameters;
 use daiko::animation::easing::EasingFunction;
+use daiko::channel::Channel;
 use daiko::component::{Child, Component, ComponentContext, IntoChild};
 use daiko::{Element, Id, Vec2};
 use std::hash::Hash;
@@ -62,7 +63,7 @@ impl Component for ViewTransition {
         let measurement = *measurements.read();
         let layout_size = ctx.layout().map(|layout| layout.size());
         let key = self.transition_key.unwrap_or(Id::NULL);
-        let mut completed_outgoing_key = None;
+        let mut completed_event = None;
         let animation = ctx.animation(
             AnimationParameters::default()
                 .with_duration(Duration::from_millis(VIEW_TRANSITION_DURATION_MS))
@@ -186,7 +187,9 @@ impl Component for ViewTransition {
             && animation.progress_linear() >= 1.0
         {
             next_state.previous_view = None;
-            completed_outgoing_key = next_state.previous_key;
+            completed_event = next_state
+                .previous_key
+                .map(|outgoing_key| ViewTransitionEvent::Completed { outgoing_key });
             next_state.current_view = Some(self.current_view.clone());
             next_state.viewport_size = next_state.target_size;
             next_state.from_size = None;
@@ -231,7 +234,10 @@ impl Component for ViewTransition {
         let previous_view = next_state.previous_view.clone();
         let previous_motion = next_state.previous_motion;
 
-        publish_view_transition_status(ctx, self.id, is_transitioning, completed_outgoing_key);
+        publish_view_transition_status(ctx, self.id, is_transitioning);
+        if let Some(event) = completed_event {
+            let _ = view_transition_events(ctx, self.id).send(event);
+        }
 
         let mut el =
             Element::new().with_style(view_transition_style(self.slide_distance, viewport_size));
@@ -350,8 +356,11 @@ enum ViewTransitionSlotReportKind {
 #[derive(Clone, Copy, Default)]
 pub(crate) struct ViewTransitionStatus {
     pub(crate) is_transitioning: bool,
-    pub(crate) completed_outgoing_key: Option<Id>,
-    pub(crate) completion_serial: u64,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum ViewTransitionEvent {
+    Completed { outgoing_key: Id },
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -378,34 +387,28 @@ pub(crate) fn view_transition_status(
     .read()
 }
 
-fn publish_view_transition_status(
+pub(crate) fn view_transition_events(
     ctx: &mut ComponentContext,
-    id: Id,
-    is_transitioning: bool,
-    completed_outgoing_key: Option<Id>,
-) {
+    id: impl Hash,
+) -> Channel<ViewTransitionEvent> {
+    ctx.use_channel_with_id(view_transition_events_id(Id::new(id)))
+}
+
+fn publish_view_transition_status(ctx: &mut ComponentContext, id: Id, is_transitioning: bool) {
     let status = ctx.use_shared_state(view_transition_status_id(id), ViewTransitionStatus::default);
     let previous_status = *status.read();
-    let completed = completed_outgoing_key.is_some();
 
-    if previous_status.is_transitioning != is_transitioning
-        || completed
-        || previous_status.completed_outgoing_key.is_some()
-    {
-        *status.write() = ViewTransitionStatus {
-            is_transitioning,
-            completed_outgoing_key,
-            completion_serial: if completed {
-                previous_status.completion_serial + 1
-            } else {
-                previous_status.completion_serial
-            },
-        };
+    if previous_status.is_transitioning != is_transitioning {
+        *status.write() = ViewTransitionStatus { is_transitioning };
     }
 }
 
 fn view_transition_status_id(id: Id) -> Id {
     Id::new(("view_transition_status", id))
+}
+
+fn view_transition_events_id(id: Id) -> Id {
+    Id::new(("view_transition_events", id))
 }
 
 fn view_transition_measurements_id(id: Id) -> Id {

@@ -1,8 +1,10 @@
 mod style;
 
 use self::style::{
-    DEFAULT_VIEW_TRANSITION_SLIDE_DISTANCE, VIEW_TRANSITION_DURATION_MS,
-    view_transition_slot_style, view_transition_style,
+    DEFAULT_VIEW_TRANSITION_SLIDE_DISTANCE, VIEW_TRANSITION_DURATION_MS, ViewTransitionSlotMotion,
+    incoming_view_transition_slot_motion, outgoing_view_transition_slot_motion,
+    outgoing_view_transition_slot_target_offset, stable_view_transition_slot_motion,
+    view_transition_slot_motion_offset, view_transition_slot_style, view_transition_style,
 };
 use daiko::animation::AnimationParameters;
 use daiko::animation::easing::EasingFunction;
@@ -78,27 +80,80 @@ impl Component for ViewTransition {
         let mut started_transition_this_run = false;
 
         if key_changed {
+            let progress_before_key_change =
+                if snapshot.previous_view.is_some() && snapshot.target_size.is_some() {
+                    animation.progress()
+                } else if snapshot.previous_view.is_some() {
+                    0.0
+                } else {
+                    1.0
+                };
+
             let mut measurement_update = measurement_snapshot;
             measurement_update.incoming_key = None;
             measurement_update.incoming_size = None;
             *measurements.write_silent() = measurement_update;
 
-            let from_size = layout_size
-                .or(measurement_snapshot.stable_size)
-                .or(snapshot.viewport_size)
-                .unwrap_or(Vec2::new(self.slide_distance, 0.0));
+            let from_size = if snapshot.previous_view.is_some() {
+                current_viewport_size(&snapshot, progress_before_key_change)
+            } else {
+                layout_size.or(measurement_snapshot.stable_size)
+            }
+            .or(snapshot.viewport_size)
+            .unwrap_or(Vec2::new(self.slide_distance, 0.0));
+
+            let incoming_motion =
+                incoming_view_transition_slot_motion(self.direction, self.slide_distance);
+            let outgoing_motion =
+                outgoing_view_transition_slot_motion(self.direction, self.slide_distance);
+            let mut current_motion = incoming_motion;
+            let mut previous_motion = outgoing_motion;
+            let mut current_view = self.current_view.clone();
+            let mut previous_key = snapshot.current_key;
+            let mut previous_view = snapshot
+                .current_view
+                .clone()
+                .or_else(|| Some(self.current_view.clone()));
+
+            if snapshot.previous_view.is_some() {
+                let current_offset = view_transition_slot_motion_offset(
+                    snapshot.current_motion,
+                    progress_before_key_change,
+                );
+                let previous_offset = view_transition_slot_motion_offset(
+                    snapshot.previous_motion,
+                    progress_before_key_change,
+                );
+                let outgoing_target_offset = outgoing_view_transition_slot_target_offset(
+                    self.direction,
+                    self.slide_distance,
+                );
+
+                if snapshot.previous_key == Some(key) {
+                    if let Some(returning_view) = snapshot.previous_view.clone() {
+                        current_view = returning_view;
+                    }
+                    previous_key = snapshot.current_key;
+                    previous_view = snapshot.current_view.clone();
+                    current_motion = ViewTransitionSlotMotion::new(previous_offset, 0.0);
+                    previous_motion =
+                        ViewTransitionSlotMotion::new(current_offset, outgoing_target_offset);
+                } else {
+                    previous_view = snapshot.current_view.clone();
+                    previous_motion =
+                        ViewTransitionSlotMotion::new(current_offset, outgoing_target_offset);
+                }
+            }
 
             snapshot.viewport_size = Some(from_size);
             snapshot.from_size = Some(from_size);
             snapshot.target_size = None;
-            snapshot.direction = self.direction;
-            snapshot.previous_view = snapshot
-                .current_view
-                .clone()
-                .or_else(|| Some(self.current_view.clone()));
-            snapshot.previous_key = snapshot.current_key;
+            snapshot.previous_view = previous_view;
+            snapshot.previous_key = previous_key;
             snapshot.current_key = Some(key);
-            snapshot.current_view = Some(self.current_view.clone());
+            snapshot.current_view = Some(current_view);
+            snapshot.current_motion = current_motion;
+            snapshot.previous_motion = previous_motion;
             animation.reset();
             started_transition_this_run = true;
             *transition_state.write_silent() = snapshot.clone();
@@ -137,6 +192,8 @@ impl Component for ViewTransition {
             snapshot.from_size = None;
             snapshot.target_size = None;
             snapshot.previous_key = None;
+            snapshot.current_motion = stable_view_transition_slot_motion();
+            snapshot.previous_motion = stable_view_transition_slot_motion();
             *transition_state.write_silent() = snapshot.clone();
         } else if snapshot.previous_view.is_none() && !animation.is_running() {
             // Keep the next outgoing child fresh without requesting another render.
@@ -172,10 +229,10 @@ impl Component for ViewTransition {
         } else {
             ViewTransitionPhase::Stable
         };
-        let direction = if snapshot.previous_view.is_some() {
-            snapshot.direction
+        let current_motion = if snapshot.previous_view.is_some() {
+            snapshot.current_motion
         } else {
-            self.direction
+            stable_view_transition_slot_motion()
         };
 
         el.add_content(ViewTransitionSlot {
@@ -188,7 +245,7 @@ impl Component for ViewTransition {
             },
             phase: current_phase,
             progress,
-            direction,
+            motion: current_motion,
             slide_distance: self.slide_distance,
             content: self.current_view.clone(),
         });
@@ -200,7 +257,7 @@ impl Component for ViewTransition {
                 report_kind: ViewTransitionSlotReportKind::None,
                 phase: ViewTransitionPhase::Outgoing,
                 progress,
-                direction,
+                motion: snapshot.previous_motion,
                 slide_distance: self.slide_distance,
                 content: previous_view,
             });
@@ -219,7 +276,8 @@ struct ViewTransitionState {
     viewport_size: Option<Vec2>,
     from_size: Option<Vec2>,
     target_size: Option<Vec2>,
-    direction: ViewTransitionDirection,
+    current_motion: ViewTransitionSlotMotion,
+    previous_motion: ViewTransitionSlotMotion,
 }
 
 #[derive(Clone, Copy, Default)]
@@ -236,7 +294,7 @@ struct ViewTransitionSlot {
     report_kind: ViewTransitionSlotReportKind,
     phase: ViewTransitionPhase,
     progress: f32,
-    direction: ViewTransitionDirection,
+    motion: ViewTransitionSlotMotion,
     slide_distance: f32,
     content: Child,
 }
@@ -272,7 +330,7 @@ impl Component for ViewTransitionSlot {
             .with_style(view_transition_slot_style(
                 self.phase,
                 self.progress,
-                self.direction,
+                self.motion,
                 self.slide_distance,
             ))
             .with_content(self.content.clone())
@@ -297,12 +355,6 @@ pub(crate) struct ViewTransitionStatus {
 pub enum ViewTransitionDirection {
     Forward,
     Backward,
-}
-
-impl Default for ViewTransitionDirection {
-    fn default() -> Self {
-        Self::Forward
-    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -359,4 +411,11 @@ fn view_transition_measurements_id(id: Id) -> Id {
 
 fn lerp_vec2(from: Vec2, to: Vec2, progress: f32) -> Vec2 {
     from + (to - from) * progress
+}
+
+fn current_viewport_size(snapshot: &ViewTransitionState, progress: f32) -> Option<Vec2> {
+    match (snapshot.from_size, snapshot.target_size) {
+        (Some(from_size), Some(target_size)) => Some(lerp_vec2(from_size, target_size, progress)),
+        _ => snapshot.viewport_size,
+    }
 }

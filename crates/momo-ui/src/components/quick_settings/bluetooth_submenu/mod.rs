@@ -8,7 +8,9 @@ use self::style::{
 use super::common::{
     QuickSettingsControlState, QuickSettingsGlyph, glyph_element, settings_bottom_row, settings_row,
 };
-use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuView};
+use super::state::{
+    SETTINGS_MENU_STATE_ID, SETTINGS_VIEW_TRANSITION_ID, SettingsMenuState, SettingsMenuView,
+};
 use super::style::{SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_text_color};
 use super::submenu_button::{
     SubmenuButton, SubmenuButtonState, SubmenuButtonSurface, submenu_button_glyph,
@@ -82,6 +84,10 @@ impl Component for BluetoothSubmenu {
                 ..snapshot
             };
         }
+        let transition_status = crate::components::view_transition::view_transition_status(
+            ctx,
+            SETTINGS_VIEW_TRANSITION_ID,
+        );
 
         Element::new()
             .with_tag("header-settings-bluetooth-submenu")
@@ -89,7 +95,8 @@ impl Component for BluetoothSubmenu {
             .with_content(settings_row(BluetoothToggleRow))
             .with_content(
                 Scrollable::new(BluetoothSubmenuBody, "bluetooth_submenu_scrollable")
-                    .size_to_content_with_clamp(Vec2::new(f32::INFINITY, f32::INFINITY)),
+                    .size_to_content_with_clamp(Vec2::new(f32::INFINITY, f32::INFINITY))
+                    .with_visible_scroll_bars(!transition_status.is_transitioning),
             )
             .with_content(settings_bottom_row(BluetoothSettingsButton))
     }

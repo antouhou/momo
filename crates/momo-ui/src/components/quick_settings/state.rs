@@ -32,6 +32,7 @@ impl Default for SettingsMenuState {
 }
 
 pub(crate) const SETTINGS_MENU_STATE_ID: &str = "momo_home_settings_menu_state";
+pub(crate) const SETTINGS_VIEW_TRANSITION_ID: &str = "momo_home_settings_view_transition";
 
 pub fn should_render_settings_menu(ctx: &mut ComponentContext) -> bool {
     let state = ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);

@@ -315,6 +315,48 @@ fn settings_menu_back_from_bluetooth_returns_to_main_without_closing() {
 }
 
 #[test]
+fn settings_menu_height_animates_when_opening_bluetooth_submenu() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+
+    runner.click_element("header-settings-button");
+    runner.run_frame();
+    runner.run_frame();
+    thread::sleep(Duration::from_millis(320));
+    runner.run_frame();
+
+    let (_, main_size) = runner.get_element_bounds("header-settings-menu");
+
+    runner.click_element("header-settings-tile-bluetooth");
+    runner.run_frame();
+    runner.run_frame();
+    thread::sleep(Duration::from_millis(220));
+    runner.run_frame();
+
+    let (_, mid_transition_size) = runner.get_element_bounds("header-settings-menu");
+
+    thread::sleep(Duration::from_millis(460));
+    runner.run_frame();
+    let (_, bluetooth_size) = runner.get_element_bounds("header-settings-menu");
+
+    assert_ne!(
+        main_size.y, bluetooth_size.y,
+        "main and Bluetooth menu heights should differ for this regression to be meaningful"
+    );
+
+    let lower_bound = main_size.y.min(bluetooth_size.y);
+    let upper_bound = main_size.y.max(bluetooth_size.y);
+    assert!(
+        mid_transition_size.y > lower_bound && mid_transition_size.y < upper_bound,
+        "menu height should be between stable sizes during transition, main={}, mid={}, bluetooth={}",
+        main_size.y,
+        mid_transition_size.y,
+        bluetooth_size.y,
+    );
+}
+
+#[test]
 fn settings_menu_closes_when_focus_leaves_the_overlay() {
     let mut runner = TestRunner::new(HomeTestApp);
     runner.set_viewport_size(1280.0, 720.0);

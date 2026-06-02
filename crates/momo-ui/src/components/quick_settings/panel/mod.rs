@@ -7,7 +7,9 @@ use self::tile_grid::SettingsTileGrid;
 use self::top_row::SettingsTopRow;
 use super::bluetooth_submenu::BluetoothSubmenu;
 use super::common::{settings_middle_row, settings_row};
-use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuView};
+use super::state::{
+    SETTINGS_MENU_STATE_ID, SETTINGS_VIEW_TRANSITION_ID, SettingsMenuState, SettingsMenuView,
+};
 use super::style::{
     SETTINGS_MENU_CONTENT_WIDTH, SETTINGS_MENU_EDGE_MARGIN, SETTINGS_MENU_MIN_HEIGHT,
     SETTINGS_MENU_SLIDE_DISTANCE, SETTINGS_MENU_TOP_OFFSET,
@@ -156,6 +158,7 @@ impl Component for SettingsMenuContent {
             SettingsMenuView::Main => MainSettingsView.into_child(),
             SettingsMenuView::Bluetooth => BluetoothSubmenu.into_child(),
         })
+        .with_id(SETTINGS_VIEW_TRANSITION_ID)
         .with_transition_key(active_view)
         .with_direction(direction)
         .with_slide_distance(SETTINGS_MENU_CONTENT_WIDTH);
@@ -168,14 +171,20 @@ impl Component for SettingsMenuContent {
 struct MainSettingsView;
 
 impl Component for MainSettingsView {
-    fn to_element(&self, _ctx: &mut ComponentContext) -> Element {
+    fn to_element(&self, ctx: &mut ComponentContext) -> Element {
+        let transition_status = crate::components::view_transition::view_transition_status(
+            ctx,
+            SETTINGS_VIEW_TRANSITION_ID,
+        );
+
         Element::new()
             .with_style(settings_content_style())
             .with_content(settings_row(SettingsTopRow))
             .with_content(settings_middle_row(VolumeControl))
             .with_content(
                 Scrollable::new(SettingsTileGrid, "quick_settings_scrollable")
-                    .size_to_content_with_clamp(Vec2::new(f32::INFINITY, f32::INFINITY)),
+                    .size_to_content_with_clamp(Vec2::new(f32::INFINITY, f32::INFINITY))
+                    .with_visible_scroll_bars(!transition_status.is_transitioning),
             )
     }
 }

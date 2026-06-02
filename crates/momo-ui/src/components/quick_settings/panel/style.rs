@@ -5,7 +5,7 @@ use super::super::style::{
     settings_panel_color,
 };
 use daiko::layout::{AlignItems, FlexDirection, ItemSize, JustifyContent, SizeConstraint};
-use daiko::style::{Border, BorderRadius, Indent, Stroke, Style};
+use daiko::style::{Border, BorderRadius, Indent, Overflow, Stroke, Style};
 
 pub(crate) fn settings_menu_style(max_height: f32) -> Style {
     Style::new()
@@ -20,6 +20,7 @@ pub(crate) fn settings_menu_style(max_height: f32) -> Style {
             settings_panel_border_color(),
         )))
         .with_border_radius(BorderRadius::all(PANEL_RADIUS))
+        .with_overflow(Overflow::Hidden)
 }
 
 pub(crate) fn settings_content_style() -> Style {

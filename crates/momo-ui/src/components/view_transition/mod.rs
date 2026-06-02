@@ -91,6 +91,7 @@ impl Component for ViewTransition {
             snapshot.viewport_size = Some(from_size);
             snapshot.from_size = Some(from_size);
             snapshot.target_size = None;
+            snapshot.direction = self.direction;
             snapshot.previous_view = snapshot
                 .current_view
                 .clone()
@@ -171,6 +172,11 @@ impl Component for ViewTransition {
         } else {
             ViewTransitionPhase::Stable
         };
+        let direction = if snapshot.previous_view.is_some() {
+            snapshot.direction
+        } else {
+            self.direction
+        };
 
         el.add_content(ViewTransitionSlot {
             measurements_id: view_transition_measurements_id(self.id),
@@ -182,7 +188,7 @@ impl Component for ViewTransition {
             },
             phase: current_phase,
             progress,
-            direction: self.direction,
+            direction,
             slide_distance: self.slide_distance,
             content: self.current_view.clone(),
         });
@@ -194,7 +200,7 @@ impl Component for ViewTransition {
                 report_kind: ViewTransitionSlotReportKind::None,
                 phase: ViewTransitionPhase::Outgoing,
                 progress,
-                direction: self.direction,
+                direction,
                 slide_distance: self.slide_distance,
                 content: previous_view,
             });
@@ -213,6 +219,7 @@ struct ViewTransitionState {
     viewport_size: Option<Vec2>,
     from_size: Option<Vec2>,
     target_size: Option<Vec2>,
+    direction: ViewTransitionDirection,
 }
 
 #[derive(Clone, Copy, Default)]
@@ -290,6 +297,12 @@ pub(crate) struct ViewTransitionStatus {
 pub enum ViewTransitionDirection {
     Forward,
     Backward,
+}
+
+impl Default for ViewTransitionDirection {
+    fn default() -> Self {
+        Self::Forward
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

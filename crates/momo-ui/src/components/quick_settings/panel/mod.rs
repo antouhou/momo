@@ -148,14 +148,7 @@ impl Component for SettingsMenuContent {
             ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
         let snapshot = *state.read();
         let active_view = snapshot.active_view;
-        let previous_active_view = snapshot.last_active_view;
-
-        let direction = match (previous_active_view, active_view) {
-            (SettingsMenuView::Bluetooth, SettingsMenuView::Main) => {
-                ViewTransitionDirection::Backward
-            }
-            _ => ViewTransitionDirection::Forward,
-        };
+        let direction = settings_view_transition_direction(ctx, active_view);
 
         let view_transition = ViewTransition::new(match active_view {
             SettingsMenuView::Main => MainSettingsView.into_child(),
@@ -167,6 +160,50 @@ impl Component for SettingsMenuContent {
         .with_slide_distance(SETTINGS_MENU_CONTENT_WIDTH);
 
         Element::new().with_content(view_transition)
+    }
+}
+
+#[derive(Clone, Copy, Default)]
+struct SettingsMenuViewTransitionDirectionState {
+    observed_active_view: Option<SettingsMenuView>,
+    direction: Option<ViewTransitionDirection>,
+}
+
+fn settings_view_transition_direction(
+    ctx: &mut ComponentContext,
+    active_view: SettingsMenuView,
+) -> ViewTransitionDirection {
+    let state = ctx.use_local_state(SettingsMenuViewTransitionDirectionState::default);
+    let mut snapshot = *state.read();
+
+    match snapshot.observed_active_view {
+        None => {
+            snapshot.observed_active_view = Some(active_view);
+            *state.write_silent() = snapshot;
+        }
+        Some(previous_active_view) if previous_active_view != active_view => {
+            snapshot.observed_active_view = Some(active_view);
+            snapshot.direction = Some(settings_menu_view_transition_direction(
+                previous_active_view,
+                active_view,
+            ));
+            *state.write_silent() = snapshot;
+        }
+        _ => {}
+    }
+
+    snapshot
+        .direction
+        .unwrap_or(ViewTransitionDirection::Forward)
+}
+
+fn settings_menu_view_transition_direction(
+    from: SettingsMenuView,
+    to: SettingsMenuView,
+) -> ViewTransitionDirection {
+    match (from, to) {
+        (SettingsMenuView::Bluetooth, SettingsMenuView::Main) => ViewTransitionDirection::Backward,
+        _ => ViewTransitionDirection::Forward,
     }
 }
 

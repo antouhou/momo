@@ -74,10 +74,6 @@ impl Component for BluetoothSubmenu {
         });
 
         if snapshot.active_view == SettingsMenuView::Bluetooth && should_go_back {
-            if let Err(error) = bluetooth_handle(ctx).stop_discovery() {
-                warn!("failed to stop bluetooth discovery: {error:?}");
-            }
-
             *state.write() = SettingsMenuState {
                 last_active_view: snapshot.active_view,
                 active_view: SettingsMenuView::Main,

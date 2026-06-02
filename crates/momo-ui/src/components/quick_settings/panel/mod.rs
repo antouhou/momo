@@ -16,7 +16,9 @@ use super::style::{
 };
 use super::volume_control::VolumeControl;
 use crate::components::home::bluetooth::bluetooth_handle;
-use crate::components::view_transition::{ViewTransition, ViewTransitionDirection};
+use crate::components::view_transition::{
+    ViewTransition, ViewTransitionDirection, view_transition_status,
+};
 use daiko::animation::AnimationParameters;
 use daiko::animation::easing::EasingFunction;
 use daiko::component::{Component, ComponentContext};
@@ -140,6 +142,7 @@ impl Component for SettingsMenuContent {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         ctx.focus_scope()
             .set_entry_policy(FocusEntryPolicy::Remembered);
+        stop_bluetooth_discovery_after_submenu_transition(ctx);
 
         let state =
             ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
@@ -165,6 +168,32 @@ impl Component for SettingsMenuContent {
 
         Element::new().with_content(view_transition)
     }
+}
+
+#[derive(Clone, Copy, Default)]
+struct SettingsMenuContentState {
+    last_handled_transition_completion_serial: u64,
+}
+
+fn stop_bluetooth_discovery_after_submenu_transition(ctx: &mut ComponentContext) {
+    let transition_status = view_transition_status(ctx, SETTINGS_VIEW_TRANSITION_ID);
+    if transition_status.completed_outgoing_key != Some(Id::new(SettingsMenuView::Bluetooth)) {
+        return;
+    }
+
+    let content_state = ctx.use_local_state(SettingsMenuContentState::default);
+    let snapshot = *content_state.read();
+    if snapshot.last_handled_transition_completion_serial == transition_status.completion_serial {
+        return;
+    }
+
+    if let Err(error) = bluetooth_handle(ctx).stop_discovery() {
+        warn!("failed to stop Bluetooth discovery: {error:?}");
+    }
+
+    *content_state.write_silent() = SettingsMenuContentState {
+        last_handled_transition_completion_serial: transition_status.completion_serial,
+    };
 }
 
 #[derive(Clone, Copy)]

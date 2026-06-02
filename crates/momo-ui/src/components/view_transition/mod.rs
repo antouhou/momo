@@ -61,6 +61,7 @@ impl Component for ViewTransition {
         let measurement_snapshot = *measurements.read();
         let layout_size = ctx.layout().map(|layout| layout.size());
         let key = self.transition_key.unwrap_or(Id::NULL);
+        let mut completed_outgoing_key = None;
         let animation = ctx.animation(
             AnimationParameters::default()
                 .with_duration(Duration::from_millis(VIEW_TRANSITION_DURATION_MS))
@@ -94,6 +95,7 @@ impl Component for ViewTransition {
                 .current_view
                 .clone()
                 .or_else(|| Some(self.current_view.clone()));
+            snapshot.previous_key = snapshot.current_key;
             snapshot.current_key = Some(key);
             snapshot.current_view = Some(self.current_view.clone());
             animation.reset();
@@ -128,10 +130,12 @@ impl Component for ViewTransition {
             && animation.progress_linear() >= 1.0
         {
             snapshot.previous_view = None;
+            completed_outgoing_key = snapshot.previous_key;
             snapshot.current_view = Some(self.current_view.clone());
             snapshot.viewport_size = snapshot.target_size;
             snapshot.from_size = None;
             snapshot.target_size = None;
+            snapshot.previous_key = None;
             *transition_state.write_silent() = snapshot.clone();
         } else if snapshot.previous_view.is_none() && !animation.is_running() {
             // Keep the next outgoing child fresh without requesting another render.
@@ -146,7 +150,7 @@ impl Component for ViewTransition {
         }
 
         let is_transitioning = snapshot.previous_view.is_some();
-        publish_view_transition_status(ctx, self.id, is_transitioning);
+        publish_view_transition_status(ctx, self.id, is_transitioning, completed_outgoing_key);
 
         let viewport_size = if is_transitioning {
             match (snapshot.from_size, snapshot.target_size) {
@@ -203,6 +207,7 @@ impl Component for ViewTransition {
 #[derive(Clone, Default)]
 struct ViewTransitionState {
     current_key: Option<Id>,
+    previous_key: Option<Id>,
     current_view: Option<Child>,
     previous_view: Option<Child>,
     viewport_size: Option<Vec2>,
@@ -277,6 +282,8 @@ enum ViewTransitionSlotReportKind {
 #[derive(Clone, Copy, Default)]
 pub(crate) struct ViewTransitionStatus {
     pub(crate) is_transitioning: bool,
+    pub(crate) completed_outgoing_key: Option<Id>,
+    pub(crate) completion_serial: u64,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -303,10 +310,29 @@ pub(crate) fn view_transition_status(
     .read()
 }
 
-fn publish_view_transition_status(ctx: &mut ComponentContext, id: Id, is_transitioning: bool) {
+fn publish_view_transition_status(
+    ctx: &mut ComponentContext,
+    id: Id,
+    is_transitioning: bool,
+    completed_outgoing_key: Option<Id>,
+) {
     let status = ctx.use_shared_state(view_transition_status_id(id), ViewTransitionStatus::default);
-    if status.read().is_transitioning != is_transitioning {
-        *status.write() = ViewTransitionStatus { is_transitioning };
+    let snapshot = *status.read();
+    let completed = completed_outgoing_key.is_some();
+
+    if snapshot.is_transitioning != is_transitioning
+        || completed
+        || snapshot.completed_outgoing_key.is_some()
+    {
+        *status.write() = ViewTransitionStatus {
+            is_transitioning,
+            completed_outgoing_key,
+            completion_serial: if completed {
+                snapshot.completion_serial + 1
+            } else {
+                snapshot.completion_serial
+            },
+        };
     }
 }
 

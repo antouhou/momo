@@ -30,7 +30,11 @@ pub(super) fn view_transition_slot_style(
         .with_size_constraint(
             SizeConstraint::exact_content_height().with_exact_width(slide_distance),
         )
-        .with_transform(Some(Transform::new().then_translate_x(offset)));
+        .with_transform(Some(Transform::new().then_translate_x(offset)))
+        .with_order(match phase {
+            ViewTransitionPhase::Stable | ViewTransitionPhase::Incoming => 1,
+            ViewTransitionPhase::Outgoing => 0,
+        });
 
     if matches!(
         phase,

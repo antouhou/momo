@@ -7,7 +7,7 @@ use self::style::{
 use super::common::{
     QuickSettingsControlState, QuickSettingsGlyph, glyph_element, is_menu_view_active,
 };
-use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuView};
+use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuViewType};
 use super::style::{SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_tile_icon_color};
 use crate::components::home::bluetooth::{bluetooth_handle, bluetooth_state};
 use daiko::Element;
@@ -128,7 +128,7 @@ impl Component for SettingsTileButton {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         let mut pointer = ctx.pointer();
         let focusable = ctx.focusable();
-        let is_main_view = is_menu_view_active(ctx, SettingsMenuView::Main);
+        let is_main_view = is_menu_view_active(ctx, SettingsMenuViewType::Main);
         let shared_state =
             ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
 
@@ -142,8 +142,8 @@ impl Component for SettingsTileButton {
         if matches!(self.spec.action, SettingsTileAction::OpenBluetoothSubmenu)
             && {
                 let menu_state = shared_state.read();
-                menu_state.last_active_view == SettingsMenuView::Bluetooth
-                    && menu_state.active_view == SettingsMenuView::Main
+                menu_state.last_active_view == SettingsMenuViewType::Bluetooth
+                    && menu_state.active_view == SettingsMenuViewType::Main
             }
             && is_main_view
         {
@@ -170,7 +170,7 @@ impl Component for SettingsTileButton {
                     }
                     shared_state
                         .write()
-                        .set_active_view(SettingsMenuView::Bluetooth);
+                        .set_active_view(SettingsMenuViewType::Bluetooth);
                 }
                 SettingsTileAction::None => {}
             }

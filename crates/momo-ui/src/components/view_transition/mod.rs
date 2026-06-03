@@ -22,21 +22,33 @@ use std::time::Duration;
 
 pub struct ViewTransition {
     id: Id,
-    current_view: Child,
+    from_view: Option<Child>,
+    to_view: Child,
     transition_key: Option<Id>,
     direction: ViewTransitionDirection,
     slide_distance: f32,
 }
 
 impl ViewTransition {
-    pub fn new(current_view: impl IntoChild) -> Self {
+    pub fn new() -> Self {
         Self {
             id: Id::new("view_transition"),
-            current_view: current_view.into_child(),
+            from_view: None,
+            to_view: Element::new().into_child(),
             transition_key: None,
             direction: ViewTransitionDirection::Forward,
             slide_distance: DEFAULT_VIEW_TRANSITION_SLIDE_DISTANCE,
         }
+    }
+
+    pub fn from(mut self, from_view: impl IntoChild) -> Self {
+        self.from_view = Some(from_view.into_child());
+        self
+    }
+
+    pub fn to(mut self, to_view: impl IntoChild) -> Self {
+        self.to_view = to_view.into_child();
+        self
     }
 
     pub fn with_id(mut self, id: impl Hash) -> Self {
@@ -92,7 +104,6 @@ impl Component for ViewTransition {
 
         if next_state.current_key.is_none() {
             next_state.current_key = Some(key);
-            next_state.current_view = Some(self.current_view.clone());
             *transition_state.write_silent() = next_state.clone();
         }
 
@@ -101,9 +112,9 @@ impl Component for ViewTransition {
 
         if key_changed {
             let progress_before_key_change =
-                if next_state.previous_view.is_some() && next_state.target_size.is_some() {
+                if next_state.previous_key.is_some() && next_state.target_size.is_some() {
                     animation.progress()
-                } else if next_state.previous_view.is_some() {
+                } else if next_state.previous_key.is_some() {
                     0.0
                 } else {
                     1.0
@@ -114,7 +125,7 @@ impl Component for ViewTransition {
             measurement_update.incoming_size = None;
             *measurements.write_silent() = measurement_update;
 
-            let from_size = if next_state.previous_view.is_some() {
+            let from_size = if next_state.previous_key.is_some() {
                 current_viewport_size(&next_state, progress_before_key_change)
             } else {
                 layout_size.or(measurement.stable_size)
@@ -128,14 +139,9 @@ impl Component for ViewTransition {
                 outgoing_view_transition_slot_motion(self.direction, self.slide_distance);
             let mut current_motion = incoming_motion;
             let mut previous_motion = outgoing_motion;
-            let mut current_view = self.current_view.clone();
             let mut previous_key = next_state.current_key;
-            let mut previous_view = next_state
-                .current_view
-                .clone()
-                .or_else(|| Some(self.current_view.clone()));
 
-            if next_state.previous_view.is_some() {
+            if next_state.previous_key.is_some() {
                 let current_offset = view_transition_slot_motion_offset(
                     next_state.current_motion,
                     progress_before_key_change,
@@ -150,16 +156,11 @@ impl Component for ViewTransition {
                 );
 
                 if next_state.previous_key == Some(key) {
-                    if let Some(returning_view) = next_state.previous_view.clone() {
-                        current_view = returning_view;
-                    }
                     previous_key = next_state.current_key;
-                    previous_view = next_state.current_view.clone();
                     current_motion = ViewTransitionSlotMotion::new(previous_offset, 0.0);
                     previous_motion =
                         ViewTransitionSlotMotion::new(current_offset, outgoing_target_offset);
                 } else {
-                    previous_view = next_state.current_view.clone();
                     previous_motion =
                         ViewTransitionSlotMotion::new(current_offset, outgoing_target_offset);
                 }
@@ -168,10 +169,8 @@ impl Component for ViewTransition {
             next_state.viewport_size = Some(from_size);
             next_state.from_size = Some(from_size);
             next_state.target_size = None;
-            next_state.previous_view = previous_view;
             next_state.previous_key = previous_key;
             next_state.current_key = Some(key);
-            next_state.current_view = Some(current_view);
             next_state.current_motion = current_motion;
             next_state.previous_motion = previous_motion;
             animation.reset();
@@ -179,7 +178,7 @@ impl Component for ViewTransition {
             *transition_state.write_silent() = next_state.clone();
         }
 
-        if next_state.previous_view.is_some()
+        if next_state.previous_key.is_some()
             && !started_transition_this_run
             && measurement.incoming_key == Some(key)
             && let Some(target_size) = measurement.incoming_size
@@ -192,24 +191,22 @@ impl Component for ViewTransition {
             *transition_state.write_silent() = next_state.clone();
         }
 
-        let progress = if next_state.previous_view.is_some() && next_state.target_size.is_some() {
+        let progress = if next_state.previous_key.is_some() && next_state.target_size.is_some() {
             animation.progress()
-        } else if next_state.previous_view.is_some() {
+        } else if next_state.previous_key.is_some() {
             0.0
         } else {
             1.0
         };
 
-        if next_state.previous_view.is_some()
+        if next_state.previous_key.is_some()
             && next_state.target_size.is_some()
             && !animation.is_running()
             && animation.progress_linear() >= 1.0
         {
-            next_state.previous_view = None;
             completed_event = next_state
                 .previous_key
                 .map(|outgoing_key| ViewTransitionEvent::Completed { outgoing_key });
-            next_state.current_view = Some(self.current_view.clone());
             next_state.viewport_size = next_state.target_size;
             next_state.from_size = None;
             next_state.target_size = None;
@@ -217,9 +214,8 @@ impl Component for ViewTransition {
             next_state.current_motion = stable_view_transition_slot_motion();
             next_state.previous_motion = stable_view_transition_slot_motion();
             *transition_state.write_silent() = next_state.clone();
-        } else if next_state.previous_view.is_none() && !animation.is_running() {
-            // Keep the next outgoing child fresh without requesting another render.
-            next_state.current_view = Some(self.current_view.clone());
+        } else if next_state.previous_key.is_none() && !animation.is_running() {
+            // Keep the stable viewport size fresh without requesting another render.
             let measured_size = layout_size.or(measurement.stable_size);
             if let Some(measured_size) = measured_size
                 && next_state.viewport_size != Some(measured_size)
@@ -229,7 +225,7 @@ impl Component for ViewTransition {
             *transition_state.write_silent() = next_state.clone();
         }
 
-        let is_transitioning = next_state.previous_view.is_some();
+        let is_transitioning = next_state.previous_key.is_some();
         let viewport_size = if is_transitioning {
             match (next_state.from_size, next_state.target_size) {
                 (Some(from_size), Some(target_size)) => {
@@ -240,17 +236,16 @@ impl Component for ViewTransition {
         } else {
             None
         };
-        let current_phase = if next_state.previous_view.is_some() {
+        let current_phase = if next_state.previous_key.is_some() {
             ViewTransitionPhase::Incoming
         } else {
             ViewTransitionPhase::Stable
         };
-        let current_motion = if next_state.previous_view.is_some() {
+        let current_motion = if next_state.previous_key.is_some() {
             next_state.current_motion
         } else {
             stable_view_transition_slot_motion()
         };
-        let previous_view = next_state.previous_view.clone();
         let previous_motion = next_state.previous_motion;
 
         publish_view_transition_status(ctx, self.id, is_transitioning);
@@ -275,10 +270,10 @@ impl Component for ViewTransition {
             progress,
             motion: current_motion,
             slide_distance: self.slide_distance,
-            content: self.current_view.clone(),
+            content: self.to_view.clone(),
         });
 
-        if let Some(previous_view) = previous_view {
+        if is_transitioning {
             el.add_content(ViewTransitionSlot {
                 measurements_id: view_transition_measurements_id(self.id),
                 report_key: None,
@@ -287,7 +282,10 @@ impl Component for ViewTransition {
                 progress,
                 motion: previous_motion,
                 slide_distance: self.slide_distance,
-                content: previous_view,
+                content: self
+                    .from_view
+                    .clone()
+                    .unwrap_or_else(|| self.to_view.clone()),
             });
         }
 

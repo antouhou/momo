@@ -2,7 +2,7 @@ mod style;
 
 use self::style::{settings_status_chip_style, status_chip_content_style, status_value_style};
 use super::common::{QuickSettingsGlyph, control_state, glyph_element, is_menu_view_active};
-use super::state::SettingsMenuView;
+use super::state::SettingsMenuViewType;
 use super::style::{
     SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_danger_text_color, settings_text_color,
 };
@@ -28,7 +28,7 @@ pub(super) struct StatusChip;
 impl Component for StatusChip {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         let focusable = ctx.focusable();
-        let is_active = is_menu_view_active(ctx, SettingsMenuView::Main);
+        let is_active = is_menu_view_active(ctx, SettingsMenuViewType::Main);
         focusable.set_preferred_focus(is_active);
         focusable.set_navigation_enabled(is_active);
         let state = control_state(ctx);

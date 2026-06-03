@@ -8,7 +8,7 @@ use self::top_row::SettingsTopRow;
 use super::bluetooth_submenu::BluetoothSubmenu;
 use super::common::{settings_middle_row, settings_row};
 use super::state::{
-    SETTINGS_MENU_STATE_ID, SETTINGS_VIEW_TRANSITION_ID, SettingsMenuState, SettingsMenuView,
+    SETTINGS_MENU_STATE_ID, SETTINGS_VIEW_TRANSITION_ID, SettingsMenuState, SettingsMenuViewType,
 };
 use super::style::{
     SETTINGS_MENU_CONTENT_WIDTH, SETTINGS_MENU_EDGE_MARGIN, SETTINGS_MENU_MIN_HEIGHT,
@@ -21,7 +21,7 @@ use crate::components::view_transition::{
 };
 use daiko::animation::AnimationParameters;
 use daiko::animation::easing::EasingFunction;
-use daiko::component::{Component, ComponentContext};
+use daiko::component::{Child, Component, ComponentContext};
 use daiko::navigation::{FocusBoundary, FocusEntryPolicy, FocusOrigin, NavigationInputAction};
 use daiko::widgets::overlay::{Overlay, OverlayPositioning};
 use daiko::widgets::scrollable::Scrollable;
@@ -56,7 +56,7 @@ impl Component for SettingsMenuPanel {
 
         if is_open {
             focus_scope.set_boundary(FocusBoundary::Stop);
-            if active_view == SettingsMenuView::Main {
+            if active_view == SettingsMenuViewType::Main {
                 focus_scope.capture_when_contains_focus(&[
                     NavigationInputAction::Cancel,
                     NavigationInputAction::Back,
@@ -99,7 +99,7 @@ impl Component for SettingsMenuPanel {
                 }
 
                 if should_close
-                    && state.read().active_view == SettingsMenuView::Bluetooth
+                    && state.read().active_view == SettingsMenuViewType::Bluetooth
                     && let Err(error) = bluetooth_handle(ctx).stop_discovery()
                 {
                     warn!("failed to stop Bluetooth discovery: {error:?}");
@@ -139,6 +139,22 @@ struct SettingsMenuVisibility {
     is_visible: bool,
 }
 
+fn settings_view(
+    view_type: SettingsMenuViewType,
+    show_scroll_bars_when_overflowing: bool,
+) -> Child {
+    match view_type {
+        SettingsMenuViewType::Main => MainSettingsView {
+            show_scroll_bars_when_overflowing,
+        }
+        .into_child(),
+        SettingsMenuViewType::Bluetooth => BluetoothSubmenu {
+            show_scroll_bars_when_overflowing,
+        }
+        .into_child(),
+    }
+}
+
 #[derive(Clone, Copy)]
 struct SettingsMenuContent;
 
@@ -146,28 +162,26 @@ impl Component for SettingsMenuContent {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         ctx.focus_scope()
             .set_entry_policy(FocusEntryPolicy::Remembered);
-        let view_transition_controller = ViewTransition::use_controller(ctx, SETTINGS_VIEW_TRANSITION_ID);
+        let view_transition_controller =
+            ViewTransition::use_controller(ctx, SETTINGS_VIEW_TRANSITION_ID);
         stop_bluetooth_discovery_after_submenu_transition(ctx, &view_transition_controller);
 
         let state =
             ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
-        let active_view = state.read().active_view;
-        let direction = settings_view_transition_direction(ctx, active_view);
+        let active_view_type = state.read().active_view;
+        let is_view_transitioning = view_transition_controller.is_transitioning();
+        let view_transition_state =
+            settings_view_transition_state(ctx, active_view_type, is_view_transitioning);
+        let previous_active_view_type = view_transition_state.from_view;
+        let show_scroll_bars = !is_view_transitioning && !view_transition_state.active_view_changed;
 
-        let view_transition = ViewTransition::new(match active_view {
-            SettingsMenuView::Main => MainSettingsView {
-                view_transition_controller: view_transition_controller.clone(),
-            }
-            .into_child(),
-            SettingsMenuView::Bluetooth => BluetoothSubmenu {
-                view_transition_controller: view_transition_controller.clone(),
-            }
-            .into_child(),
-        })
-        .with_id(SETTINGS_VIEW_TRANSITION_ID)
-        .with_transition_key(active_view)
-        .with_direction(direction)
-        .with_slide_distance(SETTINGS_MENU_CONTENT_WIDTH);
+        let view_transition = ViewTransition::new()
+            .from(settings_view(previous_active_view_type, show_scroll_bars))
+            .to(settings_view(active_view_type, show_scroll_bars))
+            .with_id(SETTINGS_VIEW_TRANSITION_ID)
+            .with_transition_key(active_view_type)
+            .with_direction(view_transition_state.direction)
+            .with_slide_distance(SETTINGS_MENU_CONTENT_WIDTH);
 
         Element::new().with_content(view_transition)
     }
@@ -175,16 +189,26 @@ impl Component for SettingsMenuContent {
 
 #[derive(Clone, Copy, Default)]
 struct SettingsMenuViewTransitionDirectionState {
-    observed_active_view: Option<SettingsMenuView>,
+    observed_active_view: Option<SettingsMenuViewType>,
+    from_view: Option<SettingsMenuViewType>,
     direction: Option<ViewTransitionDirection>,
 }
 
-fn settings_view_transition_direction(
+#[derive(Clone, Copy)]
+struct SettingsMenuViewTransitionState {
+    from_view: SettingsMenuViewType,
+    direction: ViewTransitionDirection,
+    active_view_changed: bool,
+}
+
+fn settings_view_transition_state(
     ctx: &mut ComponentContext,
-    active_view: SettingsMenuView,
-) -> ViewTransitionDirection {
+    active_view: SettingsMenuViewType,
+    is_transitioning: bool,
+) -> SettingsMenuViewTransitionState {
     let state = ctx.use_local_state(SettingsMenuViewTransitionDirectionState::default);
     let mut view_state = *state.read();
+    let mut active_view_changed = false;
 
     match view_state.observed_active_view {
         None => {
@@ -193,26 +217,39 @@ fn settings_view_transition_direction(
         }
         Some(previous_active_view) if previous_active_view != active_view => {
             view_state.observed_active_view = Some(active_view);
+            view_state.from_view = Some(previous_active_view);
             view_state.direction = Some(settings_menu_view_transition_direction(
                 previous_active_view,
                 active_view,
             ));
+            active_view_changed = true;
             *state.write_silent() = view_state;
         }
-        _ => {}
+        _ => {
+            if !is_transitioning && view_state.from_view.is_some() {
+                view_state.from_view = None;
+                *state.write_silent() = view_state;
+            }
+        }
     }
 
-    view_state
-        .direction
-        .unwrap_or(ViewTransitionDirection::Forward)
+    SettingsMenuViewTransitionState {
+        from_view: view_state.from_view.unwrap_or(active_view),
+        direction: view_state
+            .direction
+            .unwrap_or(ViewTransitionDirection::Forward),
+        active_view_changed,
+    }
 }
 
 fn settings_menu_view_transition_direction(
-    from: SettingsMenuView,
-    to: SettingsMenuView,
+    from: SettingsMenuViewType,
+    to: SettingsMenuViewType,
 ) -> ViewTransitionDirection {
     match (from, to) {
-        (SettingsMenuView::Bluetooth, SettingsMenuView::Main) => ViewTransitionDirection::Backward,
+        (SettingsMenuViewType::Bluetooth, SettingsMenuViewType::Main) => {
+            ViewTransitionDirection::Backward
+        }
         _ => ViewTransitionDirection::Forward,
     }
 }
@@ -226,7 +263,7 @@ fn stop_bluetooth_discovery_after_submenu_transition(
             event,
             ViewTransitionEvent::Completed {
                 outgoing_key
-            } if outgoing_key == Id::new(SettingsMenuView::Bluetooth)
+            } if outgoing_key == Id::new(SettingsMenuViewType::Bluetooth)
         ) && let Err(error) = bluetooth_handle(ctx).stop_discovery()
         {
             warn!("failed to stop Bluetooth discovery: {error:?}");
@@ -234,15 +271,13 @@ fn stop_bluetooth_discovery_after_submenu_transition(
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 struct MainSettingsView {
-    view_transition_controller: ViewTransitionController,
+    show_scroll_bars_when_overflowing: bool,
 }
 
 impl Component for MainSettingsView {
     fn to_element(&self, _ctx: &mut ComponentContext) -> Element {
-        let show_scroll_bars_when_overflowing = !self.view_transition_controller.is_transitioning();
-
         Element::new()
             .with_style(settings_content_style())
             .with_content(settings_row(SettingsTopRow))
@@ -250,7 +285,7 @@ impl Component for MainSettingsView {
             .with_content(
                 Scrollable::new(SettingsTileGrid, "quick_settings_scrollable")
                     .size_to_content_with_clamp(Vec2::new(f32::INFINITY, f32::INFINITY))
-                    .with_visible_scroll_bars(show_scroll_bars_when_overflowing),
+                    .with_visible_scroll_bars(self.show_scroll_bars_when_overflowing),
             )
     }
 }

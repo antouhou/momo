@@ -1,13 +1,10 @@
 use super::ViewTransitionDirection;
-use daiko::component::Child;
 use daiko::{Id, Vec2};
 
 #[derive(Clone, Default)]
 pub(super) struct ViewTransitionState {
     pub(super) current_key: Option<Id>,
     pub(super) previous_key: Option<Id>,
-    pub(super) current_view: Option<Child>,
-    pub(super) previous_view: Option<Child>,
     pub(super) viewport_size: Option<Vec2>,
     pub(super) from_size: Option<Vec2>,
     pub(super) target_size: Option<Vec2>,

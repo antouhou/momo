@@ -2,7 +2,7 @@ use daiko::Id;
 use daiko::component::ComponentContext;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
-pub enum SettingsMenuView {
+pub enum SettingsMenuViewType {
     #[default]
     Main,
     Bluetooth,
@@ -14,8 +14,8 @@ pub struct SettingsMenuState {
     pub just_opened: bool,
     pub opened_from_trigger_press: bool,
     pub is_animating: bool,
-    pub last_active_view: SettingsMenuView,
-    pub active_view: SettingsMenuView,
+    pub last_active_view: SettingsMenuViewType,
+    pub active_view: SettingsMenuViewType,
 }
 
 impl Default for SettingsMenuState {
@@ -25,14 +25,14 @@ impl Default for SettingsMenuState {
             just_opened: false,
             opened_from_trigger_press: false,
             is_animating: false,
-            last_active_view: SettingsMenuView::Main,
-            active_view: SettingsMenuView::Main,
+            last_active_view: SettingsMenuViewType::Main,
+            active_view: SettingsMenuViewType::Main,
         }
     }
 }
 
 impl SettingsMenuState {
-    pub(crate) fn set_active_view(&mut self, active_view: SettingsMenuView) {
+    pub(crate) fn set_active_view(&mut self, active_view: SettingsMenuViewType) {
         self.last_active_view = self.active_view;
         self.active_view = active_view;
     }
@@ -42,8 +42,8 @@ impl SettingsMenuState {
     }
 
     pub(crate) fn reset_active_view_to_main(&mut self) {
-        self.last_active_view = SettingsMenuView::Main;
-        self.active_view = SettingsMenuView::Main;
+        self.last_active_view = SettingsMenuViewType::Main;
+        self.active_view = SettingsMenuViewType::Main;
     }
 }
 

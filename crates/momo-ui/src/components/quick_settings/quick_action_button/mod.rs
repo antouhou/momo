@@ -5,7 +5,7 @@ use super::common::{
     QuickSettingsControlState, QuickSettingsGlyph, control_state, glyph_element,
     is_menu_view_active,
 };
-use super::state::SettingsMenuView;
+use super::state::SettingsMenuViewType;
 use super::style::{
     SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_danger_text_color,
     settings_inverse_text_color, settings_text_color,
@@ -59,7 +59,7 @@ pub(super) struct QuickActionButton {
 impl Component for QuickActionButton {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         ctx.focusable()
-            .set_navigation_enabled(is_menu_view_active(ctx, SettingsMenuView::Main));
+            .set_navigation_enabled(is_menu_view_active(ctx, SettingsMenuViewType::Main));
         let state = control_state(ctx);
         let mut element = Element::new()
             .with_style(settings_round_button_style(

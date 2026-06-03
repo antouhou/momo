@@ -6,7 +6,7 @@ use self::style::{
 };
 use super::common::is_menu_view_active;
 use super::common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_element};
-use super::state::SettingsMenuView;
+use super::state::SettingsMenuViewType;
 use super::style::{
     SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, SETTINGS_VOLUME_THUMB_SIZE,
     SETTINGS_VOLUME_TRACK_HEIGHT, settings_accent_color, settings_bright_surface_border_color,
@@ -40,7 +40,7 @@ impl Component for VolumeControl {
         let current_slider_volume = *slider_volume.read();
         let mut pointer = ctx.pointer();
         let focusable = ctx.focusable();
-        let is_active = is_menu_view_active(ctx, SettingsMenuView::Main);
+        let is_active = is_menu_view_active(ctx, SettingsMenuViewType::Main);
 
         if current_slider_volume != volume {
             *slider_volume.write_silent() = volume;

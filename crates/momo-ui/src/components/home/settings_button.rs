@@ -6,7 +6,7 @@ use crate::components::home::header::{
 };
 use crate::components::home::model::home_top_row_settings_focus_key;
 use crate::components::quick_settings::SETTINGS_MENU_STATE_ID;
-use crate::components::quick_settings::state::{SettingsMenuState, SettingsMenuView};
+use crate::components::quick_settings::state::{SettingsMenuState, SettingsMenuViewType};
 use daiko::Element;
 use daiko::Id;
 use daiko::component::{Component, ComponentContext};
@@ -50,7 +50,7 @@ impl Component for HeaderSettingsTrigger {
         if (is_open || !is_animating) && just_activated {
             let next_is_open = !is_open;
             if !next_is_open
-                && state.read().active_view == SettingsMenuView::Bluetooth
+                && state.read().active_view == SettingsMenuViewType::Bluetooth
                 && let Err(error) = bluetooth_handle(ctx).stop_discovery()
             {
                 warn!("failed to stop Bluetooth discovery: {error:?}");

@@ -1,4 +1,4 @@
-use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuView};
+use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuViewType};
 use super::style::{SETTINGS_MENU_VERTICAL_PADDING, settings_inset_section_style};
 use daiko::Element;
 use daiko::Id;
@@ -79,7 +79,7 @@ pub(super) fn control_state(ctx: &mut ComponentContext) -> QuickSettingsControlS
     }
 }
 
-pub(super) fn is_menu_view_active(ctx: &mut ComponentContext, view: SettingsMenuView) -> bool {
+pub(super) fn is_menu_view_active(ctx: &mut ComponentContext, view: SettingsMenuViewType) -> bool {
     let state = ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
     state.read().active_view == view
 }

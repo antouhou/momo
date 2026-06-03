@@ -1,15 +1,21 @@
+mod state;
 mod style;
 
-use self::style::{
-    DEFAULT_VIEW_TRANSITION_SLIDE_DISTANCE, VIEW_TRANSITION_DURATION_MS, ViewTransitionSlotMotion,
+use self::state::{
+    ViewTransitionMeasurements, ViewTransitionSlotMotion, ViewTransitionState,
     incoming_view_transition_slot_motion, outgoing_view_transition_slot_motion,
     outgoing_view_transition_slot_target_offset, stable_view_transition_slot_motion,
-    view_transition_slot_motion_offset, view_transition_slot_style, view_transition_style,
+    view_transition_slot_motion_offset,
+};
+use self::style::{
+    DEFAULT_VIEW_TRANSITION_SLIDE_DISTANCE, VIEW_TRANSITION_DURATION_MS,
+    view_transition_slot_style, view_transition_style,
 };
 use daiko::animation::AnimationParameters;
 use daiko::animation::easing::EasingFunction;
 use daiko::channel::Channel;
 use daiko::component::{Child, Component, ComponentContext, IntoChild};
+use daiko::state_management::StateHandle;
 use daiko::{Element, Id, Vec2};
 use std::hash::Hash;
 use std::time::Duration;
@@ -51,6 +57,19 @@ impl ViewTransition {
     pub fn with_slide_distance(mut self, slide_distance: f32) -> Self {
         self.slide_distance = slide_distance;
         self
+    }
+
+    pub(crate) fn use_controller(
+        ctx: &mut ComponentContext,
+        id: impl Hash,
+    ) -> ViewTransitionController {
+        let id = Id::new(id);
+
+        ViewTransitionController {
+            status: ctx
+                .use_shared_state(view_transition_status_id(id), ViewTransitionStatus::default),
+            events: ctx.use_channel_with_id(view_transition_events_id(id)),
+        }
     }
 }
 
@@ -236,7 +255,9 @@ impl Component for ViewTransition {
 
         publish_view_transition_status(ctx, self.id, is_transitioning);
         if let Some(event) = completed_event {
-            let _ = view_transition_events(ctx, self.id).send(event);
+            let _ = ctx
+                .use_channel_with_id(view_transition_events_id(self.id))
+                .send(event);
         }
 
         let mut el =
@@ -272,26 +293,6 @@ impl Component for ViewTransition {
 
         el
     }
-}
-
-#[derive(Clone, Default)]
-struct ViewTransitionState {
-    current_key: Option<Id>,
-    previous_key: Option<Id>,
-    current_view: Option<Child>,
-    previous_view: Option<Child>,
-    viewport_size: Option<Vec2>,
-    from_size: Option<Vec2>,
-    target_size: Option<Vec2>,
-    current_motion: ViewTransitionSlotMotion,
-    previous_motion: ViewTransitionSlotMotion,
-}
-
-#[derive(Clone, Copy, Default)]
-struct ViewTransitionMeasurements {
-    stable_size: Option<Vec2>,
-    incoming_key: Option<Id>,
-    incoming_size: Option<Vec2>,
 }
 
 #[derive(Clone)]
@@ -354,8 +355,8 @@ enum ViewTransitionSlotReportKind {
 }
 
 #[derive(Clone, Copy, Default)]
-pub(crate) struct ViewTransitionStatus {
-    pub(crate) is_transitioning: bool,
+struct ViewTransitionStatus {
+    is_transitioning: bool,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -376,22 +377,20 @@ pub(crate) enum ViewTransitionPhase {
     Outgoing,
 }
 
-pub(crate) fn view_transition_status(
-    ctx: &mut ComponentContext,
-    id: impl Hash,
-) -> ViewTransitionStatus {
-    *ctx.use_shared_state(
-        view_transition_status_id(Id::new(id)),
-        ViewTransitionStatus::default,
-    )
-    .read()
+#[derive(Clone)]
+pub(crate) struct ViewTransitionController {
+    status: StateHandle<ViewTransitionStatus>,
+    events: Channel<ViewTransitionEvent>,
 }
 
-pub(crate) fn view_transition_events(
-    ctx: &mut ComponentContext,
-    id: impl Hash,
-) -> Channel<ViewTransitionEvent> {
-    ctx.use_channel_with_id(view_transition_events_id(Id::new(id)))
+impl ViewTransitionController {
+    pub(crate) fn is_transitioning(&self) -> bool {
+        self.status.read().is_transitioning
+    }
+
+    pub(crate) fn events(&self) -> impl Iterator<Item = ViewTransitionEvent> {
+        self.events.iter()
+    }
 }
 
 fn publish_view_transition_status(ctx: &mut ComponentContext, id: Id, is_transitioning: bool) {

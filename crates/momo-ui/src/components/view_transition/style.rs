@@ -1,4 +1,5 @@
-use super::{ViewTransitionDirection, ViewTransitionPhase};
+use super::ViewTransitionPhase;
+use super::state::{ViewTransitionSlotMotion, view_transition_slot_motion_offset};
 use daiko::Vec2;
 use daiko::layout::{FlexDirection, SizeConstraint};
 use daiko::style::{Overflow, Style, Transform};
@@ -29,11 +30,7 @@ pub(super) fn view_transition_slot_style(
         .with_size_constraint(
             SizeConstraint::exact_content_height().with_exact_width(slide_distance),
         )
-        .with_transform(Some(Transform::new().then_translate_x(offset)))
-        .with_order(match phase {
-            ViewTransitionPhase::Stable | ViewTransitionPhase::Incoming => 1,
-            ViewTransitionPhase::Outgoing => 0,
-        });
+        .with_transform(Some(Transform::new().then_translate_x(offset)));
 
     if matches!(
         phase,
@@ -43,66 +40,4 @@ pub(super) fn view_transition_slot_style(
     }
 
     style
-}
-
-#[derive(Clone, Copy, Debug, Default)]
-pub(super) struct ViewTransitionSlotMotion {
-    from_offset: f32,
-    to_offset: f32,
-}
-
-impl ViewTransitionSlotMotion {
-    pub(super) fn new(from_offset: f32, to_offset: f32) -> Self {
-        Self {
-            from_offset,
-            to_offset,
-        }
-    }
-}
-
-pub(super) fn stable_view_transition_slot_motion() -> ViewTransitionSlotMotion {
-    ViewTransitionSlotMotion::new(0.0, 0.0)
-}
-
-pub(super) fn incoming_view_transition_slot_motion(
-    direction: ViewTransitionDirection,
-    slide_distance: f32,
-) -> ViewTransitionSlotMotion {
-    ViewTransitionSlotMotion::new(incoming_offset(direction, slide_distance), 0.0)
-}
-
-pub(super) fn outgoing_view_transition_slot_motion(
-    direction: ViewTransitionDirection,
-    slide_distance: f32,
-) -> ViewTransitionSlotMotion {
-    ViewTransitionSlotMotion::new(0.0, outgoing_offset(direction, slide_distance))
-}
-
-pub(super) fn outgoing_view_transition_slot_target_offset(
-    direction: ViewTransitionDirection,
-    slide_distance: f32,
-) -> f32 {
-    outgoing_offset(direction, slide_distance)
-}
-
-pub(super) fn view_transition_slot_motion_offset(
-    motion: ViewTransitionSlotMotion,
-    progress: f32,
-) -> f32 {
-    motion.from_offset + (motion.to_offset - motion.from_offset) * progress
-}
-
-fn incoming_offset(direction: ViewTransitionDirection, slide_distance: f32) -> f32 {
-    direction_sign(direction) * slide_distance
-}
-
-fn outgoing_offset(direction: ViewTransitionDirection, slide_distance: f32) -> f32 {
-    -direction_sign(direction) * slide_distance
-}
-
-fn direction_sign(direction: ViewTransitionDirection) -> f32 {
-    match direction {
-        ViewTransitionDirection::Forward => 1.0,
-        ViewTransitionDirection::Backward => -1.0,
-    }
 }

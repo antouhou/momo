@@ -17,8 +17,7 @@ use super::style::{
 use super::volume_control::VolumeControl;
 use crate::components::home::bluetooth::bluetooth_handle;
 use crate::components::view_transition::{
-    ViewTransition, ViewTransitionDirection, ViewTransitionEvent, view_transition_events,
-    view_transition_status,
+    ViewTransition, ViewTransitionController, ViewTransitionDirection, ViewTransitionEvent,
 };
 use daiko::animation::AnimationParameters;
 use daiko::animation::easing::EasingFunction;
@@ -147,7 +146,8 @@ impl Component for SettingsMenuContent {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         ctx.focus_scope()
             .set_entry_policy(FocusEntryPolicy::Remembered);
-        stop_bluetooth_discovery_after_submenu_transition(ctx);
+        let view_transition_controller = ViewTransition::use_controller(ctx, SETTINGS_VIEW_TRANSITION_ID);
+        stop_bluetooth_discovery_after_submenu_transition(ctx, &view_transition_controller);
 
         let state =
             ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
@@ -155,8 +155,14 @@ impl Component for SettingsMenuContent {
         let direction = settings_view_transition_direction(ctx, active_view);
 
         let view_transition = ViewTransition::new(match active_view {
-            SettingsMenuView::Main => MainSettingsView.into_child(),
-            SettingsMenuView::Bluetooth => BluetoothSubmenu.into_child(),
+            SettingsMenuView::Main => MainSettingsView {
+                view_transition_controller: view_transition_controller.clone(),
+            }
+            .into_child(),
+            SettingsMenuView::Bluetooth => BluetoothSubmenu {
+                view_transition_controller: view_transition_controller.clone(),
+            }
+            .into_child(),
         })
         .with_id(SETTINGS_VIEW_TRANSITION_ID)
         .with_transition_key(active_view)
@@ -211,8 +217,11 @@ fn settings_menu_view_transition_direction(
     }
 }
 
-fn stop_bluetooth_discovery_after_submenu_transition(ctx: &mut ComponentContext) {
-    for event in view_transition_events(ctx, SETTINGS_VIEW_TRANSITION_ID).iter() {
+fn stop_bluetooth_discovery_after_submenu_transition(
+    ctx: &mut ComponentContext,
+    transition: &ViewTransitionController,
+) {
+    for event in transition.events() {
         if matches!(
             event,
             ViewTransitionEvent::Completed {
@@ -225,12 +234,14 @@ fn stop_bluetooth_discovery_after_submenu_transition(ctx: &mut ComponentContext)
     }
 }
 
-#[derive(Clone, Copy)]
-struct MainSettingsView;
+#[derive(Clone)]
+struct MainSettingsView {
+    view_transition_controller: ViewTransitionController,
+}
 
 impl Component for MainSettingsView {
-    fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        let transition_status = view_transition_status(ctx, SETTINGS_VIEW_TRANSITION_ID);
+    fn to_element(&self, _ctx: &mut ComponentContext) -> Element {
+        let show_scroll_bars_when_overflowing = !self.view_transition_controller.is_transitioning();
 
         Element::new()
             .with_style(settings_content_style())
@@ -239,7 +250,7 @@ impl Component for MainSettingsView {
             .with_content(
                 Scrollable::new(SettingsTileGrid, "quick_settings_scrollable")
                     .size_to_content_with_clamp(Vec2::new(f32::INFINITY, f32::INFINITY))
-                    .with_visible_scroll_bars(!transition_status.is_transitioning),
+                    .with_visible_scroll_bars(show_scroll_bars_when_overflowing),
             )
     }
 }

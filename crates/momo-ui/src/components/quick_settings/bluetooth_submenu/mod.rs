@@ -8,9 +8,7 @@ use self::style::{
 use super::common::{
     QuickSettingsControlState, QuickSettingsGlyph, glyph_element, settings_bottom_row, settings_row,
 };
-use super::state::{
-    SETTINGS_MENU_STATE_ID, SETTINGS_VIEW_TRANSITION_ID, SettingsMenuState, SettingsMenuView,
-};
+use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuView};
 use super::style::{SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_text_color};
 use super::submenu_button::{
     SubmenuButton, SubmenuButtonState, SubmenuButtonSurface, submenu_button_glyph,
@@ -19,6 +17,7 @@ use super::submenu_button::{
 use crate::components::home::bluetooth::{
     BluetoothDeviceSection, BluetoothDeviceState, bluetooth_handle, bluetooth_state,
 };
+use crate::components::view_transition::ViewTransitionController;
 use daiko::component::{Component, ComponentContext};
 use daiko::navigation::{FocusEntryPolicy, FocusOrigin, NavigationInputAction};
 use daiko::widgets::scrollable::Scrollable;
@@ -51,8 +50,10 @@ const TABLET_ICON: &[u8] = include_bytes!("../../../../assets/tablet.svg");
 pub(super) const BLUETOOTH_TOGGLE_TAG: &str = "header-settings-bluetooth-toggle";
 pub(super) const BLUETOOTH_SETTINGS_BUTTON_TAG: &str = "header-settings-bluetooth-settings-button";
 
-#[derive(Clone, Copy)]
-pub(super) struct BluetoothSubmenu;
+#[derive(Clone)]
+pub(super) struct BluetoothSubmenu {
+    pub(super) view_transition_controller: ViewTransitionController,
+}
 
 impl Component for BluetoothSubmenu {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
@@ -75,10 +76,7 @@ impl Component for BluetoothSubmenu {
         if should_go_back && state.read().active_view == SettingsMenuView::Bluetooth {
             state.write().set_active_view(SettingsMenuView::Main);
         }
-        let transition_status = crate::components::view_transition::view_transition_status(
-            ctx,
-            SETTINGS_VIEW_TRANSITION_ID,
-        );
+        let show_scroll_bars_when_overflowing = !self.view_transition_controller.is_transitioning();
 
         Element::new()
             .with_tag("header-settings-bluetooth-submenu")
@@ -87,7 +85,7 @@ impl Component for BluetoothSubmenu {
             .with_content(
                 Scrollable::new(BluetoothSubmenuBody, "bluetooth_submenu_scrollable")
                     .size_to_content_with_clamp(Vec2::new(f32::INFINITY, f32::INFINITY))
-                    .with_visible_scroll_bars(!transition_status.is_transitioning),
+                    .with_visible_scroll_bars(show_scroll_bars_when_overflowing),
             )
             .with_content(settings_bottom_row(BluetoothSettingsButton))
     }

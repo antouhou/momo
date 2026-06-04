@@ -169,6 +169,7 @@ impl Component for ViewTransition {
             next_state.viewport_size = Some(from_size);
             next_state.from_size = Some(from_size);
             next_state.target_size = None;
+            next_state.settling_size = None;
             next_state.previous_key = previous_key;
             next_state.current_key = Some(key);
             next_state.current_motion = current_motion;
@@ -182,9 +183,7 @@ impl Component for ViewTransition {
             && !started_transition_this_run
             && measurement.incoming_key == Some(key)
             && let Some(target_size) = measurement.incoming_size
-            && (next_state.target_size.is_none()
-                || (next_state.target_size != Some(target_size)
-                    && animation.progress_linear() == 0.0))
+            && next_state.target_size.is_none()
         {
             next_state.target_size = Some(target_size);
             animation.restart_reset();
@@ -207,22 +206,32 @@ impl Component for ViewTransition {
             completed_event = next_state
                 .previous_key
                 .map(|outgoing_key| ViewTransitionEvent::Completed { outgoing_key });
+            let target_size = next_state.target_size;
             next_state.viewport_size = next_state.target_size;
             next_state.from_size = None;
             next_state.target_size = None;
+            next_state.settling_size = target_size;
             next_state.previous_key = None;
             next_state.current_motion = stable_view_transition_slot_motion();
             next_state.previous_motion = stable_view_transition_slot_motion();
-            *transition_state.write_silent() = next_state.clone();
+            *transition_state.write() = next_state.clone();
         } else if next_state.previous_key.is_none() && !animation.is_running() {
-            // Keep the stable viewport size fresh without requesting another render.
-            let measured_size = layout_size.or(measurement.stable_size);
-            if let Some(measured_size) = measured_size
-                && next_state.viewport_size != Some(measured_size)
-            {
-                next_state.viewport_size = Some(measured_size);
+            if let Some(settling_size) = next_state.settling_size {
+                if layout_size == Some(settling_size) {
+                    next_state.settling_size = None;
+                }
+
+                *transition_state.write() = next_state.clone();
+            } else {
+                // Keep the stable viewport size fresh without requesting another render.
+                let measured_size = layout_size.or(measurement.stable_size);
+                if let Some(measured_size) = measured_size
+                    && next_state.viewport_size != Some(measured_size)
+                {
+                    next_state.viewport_size = Some(measured_size);
+                }
+                *transition_state.write_silent() = next_state.clone();
             }
-            *transition_state.write_silent() = next_state.clone();
         }
 
         let is_transitioning = next_state.previous_key.is_some();
@@ -231,8 +240,10 @@ impl Component for ViewTransition {
                 (Some(from_size), Some(target_size)) => {
                     Some(lerp_vec2(from_size, target_size, progress))
                 }
-                _ => next_state.viewport_size,
+                _ => None,
             }
+        } else if next_state.settling_size.is_some() {
+            next_state.settling_size
         } else {
             None
         };
@@ -247,6 +258,7 @@ impl Component for ViewTransition {
             stable_view_transition_slot_motion()
         };
         let previous_motion = next_state.previous_motion;
+        let outgoing_fixed_size = next_state.from_size;
 
         publish_view_transition_status(ctx, self.id, is_transitioning);
         if let Some(event) = completed_event {
@@ -261,15 +273,20 @@ impl Component for ViewTransition {
         el.add_content(ViewTransitionSlot {
             measurements_id: view_transition_measurements_id(self.id),
             report_key: Some(key),
-            report_kind: match current_phase {
-                ViewTransitionPhase::Stable => ViewTransitionSlotReportKind::Stable,
-                ViewTransitionPhase::Incoming => ViewTransitionSlotReportKind::Incoming,
-                ViewTransitionPhase::Outgoing => ViewTransitionSlotReportKind::None,
+            report_kind: if started_transition_this_run || next_state.settling_size.is_some() {
+                ViewTransitionSlotReportKind::None
+            } else {
+                match current_phase {
+                    ViewTransitionPhase::Stable => ViewTransitionSlotReportKind::Stable,
+                    ViewTransitionPhase::Incoming => ViewTransitionSlotReportKind::Incoming,
+                    ViewTransitionPhase::Outgoing => ViewTransitionSlotReportKind::None,
+                }
             },
             phase: current_phase,
             progress,
             motion: current_motion,
             slide_distance: self.slide_distance,
+            fixed_size: None,
             content: self.to_view.clone(),
         });
 
@@ -282,6 +299,7 @@ impl Component for ViewTransition {
                 progress,
                 motion: previous_motion,
                 slide_distance: self.slide_distance,
+                fixed_size: outgoing_fixed_size,
                 content: self
                     .from_view
                     .clone()
@@ -302,6 +320,7 @@ struct ViewTransitionSlot {
     progress: f32,
     motion: ViewTransitionSlotMotion,
     slide_distance: f32,
+    fixed_size: Option<Vec2>,
     content: Child,
 }
 
@@ -340,6 +359,7 @@ impl Component for ViewTransitionSlot {
                 self.progress,
                 self.motion,
                 self.slide_distance,
+                self.fixed_size,
             ))
             .with_content(self.content.clone())
     }

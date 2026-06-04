@@ -8,6 +8,7 @@ pub(super) struct ViewTransitionState {
     pub(super) viewport_size: Option<Vec2>,
     pub(super) from_size: Option<Vec2>,
     pub(super) target_size: Option<Vec2>,
+    pub(super) settling_size: Option<Vec2>,
     pub(super) current_motion: ViewTransitionSlotMotion,
     pub(super) previous_motion: ViewTransitionSlotMotion,
 }

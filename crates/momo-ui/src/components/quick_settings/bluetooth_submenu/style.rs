@@ -30,9 +30,7 @@ pub(super) enum DeviceRowAvailability {
 
 pub(super) fn bluetooth_submenu_style() -> Style {
     Style::new()
-        .with_size_constraint(
-            SizeConstraint::fixed_width(SETTINGS_MENU_CONTENT_WIDTH),
-        )
+        .with_size_constraint(SizeConstraint::fixed_width(SETTINGS_MENU_CONTENT_WIDTH))
         .with_grow(1.0)
         .with_direction(FlexDirection::Column)
         .with_spacing((SETTINGS_MENU_GAP, SETTINGS_MENU_GAP))

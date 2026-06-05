@@ -21,7 +21,7 @@ use daiko::component::{Component, ComponentContext};
 use daiko::navigation::{FocusEntryPolicy, FocusOrigin, NavigationInputAction};
 use daiko::widgets::scrollable::Scrollable;
 use daiko::widgets::text::Text;
-use daiko::{Element, Id, Vec2};
+use daiko::{Element, Id};
 use system_control::{BluetoothConnectionState, BluetoothDeviceCategory};
 use tracing::warn;
 
@@ -82,7 +82,6 @@ impl Component for BluetoothSubmenu {
             .with_content(settings_row(BluetoothToggleRow))
             .with_content(
                 Scrollable::new(BluetoothSubmenuBody, "bluetooth_submenu_scrollable")
-                    .size_to_content_with_clamp(Vec2::new(f32::INFINITY, f32::INFINITY))
                     .with_visible_scroll_bars(self.show_scroll_bars_when_overflowing),
             )
             .with_content(settings_bottom_row(BluetoothSettingsButton))

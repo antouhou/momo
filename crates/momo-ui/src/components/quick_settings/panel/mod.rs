@@ -284,7 +284,6 @@ impl Component for MainSettingsView {
             .with_content(settings_middle_row(VolumeControl))
             .with_content(
                 Scrollable::new(SettingsTileGrid, "quick_settings_scrollable")
-                    .size_to_content_with_clamp(Vec2::new(f32::INFINITY, f32::INFINITY))
                     .with_visible_scroll_bars(self.show_scroll_bars_when_overflowing),
             )
     }

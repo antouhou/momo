@@ -97,7 +97,7 @@ fn scroll_page_delta(ctx: &mut ComponentContext, viewport_layout: Option<Layout>
         Id::new(HOME_APP_GRID_SCROLL_ACCUMULATOR_ID),
         AppGridScrollState::default,
     );
-    let scroll_delta = ctx.scroll()?;
+    let scroll_delta = ctx.consume_scroll()?;
     if !pointer_is_inside_layout(ctx, viewport_layout) {
         return None;
     }

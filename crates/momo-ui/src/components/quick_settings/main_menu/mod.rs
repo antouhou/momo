@@ -2,11 +2,11 @@ mod style;
 mod tile_grid;
 mod top_row;
 
-use self::style::settings_content_style;
 use self::tile_grid::SettingsTileGrid;
 use self::top_row::SettingsTopRow;
 use super::common::{settings_middle_row, settings_row};
 use super::volume_control::VolumeControl;
+use crate::components::quick_settings::style::settings_content_container_style;
 use daiko::widgets::scrollable::Scrollable;
 use daiko::{Element, component::Component, component::ComponentContext};
 
@@ -18,7 +18,7 @@ pub(super) struct MainMenu {
 impl Component for MainMenu {
     fn to_element(&self, _ctx: &mut ComponentContext) -> Element {
         Element::new()
-            .with_style(settings_content_style())
+            .with_style(settings_content_container_style())
             .with_content(settings_row(SettingsTopRow))
             .with_content(settings_middle_row(VolumeControl))
             .with_content(

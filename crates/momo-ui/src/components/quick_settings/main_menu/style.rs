@@ -5,14 +5,6 @@ use super::super::style::{
 use daiko::layout::{AlignItems, FlexDirection, ItemSize, JustifyContent, SizeConstraint};
 use daiko::style::{Indent, Style};
 
-pub(super) fn settings_content_style() -> Style {
-    Style::new()
-        .with_size_constraint(SizeConstraint::fixed_width(SETTINGS_MENU_CONTENT_WIDTH))
-        .with_grow(1.0)
-        .with_direction(FlexDirection::Column)
-        .with_spacing((SETTINGS_MENU_GAP, SETTINGS_MENU_GAP))
-}
-
 pub(super) fn settings_top_row_style() -> Style {
     Style::new()
         .with_size_constraint(SizeConstraint::exact_content_height())

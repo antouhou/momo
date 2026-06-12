@@ -264,6 +264,14 @@ pub(crate) fn settings_volume_thumb_border_color() -> Color {
     Color::from_rgba_unmultiplied(255, 255, 255, 110)
 }
 
+pub(crate) fn settings_content_container_style() -> Style {
+    Style::new()
+        .with_size_constraint(SizeConstraint::fixed_width(SETTINGS_MENU_CONTENT_WIDTH))
+        .with_grow(1.0)
+        .with_direction(FlexDirection::Column)
+        .with_spacing((SETTINGS_MENU_GAP, SETTINGS_MENU_GAP))
+}
+
 pub(crate) fn settings_button_focus_transform(
     width: f32,
     height: f32,

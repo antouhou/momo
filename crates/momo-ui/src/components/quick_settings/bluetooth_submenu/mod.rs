@@ -1,15 +1,18 @@
 mod style;
 
 use self::style::{
-    DeviceRowAvailability, bluetooth_submenu_body_style, bluetooth_submenu_style,
-    submenu_device_icon_color, submenu_device_icon_ring_style, submenu_device_label_color,
-    submenu_section_label_style, submenu_section_style, submenu_section_title_style,
+    DeviceRowAvailability, bluetooth_submenu_body_style, submenu_device_icon_color,
+    submenu_device_icon_ring_style, submenu_device_label_color, submenu_section_label_style,
+    submenu_section_style, submenu_section_title_style,
 };
 use super::common::{
     QuickSettingsControlState, QuickSettingsGlyph, glyph_element, settings_bottom_row, settings_row,
 };
 use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuViewType};
-use super::style::{SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_text_color};
+use super::style::{
+    SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_content_container_style,
+    settings_text_color,
+};
 use super::submenu_button::{
     SubmenuButton, SubmenuButtonState, SubmenuButtonSurface, submenu_button_glyph,
     submenu_button_leading_slot, submenu_button_surface_glyph, submenu_toggle_switch,
@@ -78,7 +81,7 @@ impl Component for BluetoothSubmenu {
 
         Element::new()
             .with_tag("header-settings-bluetooth-submenu")
-            .with_style(bluetooth_submenu_style())
+            .with_style(settings_content_container_style())
             .with_content(settings_row(BluetoothToggleRow))
             .with_content(
                 Scrollable::new(BluetoothSubmenuBody, "bluetooth_submenu_scrollable")

@@ -1,12 +1,8 @@
 mod style;
-mod tile_grid;
-mod top_row;
 
-use self::style::{settings_content_style, settings_menu_style};
-use self::tile_grid::SettingsTileGrid;
-use self::top_row::SettingsTopRow;
+use self::style::settings_menu_style;
 use super::bluetooth_submenu::BluetoothSubmenu;
-use super::common::{settings_middle_row, settings_row};
+use super::main_menu::MainMenu;
 use super::state::{
     SETTINGS_MENU_STATE_ID, SETTINGS_VIEW_TRANSITION_ID, SettingsMenuState, SettingsMenuViewType,
 };
@@ -14,7 +10,6 @@ use super::style::{
     SETTINGS_MENU_CONTENT_WIDTH, SETTINGS_MENU_EDGE_MARGIN, SETTINGS_MENU_MIN_HEIGHT,
     SETTINGS_MENU_SLIDE_DISTANCE, SETTINGS_MENU_TOP_OFFSET,
 };
-use super::volume_control::VolumeControl;
 use crate::components::home::bluetooth::bluetooth_handle;
 use crate::components::view_transition::{
     ViewTransition, ViewTransitionController, ViewTransitionDirection, ViewTransitionEvent,
@@ -24,7 +19,6 @@ use daiko::animation::easing::EasingFunction;
 use daiko::component::{Child, Component, ComponentContext};
 use daiko::navigation::{FocusBoundary, FocusEntryPolicy, FocusOrigin, NavigationInputAction};
 use daiko::widgets::overlay::{Overlay, OverlayPositioning};
-use daiko::widgets::scrollable::Scrollable;
 use daiko::{Element, Id, Vec2};
 use std::time::Duration;
 use tracing::warn;
@@ -144,7 +138,7 @@ fn settings_view(
     show_scroll_bars_when_overflowing: bool,
 ) -> Child {
     match view_type {
-        SettingsMenuViewType::Main => MainSettingsView {
+        SettingsMenuViewType::Main => MainMenu {
             show_scroll_bars_when_overflowing,
         }
         .into_child(),
@@ -268,24 +262,6 @@ fn stop_bluetooth_discovery_after_submenu_transition(
         {
             warn!("failed to stop Bluetooth discovery: {error:?}");
         }
-    }
-}
-
-#[derive(Clone, Copy)]
-struct MainSettingsView {
-    show_scroll_bars_when_overflowing: bool,
-}
-
-impl Component for MainSettingsView {
-    fn to_element(&self, _ctx: &mut ComponentContext) -> Element {
-        Element::new()
-            .with_style(settings_content_style())
-            .with_content(settings_row(SettingsTopRow))
-            .with_content(settings_middle_row(VolumeControl))
-            .with_content(
-                Scrollable::new(SettingsTileGrid, "quick_settings_scrollable")
-                    .with_visible_scroll_bars(self.show_scroll_bars_when_overflowing),
-            )
     }
 }
 

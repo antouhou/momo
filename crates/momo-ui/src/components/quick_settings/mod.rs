@@ -1,5 +1,6 @@
 mod bluetooth_submenu;
 mod common;
+mod main_menu;
 mod panel;
 mod quick_action_button;
 mod settings_tile_button;

@@ -32,15 +32,6 @@ impl Component for SettingsMenuPanel {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         let state =
             ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
-        let should_render = {
-            let state = state.read();
-            state.is_open || state.is_animating
-        };
-
-        if !should_render {
-            return Element::new();
-        }
-
         let (is_open, just_opened, active_view) = {
             let state = state.read();
             (state.is_open, state.just_opened, state.active_view)

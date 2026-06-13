@@ -312,6 +312,25 @@ fn settings_menu_back_from_bluetooth_returns_to_main_without_closing() {
             .find_element_by_tag("header-settings-bluetooth-submenu")
             .is_none()
     );
+
+    runner.run_frame();
+    runner.assert_focused("header-settings-tile-bluetooth");
+
+    runner.navigate_left();
+    runner.run_frame();
+    runner.assert_focused("header-settings-tile-network");
+
+    runner.navigate_right();
+    runner.run_frame();
+    runner.assert_focused("header-settings-tile-bluetooth");
+
+    runner.navigate_up();
+    runner.run_frame();
+    runner.assert_focused("header-settings-volume-control");
+
+    runner.navigate_down();
+    runner.run_frame();
+    runner.assert_focused("header-settings-tile-bluetooth");
 }
 
 #[test]

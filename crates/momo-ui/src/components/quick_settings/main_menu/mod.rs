@@ -1,5 +1,6 @@
 mod style;
 mod tile_grid;
+mod tile_specs;
 mod top_row;
 
 use self::tile_grid::SettingsTileGrid;

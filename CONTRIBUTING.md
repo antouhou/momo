@@ -28,3 +28,6 @@ rhythm nonetheless.
 9. Never block UI thread or do any system calls in it. If you need to do something that may block in the UI code, just
 pass a state handle to the thread that does the blocking work, and let it update the state when needed. Communicate
 with that thread over usual std channels.
+10. Try to make components as generic as possible. For example, button should not know about the context it's in - it's 
+not button's responsibility. Use channels to communicate to the parent that button state has changed - for example that 
+it has been activated, clicked or so on, and let the parent decide what to do with it.

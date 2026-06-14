@@ -1,25 +1,24 @@
 mod style;
-mod tile_grid;
-mod top_row;
 
-use self::style::{settings_content_style, settings_menu_style};
-use self::tile_grid::SettingsTileGrid;
-use self::top_row::SettingsTopRow;
+use self::style::settings_menu_style;
 use super::bluetooth_submenu::BluetoothSubmenu;
-use super::common::{settings_middle_row, settings_row};
-use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuView};
-use super::style::{
-    SETTINGS_MENU_EDGE_MARGIN, SETTINGS_MENU_MIN_HEIGHT, SETTINGS_MENU_SLIDE_DISTANCE,
-    SETTINGS_MENU_TOP_OFFSET,
+use super::main_menu::MainMenu;
+use super::state::{
+    SETTINGS_MENU_STATE_ID, SETTINGS_VIEW_TRANSITION_ID, SettingsMenuState, SettingsMenuViewType,
 };
-use super::volume_control::VolumeControl;
+use super::style::{
+    SETTINGS_MENU_CONTENT_WIDTH, SETTINGS_MENU_EDGE_MARGIN, SETTINGS_MENU_MIN_HEIGHT,
+    SETTINGS_MENU_SLIDE_DISTANCE, SETTINGS_MENU_TOP_OFFSET,
+};
 use crate::components::home::bluetooth::bluetooth_handle;
+use crate::components::view_transition::{
+    ViewTransition, ViewTransitionController, ViewTransitionDirection, ViewTransitionEvent,
+};
 use daiko::animation::AnimationParameters;
 use daiko::animation::easing::EasingFunction;
-use daiko::component::{Component, ComponentContext};
+use daiko::component::{Child, Component, ComponentContext};
 use daiko::navigation::{FocusBoundary, FocusEntryPolicy, FocusOrigin, NavigationInputAction};
 use daiko::widgets::overlay::{Overlay, OverlayPositioning};
-use daiko::widgets::scrollable::Scrollable;
 use daiko::{Element, Id, Vec2};
 use std::time::Duration;
 use tracing::warn;
@@ -33,31 +32,34 @@ impl Component for SettingsMenuPanel {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         let state =
             ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
-        let state_snapshot = *state.read();
-
-        if !state_snapshot.is_open && !state_snapshot.is_animating {
-            return Element::new();
-        }
-
-        let just_opened = state_snapshot.just_opened;
+        let (is_open, just_opened, active_view) = {
+            let state = state.read();
+            (state.is_open, state.just_opened, state.active_view)
+        };
         let mut pointer = ctx.pointer();
         let focus_scope = ctx.focus_scope();
 
-        if state_snapshot.is_open {
+        if is_open {
             focus_scope.set_boundary(FocusBoundary::Stop);
-            focus_scope.capture_when_contains_focus(&[
-                NavigationInputAction::Cancel,
-                NavigationInputAction::Back,
-            ]);
+            if active_view == SettingsMenuViewType::Main {
+                focus_scope.capture_when_contains_focus(&[
+                    NavigationInputAction::Cancel,
+                    NavigationInputAction::Back,
+                ]);
+            } else {
+                focus_scope.capture_when_contains_focus(&[NavigationInputAction::Cancel]);
+            }
 
             if just_opened {
                 focus_scope.request_focus(FocusOrigin::Navigation);
             }
         }
 
-        if state_snapshot.is_open {
-            let is_view_transition_pending =
-                state_snapshot.last_active_view != state_snapshot.active_view;
+        if is_open {
+            let is_view_transition_pending = {
+                let state = state.read();
+                state.last_active_view != state.active_view
+            };
             let close_from_navigation = focus_scope.drain_captured_actions().any(|action| {
                 matches!(
                     action,
@@ -73,7 +75,8 @@ impl Component for SettingsMenuPanel {
                 || close_from_focus_leave;
 
             if should_close || just_opened {
-                if close_from_navigation && state_snapshot.opened_from_trigger_press {
+                let opened_from_trigger_press = state.read().opened_from_trigger_press;
+                if close_from_navigation && opened_from_trigger_press {
                     ctx.navigation().request_focus_by_key(
                         crate::components::home::model::home_top_row_settings_focus_key(),
                         FocusOrigin::Navigation,
@@ -81,24 +84,19 @@ impl Component for SettingsMenuPanel {
                 }
 
                 if should_close
-                    && state_snapshot.active_view == SettingsMenuView::Bluetooth
+                    && state.read().active_view == SettingsMenuViewType::Bluetooth
                     && let Err(error) = bluetooth_handle(ctx).stop_discovery()
                 {
                     warn!("failed to stop Bluetooth discovery: {error:?}");
                 }
 
-                *state.write() = SettingsMenuState {
-                    is_open: !should_close,
-                    just_opened: false,
-                    opened_from_trigger_press: if should_close {
-                        false
-                    } else {
-                        state_snapshot.opened_from_trigger_press
-                    },
-                    is_animating: true,
-                    last_active_view: state_snapshot.last_active_view,
-                    active_view: state_snapshot.active_view,
-                };
+                let mut state = state.write();
+                state.is_open = !should_close;
+                state.just_opened = false;
+                if should_close {
+                    state.opened_from_trigger_press = false;
+                }
+                state.is_animating = true;
             }
         }
 
@@ -126,6 +124,22 @@ struct SettingsMenuVisibility {
     is_visible: bool,
 }
 
+fn settings_view(
+    view_type: SettingsMenuViewType,
+    show_scroll_bars_when_overflowing: bool,
+) -> Child {
+    match view_type {
+        SettingsMenuViewType::Main => MainMenu {
+            show_scroll_bars_when_overflowing,
+        }
+        .into_child(),
+        SettingsMenuViewType::Bluetooth => BluetoothSubmenu {
+            show_scroll_bars_when_overflowing,
+        }
+        .into_child(),
+    }
+}
+
 #[derive(Clone, Copy)]
 struct SettingsMenuContent;
 
@@ -133,40 +147,121 @@ impl Component for SettingsMenuContent {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         ctx.focus_scope()
             .set_entry_policy(FocusEntryPolicy::Remembered);
+        let view_transition_controller =
+            ViewTransition::use_controller(ctx, SETTINGS_VIEW_TRANSITION_ID);
+        stop_bluetooth_discovery_after_submenu_transition(ctx, &view_transition_controller);
 
         let state =
             ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
-        let active_view = state.read().active_view;
+        let active_view_type = state.read().active_view;
+        let is_view_transitioning = view_transition_controller.is_transitioning();
+        let view_transition_state =
+            settings_view_transition_state(ctx, active_view_type, is_view_transitioning);
+        let previous_active_view_type = view_transition_state.from_view;
+        let show_scroll_bars = !is_view_transitioning && !view_transition_state.active_view_changed;
 
-        match active_view {
-            SettingsMenuView::Main => Element::new().with_content(MainSettingsView),
-            SettingsMenuView::Bluetooth => Element::new().with_content(BluetoothSubmenu),
-        }
+        let view_transition = ViewTransition::new()
+            .from(settings_view(previous_active_view_type, show_scroll_bars))
+            .to(settings_view(active_view_type, show_scroll_bars))
+            .with_id(SETTINGS_VIEW_TRANSITION_ID)
+            .with_transition_key(active_view_type)
+            .with_direction(view_transition_state.direction)
+            .with_slide_distance(SETTINGS_MENU_CONTENT_WIDTH);
+
+        Element::new().with_content(view_transition)
     }
 }
 
-#[derive(Clone, Copy)]
-struct MainSettingsView;
+#[derive(Clone, Copy, Default)]
+struct SettingsMenuViewTransitionDirectionState {
+    observed_active_view: Option<SettingsMenuViewType>,
+    from_view: Option<SettingsMenuViewType>,
+    direction: Option<ViewTransitionDirection>,
+}
 
-impl Component for MainSettingsView {
-    fn to_element(&self, _ctx: &mut ComponentContext) -> Element {
-        Element::new()
-            .with_style(settings_content_style())
-            .with_content(settings_row(SettingsTopRow))
-            .with_content(settings_middle_row(VolumeControl))
-            .with_content(
-                Scrollable::new(SettingsTileGrid, "quick_settings_scrollable")
-                    .size_to_content_with_clamp(Vec2::new(f32::INFINITY, f32::INFINITY)),
-            )
+#[derive(Clone, Copy)]
+struct SettingsMenuViewTransitionState {
+    from_view: SettingsMenuViewType,
+    direction: ViewTransitionDirection,
+    active_view_changed: bool,
+}
+
+fn settings_view_transition_state(
+    ctx: &mut ComponentContext,
+    active_view: SettingsMenuViewType,
+    is_transitioning: bool,
+) -> SettingsMenuViewTransitionState {
+    let state = ctx.use_local_state(SettingsMenuViewTransitionDirectionState::default);
+    let mut view_state = *state.read();
+    let mut active_view_changed = false;
+
+    match view_state.observed_active_view {
+        None => {
+            view_state.observed_active_view = Some(active_view);
+            *state.write_silent() = view_state;
+        }
+        Some(previous_active_view) if previous_active_view != active_view => {
+            view_state.observed_active_view = Some(active_view);
+            view_state.from_view = Some(previous_active_view);
+            view_state.direction = Some(settings_menu_view_transition_direction(
+                previous_active_view,
+                active_view,
+            ));
+            active_view_changed = true;
+            *state.write_silent() = view_state;
+        }
+        _ => {
+            if !is_transitioning && view_state.from_view.is_some() {
+                view_state.from_view = None;
+                *state.write_silent() = view_state;
+            }
+        }
+    }
+
+    SettingsMenuViewTransitionState {
+        from_view: view_state.from_view.unwrap_or(active_view),
+        direction: view_state
+            .direction
+            .unwrap_or(ViewTransitionDirection::Forward),
+        active_view_changed,
+    }
+}
+
+fn settings_menu_view_transition_direction(
+    from: SettingsMenuViewType,
+    to: SettingsMenuViewType,
+) -> ViewTransitionDirection {
+    match (from, to) {
+        (SettingsMenuViewType::Bluetooth, SettingsMenuViewType::Main) => {
+            ViewTransitionDirection::Backward
+        }
+        _ => ViewTransitionDirection::Forward,
+    }
+}
+
+fn stop_bluetooth_discovery_after_submenu_transition(
+    ctx: &mut ComponentContext,
+    transition: &ViewTransitionController,
+) {
+    for event in transition.events() {
+        if matches!(
+            event,
+            ViewTransitionEvent::Completed {
+                outgoing_key
+            } if outgoing_key == Id::new(SettingsMenuViewType::Bluetooth)
+        ) && let Err(error) = bluetooth_handle(ctx).stop_discovery()
+        {
+            warn!("failed to stop Bluetooth discovery: {error:?}");
+        }
     }
 }
 
 pub(crate) fn settings_overlay(ctx: &mut ComponentContext) -> Overlay {
     let state = ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
-    let state_snapshot = *state.read();
-    let visibility = settings_menu_visibility(ctx, state_snapshot.is_open);
+    let is_open = state.read().is_open;
+    let visibility = settings_menu_visibility(ctx, is_open);
 
-    if !visibility.is_visible && state_snapshot.is_animating {
+    if !visibility.is_visible && state.read().is_animating {
         *state.write() = SettingsMenuState::default();
     }
 
@@ -182,7 +277,7 @@ pub(crate) fn settings_overlay(ctx: &mut ComponentContext) -> Overlay {
 
 fn settings_menu_visibility(ctx: &mut ComponentContext, is_open: bool) -> SettingsMenuVisibility {
     let motion_state = ctx.use_local_state(SettingsMenuMotionState::default);
-    let mut snapshot = *motion_state.read();
+    let mut motion = *motion_state.read();
     let animation = ctx.animation_with_id(
         Id::new(SETTINGS_MENU_ANIMATION_ID),
         AnimationParameters::default()
@@ -190,7 +285,7 @@ fn settings_menu_visibility(ctx: &mut ComponentContext, is_open: bool) -> Settin
             .with_easing(EasingFunction::EaseOut),
     );
 
-    match snapshot.previous_open {
+    match motion.previous_open {
         None => {
             if is_open {
                 animation.set_progress(0.0);
@@ -198,17 +293,17 @@ fn settings_menu_visibility(ctx: &mut ComponentContext, is_open: bool) -> Settin
             } else {
                 animation.set_progress(0.0);
             }
-            snapshot.previous_open = Some(is_open);
-            *motion_state.write_silent() = snapshot;
+            motion.previous_open = Some(is_open);
+            *motion_state.write_silent() = motion;
         }
         Some(previous_open) if previous_open != is_open => {
-            snapshot.previous_open = Some(is_open);
+            motion.previous_open = Some(is_open);
             if is_open {
                 animation.play_forward();
             } else {
                 animation.play_backward();
             }
-            *motion_state.write_silent() = snapshot;
+            *motion_state.write_silent() = motion;
         }
         _ => {}
     }

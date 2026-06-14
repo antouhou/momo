@@ -4,7 +4,7 @@ use super::bluetooth::initialize_bluetooth_state;
 use super::model::{MOCK_APPS, SCREEN_PADDING, TILE_HEIGHT, columns_for_width};
 use super::system_status::initialize_system_status_state;
 use daiko::component::{Component, ComponentContext};
-use daiko::integration::input::{InputEvent, InputEventModifiers};
+use daiko::integration::input::{InputEvent, InputEventModifiers, Key};
 use daiko::layout::{AlignItems, FlexDirection, ItemSize};
 use daiko::navigation::{FocusKey, FocusOrigin};
 use daiko::style::Style;
@@ -263,6 +263,151 @@ fn settings_menu_closes_from_cancel_navigation() {
 
     assert!(runner.find_element_by_tag("header-settings-menu").is_none());
     runner.assert_focused("header-settings-button");
+}
+
+#[test]
+fn settings_menu_back_from_bluetooth_returns_to_main_without_closing() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+
+    runner.click_element("header-settings-button");
+    runner.run_frame();
+    runner.run_frame();
+    thread::sleep(Duration::from_millis(320));
+    runner.run_frame();
+
+    runner.click_element("header-settings-tile-bluetooth");
+    runner.run_frame();
+    assert!(
+        runner
+            .find_element_by_tag("header-settings-bluetooth-submenu")
+            .is_some()
+    );
+
+    thread::sleep(Duration::from_millis(220));
+    runner.run_frame();
+    assert!(runner.find_element_by_tag("header-settings-menu").is_some());
+    assert!(
+        runner
+            .find_element_by_tag("header-settings-bluetooth-submenu")
+            .is_some()
+    );
+
+    runner.press_key_and_run_frame(Key::BrowserBack);
+    runner.run_frame();
+
+    assert!(runner.find_element_by_tag("header-settings-menu").is_some());
+    assert!(
+        runner
+            .find_element_by_tag("header-settings-tile-bluetooth")
+            .is_some()
+    );
+
+    thread::sleep(Duration::from_millis(1220));
+    runner.run_frame();
+
+    assert!(
+        runner
+            .find_element_by_tag("header-settings-bluetooth-submenu")
+            .is_none()
+    );
+
+    runner.run_frame();
+    runner.assert_focused("header-settings-tile-bluetooth");
+
+    runner.navigate_left();
+    runner.run_frame();
+    runner.assert_focused("header-settings-tile-network");
+
+    runner.navigate_right();
+    runner.run_frame();
+    runner.assert_focused("header-settings-tile-bluetooth");
+
+    runner.navigate_up();
+    runner.run_frame();
+    runner.assert_focused("header-settings-volume-control");
+
+    runner.navigate_down();
+    runner.run_frame();
+    runner.assert_focused("header-settings-tile-bluetooth");
+}
+
+#[test]
+fn settings_menu_mid_transition_back_keeps_submenu_position_continuous() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+
+    runner.click_element("header-settings-button");
+    runner.run_frame();
+    runner.run_frame();
+    thread::sleep(Duration::from_millis(320));
+    runner.run_frame();
+
+    runner.click_element("header-settings-tile-bluetooth");
+    runner.run_frame();
+    runner.run_frame();
+    thread::sleep(Duration::from_millis(120));
+    runner.run_frame();
+
+    let (before_cancel_position, _) =
+        runner.get_element_bounds("header-settings-bluetooth-submenu");
+
+    runner.press_key_and_run_frame(Key::BrowserBack);
+
+    let (after_cancel_position, _) = runner.get_element_bounds("header-settings-bluetooth-submenu");
+    let position_delta = (after_cancel_position.x - before_cancel_position.x).abs();
+
+    assert!(
+        position_delta < 6.0,
+        "Bluetooth submenu should continue from its in-flight x-position when canceled, before={}, after={}, delta={}",
+        before_cancel_position.x,
+        after_cancel_position.x,
+        position_delta,
+    );
+}
+
+#[test]
+fn settings_menu_height_animates_when_opening_bluetooth_submenu() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+
+    runner.click_element("header-settings-button");
+    runner.run_frame();
+    runner.run_frame();
+    thread::sleep(Duration::from_millis(320));
+    runner.run_frame();
+
+    let (_, main_size) = runner.get_element_bounds("header-settings-menu");
+
+    runner.click_element("header-settings-tile-bluetooth");
+    runner.run_frame();
+    runner.run_frame();
+    thread::sleep(Duration::from_millis(220));
+    runner.run_frame();
+
+    let (_, mid_transition_size) = runner.get_element_bounds("header-settings-menu");
+
+    thread::sleep(Duration::from_millis(460));
+    runner.run_frame();
+    let (_, bluetooth_size) = runner.get_element_bounds("header-settings-menu");
+
+    assert_ne!(
+        main_size.y, bluetooth_size.y,
+        "main and Bluetooth menu heights should differ for this regression to be meaningful"
+    );
+
+    let lower_bound = main_size.y.min(bluetooth_size.y);
+    let upper_bound = main_size.y.max(bluetooth_size.y);
+    assert!(
+        mid_transition_size.y > lower_bound && mid_transition_size.y < upper_bound,
+        "menu height should be between stable sizes during transition, main={}, mid={}, bluetooth={}",
+        main_size.y,
+        mid_transition_size.y,
+        bluetooth_size.y,
+    );
 }
 
 #[test]

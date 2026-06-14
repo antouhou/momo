@@ -1,15 +1,18 @@
 mod style;
 
 use self::style::{
-    DeviceRowAvailability, bluetooth_submenu_body_style, bluetooth_submenu_style,
-    submenu_device_icon_color, submenu_device_icon_ring_style, submenu_device_label_color,
-    submenu_section_label_style, submenu_section_style, submenu_section_title_style,
+    DeviceRowAvailability, bluetooth_submenu_body_style, submenu_device_icon_color,
+    submenu_device_icon_ring_style, submenu_device_label_color, submenu_section_label_style,
+    submenu_section_style, submenu_section_title_style,
 };
 use super::common::{
     QuickSettingsControlState, QuickSettingsGlyph, glyph_element, settings_bottom_row, settings_row,
 };
-use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuView};
-use super::style::{SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_text_color};
+use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuViewType};
+use super::style::{
+    SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_content_container_style,
+    settings_text_color,
+};
 use super::submenu_button::{
     SubmenuButton, SubmenuButtonState, SubmenuButtonSurface, submenu_button_glyph,
     submenu_button_leading_slot, submenu_button_surface_glyph, submenu_toggle_switch,
@@ -21,7 +24,7 @@ use daiko::component::{Component, ComponentContext};
 use daiko::navigation::{FocusEntryPolicy, FocusOrigin, NavigationInputAction};
 use daiko::widgets::scrollable::Scrollable;
 use daiko::widgets::text::Text;
-use daiko::{Element, Id, Vec2};
+use daiko::{Element, Id};
 use system_control::{BluetoothConnectionState, BluetoothDeviceCategory};
 use tracing::warn;
 
@@ -50,7 +53,9 @@ pub(super) const BLUETOOTH_TOGGLE_TAG: &str = "header-settings-bluetooth-toggle"
 pub(super) const BLUETOOTH_SETTINGS_BUTTON_TAG: &str = "header-settings-bluetooth-settings-button";
 
 #[derive(Clone, Copy)]
-pub(super) struct BluetoothSubmenu;
+pub(super) struct BluetoothSubmenu {
+    pub(super) show_scroll_bars_when_overflowing: bool,
+}
 
 impl Component for BluetoothSubmenu {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
@@ -63,7 +68,6 @@ impl Component for BluetoothSubmenu {
 
         let state =
             ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
-        let snapshot = *state.read();
         let should_go_back = focus_scope.drain_captured_actions().any(|action| {
             matches!(
                 action,
@@ -71,25 +75,17 @@ impl Component for BluetoothSubmenu {
             )
         });
 
-        if snapshot.active_view == SettingsMenuView::Bluetooth && should_go_back {
-            if let Err(error) = bluetooth_handle(ctx).stop_discovery() {
-                warn!("failed to stop bluetooth discovery: {error:?}");
-            }
-
-            *state.write() = SettingsMenuState {
-                last_active_view: snapshot.active_view,
-                active_view: SettingsMenuView::Main,
-                ..snapshot
-            };
+        if should_go_back && state.read().active_view == SettingsMenuViewType::Bluetooth {
+            state.write().set_active_view(SettingsMenuViewType::Main);
         }
 
         Element::new()
             .with_tag("header-settings-bluetooth-submenu")
-            .with_style(bluetooth_submenu_style())
+            .with_style(settings_content_container_style())
             .with_content(settings_row(BluetoothToggleRow))
             .with_content(
                 Scrollable::new(BluetoothSubmenuBody, "bluetooth_submenu_scrollable")
-                    .size_to_content_with_clamp(Vec2::new(f32::INFINITY, f32::INFINITY)),
+                    .with_visible_scroll_bars(self.show_scroll_bars_when_overflowing),
             )
             .with_content(settings_bottom_row(BluetoothSettingsButton))
     }
@@ -129,8 +125,14 @@ impl Component for BluetoothToggleRow {
         let focusable = ctx.focusable();
         let state =
             ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
-        let snapshot = *state.read();
-        let is_active = snapshot.active_view == SettingsMenuView::Bluetooth;
+        let (is_active, should_receive_handoff_focus) = {
+            let state = state.read();
+            (
+                state.active_view == SettingsMenuViewType::Bluetooth,
+                state.last_active_view == SettingsMenuViewType::Main
+                    && state.active_view == SettingsMenuViewType::Bluetooth,
+            )
+        };
         let bluetooth_state = bluetooth_state(ctx);
         let bluetooth_state = bluetooth_state.read();
         let toggle_enabled = bluetooth_state.can_toggle_power;
@@ -140,12 +142,11 @@ impl Component for BluetoothToggleRow {
             focusable.request_focus(FocusOrigin::Pointer);
         }
 
-        if snapshot.last_active_view == SettingsMenuView::Main
-            && snapshot.active_view == SettingsMenuView::Bluetooth
-        {
+        if should_receive_handoff_focus {
             focusable.request_focus(FocusOrigin::Programmatic);
-            let mut menu_state = state.write_silent();
-            menu_state.last_active_view = menu_state.active_view;
+            if focusable.is_focused() {
+                state.write_silent().complete_view_focus_handoff();
+            }
         }
 
         if is_active

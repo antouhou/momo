@@ -4,7 +4,7 @@ use daiko::Vec2;
 use daiko::layout::{FlexDirection, SizeConstraint};
 use daiko::style::{Overflow, Style, Transform};
 
-pub(super) const VIEW_TRANSITION_DURATION_MS: u64 = 360;
+pub(super) const VIEW_TRANSITION_DURATION_MS: u64 = 240;
 pub(super) const DEFAULT_VIEW_TRANSITION_SLIDE_DISTANCE: f32 = 40.0;
 
 pub(super) fn view_transition_style(width: f32, fixed_size: Option<Vec2>) -> Style {

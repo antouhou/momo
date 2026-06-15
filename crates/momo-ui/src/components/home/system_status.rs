@@ -55,7 +55,7 @@ pub(crate) fn initialize_system_status_state(
         });
 
     if volume_observation.read().is_none() {
-        let volume_state_handle = volume_state.clone();
+        let volume_state_handle = volume_state;
         let observation = volume_handle_state
             .read()
             .clone()
@@ -66,7 +66,7 @@ pub(crate) fn initialize_system_status_state(
     }
 
     if battery_observation.read().is_none() {
-        let battery_state_handle = battery_state.clone();
+        let battery_state_handle = battery_state;
         let observation = battery_handle_state
             .read()
             .clone()

@@ -72,7 +72,7 @@ fn battery_icon(
     match charging_state {
         Some(BatteryChargingState::Charging) => PLUG_BOLT_ICON,
         Some(BatteryChargingState::Full | BatteryChargingState::NotCharging) => PLUG_ICON,
-        Some(BatteryChargingState::Discharging) | Some(BatteryChargingState::Unknown) | None => {
+        Some(BatteryChargingState::Discharging | BatteryChargingState::Unknown) | None => {
             battery_percentage_icon(battery_percentage)
         }
     }

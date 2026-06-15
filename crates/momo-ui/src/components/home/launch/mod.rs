@@ -3,6 +3,7 @@ pub(super) mod overlay;
 
 use crate::components::home::model::LaunchRequest;
 use daiko::Vec2;
+use std::rc::Rc;
 
 pub(super) const HOME_LAUNCH_ANIMATION_ID: &str = "momo_home_launch_animation";
 pub(super) const HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID: &str =
@@ -24,16 +25,16 @@ pub(super) enum LaunchPhase {
     Contracting,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub(super) struct LaunchTransitionState {
     request: LaunchRequest,
     phase: LaunchPhase,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub(super) enum LaunchOverlayEvent {
-    Expanded { app_id: &'static str },
-    Contracted { app_id: &'static str },
+    Expanded { app_id: Rc<String> },
+    Contracted { app_id: Rc<String> },
 }
 
 #[derive(Clone, Copy)]

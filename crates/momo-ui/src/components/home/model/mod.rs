@@ -1,12 +1,16 @@
-use daiko::Vec2;
 use daiko::animation::{AnimationParameters, transition};
 use daiko::component::ComponentContext;
 use daiko::navigation::FocusKey;
+use daiko::state_management::StateHandle;
 use daiko::style::{Color, Transform};
+use daiko::{Id, Vec2};
+use std::path::PathBuf;
+use std::rc::Rc;
 use std::time::Duration;
 
 pub(super) const HOME_APP_GRID_PAGE_STATE_ID: &str = "momo_home_app_grid_page_state";
 pub(super) const HOME_APP_GRID_FOCUSED_KEY_ID: &str = "momo_home_app_grid_focused_key";
+pub(super) const HOME_APP_ENTRIES_STATE_ID: &str = "momo_home_app_entries";
 pub(super) const HOME_APP_GRID_SCROLL_ACCUMULATOR_ID: &str =
     "momo_home_app_grid_scroll_accumulator";
 pub(super) const HOME_APP_GRID_SMOOTH_OFFSET_ID: &str = "momo_home_app_grid_smooth_offset";
@@ -48,8 +52,15 @@ pub fn home_top_row_settings_focus_key() -> FocusKey {
     FocusKey::new(HOME_TOP_ROW_SETTINGS_FOCUS_KEY_ID)
 }
 
+#[derive(Clone)]
+pub(super) enum AppIcon {
+    BuiltIn(BuiltInAppIcon),
+    #[expect(dead_code)]
+    File(PathBuf),
+}
+
 #[derive(Clone, Copy)]
-pub(super) enum MockAppIcon {
+pub(super) enum BuiltInAppIcon {
     LiveTv,
     Movies,
     Music,
@@ -80,190 +91,242 @@ pub(super) enum MockAppIcon {
     Security,
 }
 
-#[derive(Clone, Copy)]
-pub(super) struct MockApp {
-    pub id: &'static str,
-    pub name: &'static str,
-    pub icon: MockAppIcon,
+#[derive(Clone)]
+pub(super) enum AppLaunch {
+    Mock,
+}
+
+#[derive(Clone)]
+pub(super) struct AppEntry {
+    pub id: Rc<String>,
+    pub name: Rc<String>,
+    pub icon: AppIcon,
+    pub launch: AppLaunch,
     pub accent: [u8; 3],
 }
 
-#[derive(Clone, Copy)]
+impl AppEntry {
+    pub(super) fn id(&self) -> &str {
+        self.id.as_str()
+    }
+
+    pub(super) fn name(&self) -> &str {
+        self.name.as_str()
+    }
+}
+
+#[derive(Clone)]
 pub(super) struct LaunchRequest {
-    pub app: MockApp,
+    pub app: Rc<AppEntry>,
     pub position: Vec2,
     pub size: Vec2,
     pub icon_position: Vec2,
     pub icon_size: Vec2,
 }
 
-pub(super) const MOCK_APPS: [MockApp; 28] = [
-    MockApp {
+pub(super) fn app_entries(ctx: &mut ComponentContext) -> StateHandle<Vec<Rc<AppEntry>>> {
+    ctx.use_global_state(Id::new(HOME_APP_ENTRIES_STATE_ID), default_app_entries)
+}
+
+fn default_app_entries() -> Vec<Rc<AppEntry>> {
+    MOCK_APP_SPECS
+        .iter()
+        .copied()
+        .map(MockAppSpec::to_entry)
+        .collect()
+}
+
+fn app_text(text: &'static str) -> Rc<String> {
+    Rc::new(text.to_owned())
+}
+
+#[derive(Clone, Copy)]
+pub(super) struct MockAppSpec {
+    pub id: &'static str,
+    pub name: &'static str,
+    pub icon: BuiltInAppIcon,
+    pub accent: [u8; 3],
+}
+
+impl MockAppSpec {
+    fn to_entry(self) -> Rc<AppEntry> {
+        Rc::new(AppEntry {
+            id: app_text(self.id),
+            name: app_text(self.name),
+            icon: AppIcon::BuiltIn(self.icon),
+            launch: AppLaunch::Mock,
+            accent: self.accent,
+        })
+    }
+}
+
+pub(super) const MOCK_APP_SPECS: [MockAppSpec; 28] = [
+    MockAppSpec {
         id: "live-tv",
         name: "Live TV",
-        icon: MockAppIcon::LiveTv,
+        icon: BuiltInAppIcon::LiveTv,
         accent: [60, 133, 246],
     },
-    MockApp {
+    MockAppSpec {
         id: "movies",
         name: "Movies",
-        icon: MockAppIcon::Movies,
+        icon: BuiltInAppIcon::Movies,
         accent: [255, 110, 64],
     },
-    MockApp {
+    MockAppSpec {
         id: "music",
         name: "Music",
-        icon: MockAppIcon::Music,
+        icon: BuiltInAppIcon::Music,
         accent: [76, 175, 80],
     },
-    MockApp {
+    MockAppSpec {
         id: "photos",
         name: "Photos",
-        icon: MockAppIcon::Photos,
+        icon: BuiltInAppIcon::Photos,
         accent: [255, 193, 7],
     },
-    MockApp {
+    MockAppSpec {
         id: "browser",
         name: "Browser",
-        icon: MockAppIcon::Browser,
+        icon: BuiltInAppIcon::Browser,
         accent: [0, 188, 212],
     },
-    MockApp {
+    MockAppSpec {
         id: "settings",
         name: "Settings",
-        icon: MockAppIcon::Settings,
+        icon: BuiltInAppIcon::Settings,
         accent: [171, 71, 188],
     },
-    MockApp {
+    MockAppSpec {
         id: "store",
         name: "Store",
-        icon: MockAppIcon::Store,
+        icon: BuiltInAppIcon::Store,
         accent: [244, 67, 54],
     },
-    MockApp {
+    MockAppSpec {
         id: "files",
         name: "Files",
-        icon: MockAppIcon::Files,
+        icon: BuiltInAppIcon::Files,
         accent: [121, 85, 72],
     },
-    MockApp {
+    MockAppSpec {
         id: "games",
         name: "Games",
-        icon: MockAppIcon::Games,
+        icon: BuiltInAppIcon::Games,
         accent: [233, 30, 99],
     },
-    MockApp {
+    MockAppSpec {
         id: "news",
         name: "News",
-        icon: MockAppIcon::News,
+        icon: BuiltInAppIcon::News,
         accent: [96, 125, 139],
     },
-    MockApp {
+    MockAppSpec {
         id: "weather",
         name: "Weather",
-        icon: MockAppIcon::Weather,
+        icon: BuiltInAppIcon::Weather,
         accent: [3, 169, 244],
     },
-    MockApp {
+    MockAppSpec {
         id: "sports",
         name: "Sports",
-        icon: MockAppIcon::Sports,
+        icon: BuiltInAppIcon::Sports,
         accent: [139, 195, 74],
     },
-    MockApp {
+    MockAppSpec {
         id: "podcasts",
         name: "Podcasts",
-        icon: MockAppIcon::Podcasts,
+        icon: BuiltInAppIcon::Podcasts,
         accent: [255, 87, 34],
     },
-    MockApp {
+    MockAppSpec {
         id: "calendar",
         name: "Calendar",
-        icon: MockAppIcon::Calendar,
+        icon: BuiltInAppIcon::Calendar,
         accent: [63, 81, 181],
     },
-    MockApp {
+    MockAppSpec {
         id: "mail",
         name: "Mail",
-        icon: MockAppIcon::Mail,
+        icon: BuiltInAppIcon::Mail,
         accent: [0, 150, 136],
     },
-    MockApp {
+    MockAppSpec {
         id: "camera",
         name: "Camera",
-        icon: MockAppIcon::Camera,
+        icon: BuiltInAppIcon::Camera,
         accent: [255, 152, 0],
     },
-    MockApp {
+    MockAppSpec {
         id: "terminal",
         name: "Terminal",
-        icon: MockAppIcon::Terminal,
+        icon: BuiltInAppIcon::Terminal,
         accent: [158, 158, 158],
     },
-    MockApp {
+    MockAppSpec {
         id: "sleep",
         name: "Sleep",
-        icon: MockAppIcon::Sleep,
+        icon: BuiltInAppIcon::Sleep,
         accent: [103, 58, 183],
     },
-    MockApp {
+    MockAppSpec {
         id: "search",
         name: "Search",
-        icon: MockAppIcon::Search,
+        icon: BuiltInAppIcon::Search,
         accent: [0, 121, 107],
     },
-    MockApp {
+    MockAppSpec {
         id: "kids",
         name: "Kids",
-        icon: MockAppIcon::Kids,
+        icon: BuiltInAppIcon::Kids,
         accent: [255, 64, 129],
     },
-    MockApp {
+    MockAppSpec {
         id: "stream",
         name: "Stream",
-        icon: MockAppIcon::Stream,
+        icon: BuiltInAppIcon::Stream,
         accent: [33, 150, 243],
     },
-    MockApp {
+    MockAppSpec {
         id: "radio",
         name: "Radio",
-        icon: MockAppIcon::Radio,
+        icon: BuiltInAppIcon::Radio,
         accent: [205, 220, 57],
     },
-    MockApp {
+    MockAppSpec {
         id: "books",
         name: "Books",
-        icon: MockAppIcon::Books,
+        icon: BuiltInAppIcon::Books,
         accent: [141, 110, 99],
     },
-    MockApp {
+    MockAppSpec {
         id: "fitness",
         name: "Fitness",
-        icon: MockAppIcon::Fitness,
+        icon: BuiltInAppIcon::Fitness,
         accent: [255, 87, 34],
     },
-    MockApp {
+    MockAppSpec {
         id: "calls",
         name: "Calls",
-        icon: MockAppIcon::Calls,
+        icon: BuiltInAppIcon::Calls,
         accent: [76, 175, 80],
     },
-    MockApp {
+    MockAppSpec {
         id: "travel",
         name: "Travel",
-        icon: MockAppIcon::Travel,
+        icon: BuiltInAppIcon::Travel,
         accent: [63, 81, 181],
     },
-    MockApp {
+    MockAppSpec {
         id: "recipes",
         name: "Recipes",
-        icon: MockAppIcon::Recipes,
+        icon: BuiltInAppIcon::Recipes,
         accent: [255, 193, 7],
     },
-    MockApp {
+    MockAppSpec {
         id: "security",
         name: "Security",
-        icon: MockAppIcon::Security,
+        icon: BuiltInAppIcon::Security,
         accent: [96, 125, 139],
     },
 ];

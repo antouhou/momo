@@ -50,7 +50,7 @@ impl Component for Home {
                 let clock_text =
                     ctx.peek_global_state(Id::new(HOME_CLOCK_STATE_ID), read_system_time);
                 *clock_thread_started.write_silent() = true;
-                spawn_clock_thread(clock_text.clone());
+                spawn_clock_thread(clock_text);
             }
         }
 

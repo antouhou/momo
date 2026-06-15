@@ -1,5 +1,5 @@
 use crate::components::home::app_icon::{
-    mock_app_icon, mock_app_icon_background_color, mock_app_icon_foreground_color,
+    app_icon, app_icon_background_color, app_icon_foreground_color,
 };
 use crate::components::home::launch::{
     AnimatedRect, HOME_HERO_ICON_GLYPH_SIZE, HOME_HERO_ICON_SIZE, HOME_LAUNCH_ANIMATION_ID,
@@ -10,8 +10,8 @@ use crate::components::home::launch::{
 use crate::components::home::model::{
     LaunchRequest, TILE_BORDER_RADIUS, TILE_ICON_GLYPH_SIZE, TILE_ICON_SIZE, color,
 };
-use daiko::animation::easing::{Easing, EasingFunction};
-use daiko::animation::{AnimationParameters, Interpolable};
+use daiko::animation::easing::{Easing as _, EasingFunction};
+use daiko::animation::{AnimationParameters, Interpolable as _};
 use daiko::component::{Component, ComponentContext};
 use daiko::layout::FlexDirection;
 use daiko::style::{Border, BorderRadius, Color, Stroke, Style};
@@ -19,16 +19,17 @@ use daiko::widgets::container::{Container, Fit};
 use daiko::widgets::overlay::Overlay;
 use daiko::widgets::text::{Text, TextStyle};
 use daiko::{Element, Id, Vec2};
+use std::rc::Rc;
 use std::time::Duration;
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub(in crate::components::home) struct LaunchOverlay {
     pub launch: LaunchTransitionState,
 }
 
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Default)]
 struct LaunchOverlayAnimationState {
-    current_app_id: Option<&'static str>,
+    current_app_id: Option<Rc<String>>,
     current_phase: Option<LaunchPhase>,
     expanded_event_sent: bool,
     contracted_event_sent: bool,
@@ -36,8 +37,8 @@ struct LaunchOverlayAnimationState {
 
 impl Component for LaunchOverlay {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        let animation_progress = update_launch_animation(ctx, self.launch);
-        render_launch_overlay(ctx, self.launch, animation_progress)
+        let animation_progress = update_launch_animation(ctx, self.launch.clone());
+        render_launch_overlay(ctx, self.launch.clone(), animation_progress)
     }
 }
 
@@ -49,7 +50,7 @@ fn with_opacity(color: Color, opacity: f32) -> Color {
 fn update_launch_animation(ctx: &mut ComponentContext, launch: LaunchTransitionState) -> f32 {
     let overlay_event_channel = ctx.use_channel_with_id(HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID);
     let animation_state_handle = ctx.use_local_state(LaunchOverlayAnimationState::default);
-    let mut animation_state = *animation_state_handle.read();
+    let mut animation_state = animation_state_handle.read().clone();
     let launch_animation = ctx.animation_with_id(
         Id::new(HOME_LAUNCH_ANIMATION_ID),
         AnimationParameters::default()
@@ -57,9 +58,14 @@ fn update_launch_animation(ctx: &mut ComponentContext, launch: LaunchTransitionS
             .with_easing(EasingFunction::EaseInOut),
     );
 
-    if animation_state.current_app_id != Some(launch.request.app.id) {
+    if animation_state
+        .current_app_id
+        .as_deref()
+        .map(String::as_str)
+        != Some(launch.request.app.id())
+    {
         animation_state = LaunchOverlayAnimationState {
-            current_app_id: Some(launch.request.app.id),
+            current_app_id: Some(Rc::clone(&launch.request.app.id)),
             current_phase: Some(launch.phase),
             expanded_event_sent: false,
             contracted_event_sent: false,
@@ -93,7 +99,7 @@ fn update_launch_animation(ctx: &mut ComponentContext, launch: LaunchTransitionS
         && !animation_state.expanded_event_sent
     {
         let _ = overlay_event_channel.send(LaunchOverlayEvent::Expanded {
-            app_id: launch.request.app.id,
+            app_id: Rc::clone(&launch.request.app.id),
         });
         animation_state.expanded_event_sent = true;
     }
@@ -104,7 +110,7 @@ fn update_launch_animation(ctx: &mut ComponentContext, launch: LaunchTransitionS
         && !animation_state.contracted_event_sent
     {
         let _ = overlay_event_channel.send(LaunchOverlayEvent::Contracted {
-            app_id: launch.request.app.id,
+            app_id: Rc::clone(&launch.request.app.id),
         });
         animation_state.contracted_event_sent = true;
     }
@@ -211,10 +217,10 @@ fn render_launch_overlay(
                 .with_order(10),
         );
 
-    let tile_content = build_launch_tile_content(launch.request, false);
+    let tile_content = build_launch_tile_content(launch.request.clone(), false);
     let shared_app_content =
         build_launch_destination_shared_content(LaunchDestinationSharedContentProps {
-            request: launch.request,
+            request: launch.request.clone(),
             source_icon_center,
             source_icon_size: launch.request.icon_size.x,
             final_icon_center,
@@ -249,8 +255,8 @@ fn render_launch_overlay(
 
 fn build_launch_tile_content(request: LaunchRequest, show_icon: bool) -> Element {
     let accent = color(request.app.accent);
-    let icon_background = mock_app_icon_background_color(accent);
-    let icon_foreground = mock_app_icon_foreground_color(accent);
+    let icon_background = app_icon_background_color(accent);
+    let icon_foreground = app_icon_foreground_color(accent);
 
     let icon = Element::new()
         .with_style(
@@ -260,8 +266,8 @@ fn build_launch_tile_content(request: LaunchRequest, show_icon: bool) -> Element
                 .with_background_color(icon_background)
                 .with_border_radius(BorderRadius::all(14.0)),
         )
-        .with_content(mock_app_icon(
-            request.app.icon,
+        .with_content(app_icon(
+            &request.app.icon,
             TILE_ICON_GLYPH_SIZE,
             icon_foreground,
         ));
@@ -308,7 +314,7 @@ fn build_launch_tile_content(request: LaunchRequest, show_icon: bool) -> Element
         .with_content(meta)
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 struct LaunchDestinationSharedContentProps {
     request: LaunchRequest,
     source_icon_center: Vec2,
@@ -353,15 +359,15 @@ fn build_launch_destination_shared_content(props: LaunchDestinationSharedContent
                 .with_fixed_size(current_icon_size, current_icon_size)
                 .with_centered_content()
                 .with_background_color(with_opacity(
-                    mock_app_icon_background_color(accent),
+                    app_icon_background_color(accent),
                     props.icon_opacity,
                 ))
                 .with_border_radius(BorderRadius::all(icon_radius)),
         )
-        .with_content(mock_app_icon(
-            props.request.app.icon,
+        .with_content(app_icon(
+            &props.request.app.icon,
             icon_glyph_size,
-            with_opacity(mock_app_icon_foreground_color(accent), props.icon_opacity),
+            with_opacity(app_icon_foreground_color(accent), props.icon_opacity),
         ));
 
     let labels = Container::vertical()
@@ -374,7 +380,7 @@ fn build_launch_destination_shared_content(props: LaunchDestinationSharedContent
         .with_spacing((18.0, 18.0))
         .build()
         .with_content(
-            Text::new(props.request.app.name).with_style(
+            Text::new(Rc::clone(&props.request.app.name)).with_style(
                 TextStyle::default()
                     .with_font_size(34.0)
                     .with_font_color(with_opacity(
@@ -397,7 +403,7 @@ fn build_launch_destination_shared_content(props: LaunchDestinationSharedContent
         );
 
     Element::new()
-        .with_tag(format!("launch-overlay-app-{}", props.request.app.id))
+        .with_tag(format!("launch-overlay-app-{}", props.request.app.id()))
         .with_style(
             Style::new()
                 .with_fixed_position(current_shared_content_top_left)

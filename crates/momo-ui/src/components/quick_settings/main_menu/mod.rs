@@ -7,7 +7,9 @@ use self::tile_grid::SettingsTileGrid;
 use self::top_row::SettingsTopRow;
 use super::common::{settings_middle_row, settings_row};
 use super::volume_control::VolumeControl;
-use crate::components::quick_settings::style::{settings_content_container_style, SETTINGS_MENU_GAP, SETTINGS_TILE_HEIGHT};
+use crate::components::quick_settings::style::{
+    SETTINGS_MENU_GAP, SETTINGS_TILE_HEIGHT, settings_content_container_style,
+};
 use daiko::widgets::scrollable::Scrollable;
 use daiko::{Element, component::Component, component::ComponentContext};
 

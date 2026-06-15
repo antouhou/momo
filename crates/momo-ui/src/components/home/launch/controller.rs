@@ -4,11 +4,13 @@ use crate::components::home::launch::{
 use crate::components::home::model::HOME_LAUNCH_CHANNEL_ID;
 use daiko::component::ComponentContext;
 use daiko::navigation::{FocusOrigin, NavigationInputAction};
+use daiko::state_management::StateHandle;
+use std::rc::Rc;
 
 pub(in crate::components::home) struct LaunchControllerOutput {
     pub active_launch: Option<LaunchTransitionState>,
-    pub preferred_focus_app_id: Option<&'static str>,
-    pub launched_app_id: Option<&'static str>,
+    pub preferred_focus_app_id: Option<Rc<String>>,
+    pub launched_app_id: Option<Rc<String>>,
 }
 
 pub(in crate::components::home) fn use_launch_controller(
@@ -17,7 +19,7 @@ pub(in crate::components::home) fn use_launch_controller(
     let launch_channel = ctx.use_channel_with_id(HOME_LAUNCH_CHANNEL_ID);
     let overlay_event_channel = ctx.use_channel_with_id(HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID);
     let launch_state = ctx.use_local_state(|| None::<LaunchTransitionState>);
-    let restore_focus_app_id = ctx.use_local_state(|| None::<&'static str>);
+    let restore_focus_app_id = ctx.use_local_state(|| None::<Rc<String>>);
     let home_scope = ctx.focus_scope();
     let launch_focusable = ctx.focusable();
 
@@ -42,6 +44,13 @@ pub(in crate::components::home) fn use_launch_controller(
     } else {
         &[]
     });
+    let should_reverse_launch = launch_focusable.just_cancelled()
+        || launch_focusable.drain_captured_actions().any(|action| {
+            matches!(
+                action,
+                NavigationInputAction::Cancel | NavigationInputAction::Back
+            )
+        });
 
     if let Some(request) = next_launch {
         *launch_state.write() = Some(LaunchTransitionState {
@@ -53,28 +62,39 @@ pub(in crate::components::home) fn use_launch_controller(
         launch_focusable.engage();
     }
 
-    let mut launch = *launch_state.read();
-    if let Some(active_launch) = launch
-        && overlay_expanded_app_id == Some(active_launch.request.app.id)
-        && active_launch.phase == LaunchPhase::Expanding
-    {
-        *launch_state.write() = Some(LaunchTransitionState {
-            phase: LaunchPhase::WaitingForSurface,
-            ..active_launch
-        });
-        launch = *launch_state.read();
-    }
-
-    if let Some(active_launch) = launch
-        && overlay_contracted_app_id == Some(active_launch.request.app.id)
-        && active_launch.phase == LaunchPhase::Contracting
-    {
-        *restore_focus_app_id.write() = Some(active_launch.request.app.id);
-        *launch_state.write() = None;
-        launch_focusable.disengage();
-        launch_focusable.clear_focus();
-        home_scope.request_focus(FocusOrigin::Navigation);
-        launch = None;
+    let mut launch = launch_state.read().clone();
+    if let Some(active_launch) = launch.clone() {
+        match active_launch.phase {
+            LaunchPhase::Expanding => {
+                if should_reverse_launch {
+                    set_phase(&launch_state, active_launch, LaunchPhase::Contracting);
+                    launch = launch_state.read().clone();
+                } else if overlay_expanded_app_id.as_deref().map(String::as_str)
+                    == Some(active_launch.request.app.id())
+                {
+                    set_phase(&launch_state, active_launch, LaunchPhase::WaitingForSurface);
+                    launch = launch_state.read().clone();
+                }
+            }
+            LaunchPhase::Contracting => {
+                if overlay_contracted_app_id.as_deref().map(String::as_str)
+                    == Some(active_launch.request.app.id())
+                {
+                    *restore_focus_app_id.write() = Some(Rc::clone(&active_launch.request.app.id));
+                    *launch_state.write() = None;
+                    launch_focusable.disengage();
+                    launch_focusable.clear_focus();
+                    home_scope.request_focus(FocusOrigin::Navigation);
+                    launch = None;
+                }
+            }
+            LaunchPhase::WaitingForSurface => {
+                if should_reverse_launch {
+                    set_phase(&launch_state, active_launch, LaunchPhase::Contracting);
+                    launch = launch_state.read().clone();
+                }
+            }
+        }
     }
 
     if launch.is_some() && !launch_focusable.is_focused() {
@@ -84,28 +104,22 @@ pub(in crate::components::home) fn use_launch_controller(
         launch_focusable.engage();
     }
 
-    let should_reverse_launch = launch_focusable.just_cancelled()
-        || launch_focusable.drain_captured_actions().any(|action| {
-            matches!(
-                action,
-                NavigationInputAction::Cancel | NavigationInputAction::Back
-            )
-        });
-
-    if let Some(active_launch) = launch
-        && should_reverse_launch
-        && active_launch.phase != LaunchPhase::Contracting
-    {
-        *launch_state.write() = Some(LaunchTransitionState {
-            phase: LaunchPhase::Contracting,
-            ..active_launch
-        });
-        launch = *launch_state.read();
-    }
-
     LaunchControllerOutput {
-        launched_app_id: launch.map(|active| active.request.app.id),
-        preferred_focus_app_id: *restore_focus_app_id.read(),
+        launched_app_id: launch
+            .as_ref()
+            .map(|active| Rc::clone(&active.request.app.id)),
+        preferred_focus_app_id: restore_focus_app_id.read().clone(),
         active_launch: launch,
     }
+}
+
+fn set_phase(
+    launch_state: &StateHandle<Option<LaunchTransitionState>>,
+    active_launch: LaunchTransitionState,
+    phase: LaunchPhase,
+) {
+    *launch_state.write() = Some(LaunchTransitionState {
+        phase,
+        ..active_launch
+    });
 }

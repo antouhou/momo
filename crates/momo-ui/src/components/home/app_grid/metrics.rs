@@ -1,7 +1,6 @@
 use crate::components::home::app_grid::{PAGE_DOTS_HEIGHT, PAGE_DOTS_TOP_GAP};
 use crate::components::home::model::{
-    GRID_GAP, MOCK_APPS, SCREEN_PADDING, TILE_HEIGHT, TILE_WIDTH, columns_for_width,
-    rows_for_height,
+    GRID_GAP, SCREEN_PADDING, TILE_HEIGHT, TILE_WIDTH, columns_for_width, rows_for_height,
 };
 use daiko::Vec2;
 
@@ -21,7 +20,7 @@ pub(in crate::components::home::app_grid) struct AppGridMetrics {
 }
 
 impl AppGridMetrics {
-    pub(crate) fn from_wrapper_size(wrapper_size: Vec2) -> Self {
+    pub(crate) fn from_wrapper_size(wrapper_size: Vec2, app_count: usize) -> Self {
         let page_width = wrapper_size.x.max(TILE_WIDTH);
         let available_width = (page_width - SCREEN_PADDING * 2.0).max(TILE_WIDTH);
         let available_grid_height =
@@ -29,7 +28,7 @@ impl AppGridMetrics {
         let columns = columns_for_width(available_width);
         let rows = rows_for_height(available_grid_height);
         let tiles_per_page = (columns * rows).max(1);
-        let page_count = MOCK_APPS.len().div_ceil(tiles_per_page).max(1);
+        let page_count = app_count.div_ceil(tiles_per_page).max(1);
         let row_width = grid_axis_size(columns, TILE_WIDTH);
         let page_height = grid_axis_size(rows, TILE_HEIGHT);
 

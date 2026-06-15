@@ -64,12 +64,11 @@ pub(crate) fn initialize_bluetooth_state(
         build_bluetooth_state(bluetooth_handle_state.read().clone().current_state());
 
     if bluetooth_observation.read().is_none() {
-        let bluetooth_state_handle = bluetooth_state.clone();
         let observation = bluetooth_handle_state
             .read()
             .clone()
             .observe(move |next_state| {
-                *bluetooth_state_handle.write() = build_bluetooth_state(next_state);
+                *bluetooth_state.write() = build_bluetooth_state(next_state);
             });
         *bluetooth_observation.write_silent() = Some(observation);
     }

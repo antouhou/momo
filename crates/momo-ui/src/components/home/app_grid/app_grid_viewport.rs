@@ -4,8 +4,8 @@ use crate::components::home::app_grid::{
 };
 use crate::components::home::app_tile::AppTile;
 use crate::components::home::model::{
-    GRID_GAP, HOME_APP_GRID_FOCUSED_KEY_ID, HOME_APP_GRID_PAGE_STATE_ID,
-    HOME_APP_GRID_SCROLL_ACCUMULATOR_ID, HOME_APP_GRID_SMOOTH_OFFSET_ID, MOCK_APPS,
+    AppEntry, GRID_GAP, HOME_APP_GRID_FOCUSED_KEY_ID, HOME_APP_GRID_PAGE_STATE_ID,
+    HOME_APP_GRID_SCROLL_ACCUMULATOR_ID, HOME_APP_GRID_SMOOTH_OFFSET_ID, app_entries,
 };
 use daiko::animation::SmoothFollowConfig;
 use daiko::component::{Component, ComponentContext};
@@ -14,6 +14,7 @@ use daiko::navigation::{FocusEntryPolicy, FocusKey, TraversalPolicy};
 use daiko::style::{Overflow, Style};
 use daiko::widgets::container::{Container, Fit};
 use daiko::{Element, Id, Vec2};
+use std::rc::Rc;
 use std::time::{Duration, Instant};
 
 #[derive(Clone)]
@@ -34,11 +35,15 @@ impl Component for AppGridViewport {
         let viewport_layout = ctx.layout();
         let page_state = ctx.use_shared_state(Id::new(HOME_APP_GRID_PAGE_STATE_ID), || 0);
 
+        let apps_handle = app_entries(ctx);
+        let apps = apps_handle.read();
+
         let mut target_page = (*page_state.read()).min(self.metrics.last_page_index());
         let focused_key = focus_scope.focused_child_key();
         if focused_key != *last_focused_key.read() {
             *last_focused_key.write_silent() = focused_key;
-            if let Some(focused_page) = focused_page_index(focused_key, self.metrics.tiles_per_page)
+            if let Some(focused_page) =
+                focused_page_index(focused_key, self.metrics.tiles_per_page, &apps)
             {
                 target_page = focused_page.min(self.metrics.last_page_index());
             }
@@ -74,7 +79,12 @@ impl Component for AppGridViewport {
                     .with_fixed_size(self.metrics.page_width, self.metrics.page_height)
                     .with_overflow(Overflow::Visible),
             )
-            .with_content(build_page_strip(&self.grid, self.metrics, rendered_offset))
+            .with_content(build_page_strip(
+                &self.grid,
+                self.metrics,
+                rendered_offset,
+                &apps,
+            ))
     }
 }
 
@@ -84,11 +94,14 @@ struct AppGridScrollState {
     locked_until: Option<Instant>,
 }
 
-fn focused_page_index(focused_key: Option<FocusKey>, tiles_per_page: usize) -> Option<usize> {
+fn focused_page_index(
+    focused_key: Option<FocusKey>,
+    tiles_per_page: usize,
+    apps: &[Rc<AppEntry>],
+) -> Option<usize> {
     let focused_key = focused_key?;
-    MOCK_APPS
-        .iter()
-        .position(|app| FocusKey::new(app.id) == focused_key)
+    apps.iter()
+        .position(|app| FocusKey::new(app.id()) == focused_key)
         .map(|app_index| app_index / tiles_per_page)
 }
 
@@ -161,7 +174,12 @@ fn scroll_axis_delta(scroll_delta: Vec2) -> f32 {
     }
 }
 
-fn build_page_strip(grid: &AppGrid, metrics: AppGridMetrics, rendered_offset: f32) -> Element {
+fn build_page_strip(
+    grid: &AppGrid,
+    metrics: AppGridMetrics,
+    rendered_offset: f32,
+    apps: &[Rc<AppEntry>],
+) -> Element {
     let mut page_strip = Element::new().with_tag("apps-grid-page-strip").with_style(
         Style::new()
             .with_fixed_size(
@@ -176,7 +194,7 @@ fn build_page_strip(grid: &AppGrid, metrics: AppGridMetrics, rendered_offset: f3
     );
 
     for page_index in 0..metrics.page_count {
-        page_strip.add_content(build_page_contents(grid, metrics, page_index));
+        page_strip.add_content(build_page_contents(grid, metrics, page_index, apps));
     }
 
     page_strip
@@ -186,13 +204,14 @@ pub(in crate::components::home::app_grid) fn build_page_contents(
     grid: &AppGrid,
     metrics: AppGridMetrics,
     page_index: usize,
+    apps: &[Rc<AppEntry>],
 ) -> Element {
     let first_app_index = page_index * metrics.tiles_per_page;
-    let page_app_count = MOCK_APPS
+    let page_app_count = apps
         .len()
         .saturating_sub(first_app_index)
         .min(metrics.tiles_per_page);
-    let page_apps = &MOCK_APPS[first_app_index..first_app_index + page_app_count];
+    let page_apps = &apps[first_app_index..first_app_index + page_app_count];
 
     let mut page = Container::vertical()
         .with_fit(
@@ -223,13 +242,15 @@ pub(in crate::components::home::app_grid) fn build_page_contents(
         for (column_index, app) in row.iter().enumerate() {
             let app_index = first_app_index + row_index * metrics.columns + column_index;
             row_container.add_content(AppTile {
-                app: *app,
-                preferred_focus: grid.preferred_focus_app_id == Some(app.id)
+                app: Rc::clone(app),
+                preferred_focus: grid.preferred_focus_app_id.as_deref().map(String::as_str)
+                    == Some(app.id())
                     || (grid.preferred_focus_app_id.is_none() && app_index == 0),
                 interactions_disabled: grid.interactions_disabled,
-                is_hidden_for_launch: grid.hidden_app_id == Some(app.id),
-                focus_left_app_id: page_edge_focus_target(metrics, app_index, -1),
-                focus_right_app_id: page_edge_focus_target(metrics, app_index, 1),
+                is_hidden_for_launch: grid.hidden_app_id.as_deref().map(String::as_str)
+                    == Some(app.id()),
+                focus_left_key: page_edge_focus_target(metrics, apps, app_index, -1),
+                focus_right_key: page_edge_focus_target(metrics, apps, app_index, 1),
                 focus_down_key: (row_index + 1 == page_apps.chunks(metrics.columns).len())
                     .then_some(page_dot_focus_key(page_index)),
             });
@@ -243,9 +264,10 @@ pub(in crate::components::home::app_grid) fn build_page_contents(
 
 fn page_edge_focus_target(
     metrics: AppGridMetrics,
+    apps: &[Rc<AppEntry>],
     app_index: usize,
     page_delta: isize,
-) -> Option<&'static str> {
+) -> Option<FocusKey> {
     let page_index = app_index / metrics.tiles_per_page;
     let index_in_page = app_index % metrics.tiles_per_page;
     let row_index = index_in_page / metrics.columns;
@@ -274,5 +296,6 @@ fn page_edge_focus_target(
     let target_app_index = target_page_index * metrics.tiles_per_page
         + row_index * metrics.columns
         + target_column_index;
-    MOCK_APPS.get(target_app_index).map(|app| app.id)
+    apps.get(target_app_index)
+        .map(|app| FocusKey::new(app.id.as_ref()))
 }

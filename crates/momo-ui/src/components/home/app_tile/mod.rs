@@ -1,11 +1,11 @@
 mod style;
 
 use crate::components::home::app_icon::{
-    mock_app_icon, mock_app_icon_background_color, mock_app_icon_foreground_color,
+    app_icon, app_icon_background_color, app_icon_foreground_color,
 };
 use crate::components::home::app_tile::style::{tile_style, tile_title_style};
 use crate::components::home::model::{
-    HOME_LAUNCH_CHANNEL_ID, LaunchRequest, MockApp, TILE_HEIGHT, TILE_ICON_GLYPH_SIZE,
+    AppEntry, AppLaunch, HOME_LAUNCH_CHANNEL_ID, LaunchRequest, TILE_HEIGHT, TILE_ICON_GLYPH_SIZE,
     TILE_ICON_SIZE, TILE_WIDTH, color, tile_focus_transform, tile_icon_origin,
     transformed_local_rect,
 };
@@ -16,15 +16,16 @@ use daiko::navigation::{FocusKey, FocusOrigin, NavigationDirection};
 use daiko::style::{BorderRadius, Color, CursorIcon, Style};
 use daiko::widgets::container::{Container, Fit};
 use daiko::widgets::text::Text;
+use std::rc::Rc;
 
 #[derive(Clone)]
 pub(super) struct AppTile {
-    pub app: MockApp,
+    pub app: Rc<AppEntry>,
     pub preferred_focus: bool,
     pub interactions_disabled: bool,
     pub is_hidden_for_launch: bool,
-    pub focus_left_app_id: Option<&'static str>,
-    pub focus_right_app_id: Option<&'static str>,
+    pub focus_left_key: Option<FocusKey>,
+    pub focus_right_key: Option<FocusKey>,
     pub focus_down_key: Option<FocusKey>,
 }
 
@@ -35,16 +36,10 @@ impl Component for AppTile {
         let layout = ctx.layout();
 
         focusable.set_navigation_enabled(!self.interactions_disabled);
-        focusable.set_focus_key(FocusKey::new(self.app.id));
+        focusable.set_focus_key(FocusKey::new(self.app.id()));
         focusable.set_preferred_focus(self.preferred_focus);
-        focusable.set_focus_directional_override(
-            NavigationDirection::Left,
-            self.focus_left_app_id.map(FocusKey::new),
-        );
-        focusable.set_focus_directional_override(
-            NavigationDirection::Right,
-            self.focus_right_app_id.map(FocusKey::new),
-        );
+        focusable.set_focus_directional_override(NavigationDirection::Left, self.focus_left_key);
+        focusable.set_focus_directional_override(NavigationDirection::Right, self.focus_right_key);
         focusable.set_focus_directional_override(NavigationDirection::Down, self.focus_down_key);
 
         let pointer_activated = !self.interactions_disabled && pointer.just_pressed();
@@ -56,7 +51,7 @@ impl Component for AppTile {
         }
 
         if self.is_hidden_for_launch {
-            return Element::new().with_tag(self.app.id).with_style(
+            return Element::new().with_tag(self.app.id()).with_style(
                 Style::new()
                     .with_fixed_size(TILE_WIDTH, TILE_HEIGHT)
                     .with_background_color(Color::TRANSPARENT),
@@ -68,8 +63,8 @@ impl Component for AppTile {
         let _is_pressed = !self.interactions_disabled && pointer.is_pressed();
         let paint_decorations = is_focus_visible || is_hovering;
         let accent = color(self.app.accent);
-        let icon_background = mock_app_icon_background_color(accent);
-        let icon_text_color = mock_app_icon_foreground_color(accent);
+        let icon_background = app_icon_background_color(accent);
+        let icon_text_color = app_icon_foreground_color(accent);
 
         let tile_transform =
             tile_focus_transform(Vec2::new(TILE_WIDTH, TILE_HEIGHT), is_focus_visible, ctx);
@@ -92,14 +87,16 @@ impl Component for AppTile {
                 );
                 let launch_channel = ctx.use_channel_with_id(HOME_LAUNCH_CHANNEL_ID);
                 let _ = launch_channel.send(LaunchRequest {
-                    app: self.app,
+                    app: Rc::clone(&self.app),
                     position: surface_position,
                     size: surface_size,
                     icon_position,
                     icon_size,
                 });
             }
-            println!("Activated app: {}", self.app.name);
+            match &self.app.launch {
+                AppLaunch::Mock => println!("Activated app: {}", self.app.name()),
+            }
         }
 
         if is_hovering {
@@ -114,8 +111,8 @@ impl Component for AppTile {
                     .with_background_color(icon_background)
                     .with_border_radius(BorderRadius::all(14.0)),
             )
-            .with_content(mock_app_icon(
-                self.app.icon,
+            .with_content(app_icon(
+                &self.app.icon,
                 TILE_ICON_GLYPH_SIZE,
                 icon_text_color,
             ));
@@ -125,7 +122,7 @@ impl Component for AppTile {
             .align_items_center()
             .with_spacing((4.0, 4.0))
             .build()
-            .with_content(Text::new(self.app.name).with_style(tile_title_style()));
+            .with_content(Text::new(Rc::clone(&self.app.name)).with_style(tile_title_style()));
 
         // TODO: better focus ring
         // if is_focus_visible
@@ -139,7 +136,7 @@ impl Component for AppTile {
         // }
 
         let element = Element::new()
-            .with_tag(self.app.id)
+            .with_tag(self.app.id())
             .with_style(style)
             .with_content(icon)
             .with_content(meta);

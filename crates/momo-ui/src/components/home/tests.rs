@@ -1,7 +1,7 @@
 use super::Home;
 use super::app_grid::AppGrid;
 use super::bluetooth::initialize_bluetooth_state;
-use super::model::{MOCK_APPS, SCREEN_PADDING, TILE_HEIGHT, columns_for_width};
+use super::model::{MOCK_APP_SPECS, SCREEN_PADDING, TILE_HEIGHT, columns_for_width};
 use super::system_status::initialize_system_status_state;
 use daiko::component::{Component, ComponentContext};
 use daiko::integration::input::{InputEvent, InputEventModifiers, Key};
@@ -488,7 +488,7 @@ fn app_grid_does_not_clip_edge_columns_near_breakpoints() {
             "pager viewport should end at the window edge at viewport width {viewport_width}: viewport_right={viewport_right}, viewport_size={viewport_size:?}"
         );
 
-        for app in MOCK_APPS.iter().take(expected_first_page_tile_count) {
+        for app in MOCK_APP_SPECS.iter().take(expected_first_page_tile_count) {
             let (tile_position, tile_size) = runner.get_element_bounds(app.id);
             assert!(
                 tile_position.x >= viewport_left - 0.5,
@@ -503,9 +503,10 @@ fn app_grid_does_not_clip_edge_columns_near_breakpoints() {
         }
 
         let first_row_last_app_index = expected_columns.saturating_sub(1);
-        let (first_tile_position, _first_tile_size) = runner.get_element_bounds(MOCK_APPS[0].id);
+        let (first_tile_position, _first_tile_size) =
+            runner.get_element_bounds(MOCK_APP_SPECS[0].id);
         let (last_tile_position, last_tile_size) =
-            runner.get_element_bounds(MOCK_APPS[first_row_last_app_index].id);
+            runner.get_element_bounds(MOCK_APP_SPECS[first_row_last_app_index].id);
         let left_gutter = first_tile_position.x - content_left;
         let right_gutter = content_right - (last_tile_position.x + last_tile_size.x);
 
@@ -531,9 +532,9 @@ fn app_grid_uses_wrapper_layout_for_page_width() {
     let (viewport_position, viewport_size) = runner.get_element_bounds("apps-grid-viewport");
     let expected_columns = columns_for_width(shell_size.x - SCREEN_PADDING * 2.0);
     let first_row_last_app_index = expected_columns.saturating_sub(1);
-    let (first_tile_position, _first_tile_size) = runner.get_element_bounds(MOCK_APPS[0].id);
+    let (first_tile_position, _first_tile_size) = runner.get_element_bounds(MOCK_APP_SPECS[0].id);
     let (last_tile_position, last_tile_size) =
-        runner.get_element_bounds(MOCK_APPS[first_row_last_app_index].id);
+        runner.get_element_bounds(MOCK_APP_SPECS[first_row_last_app_index].id);
     let content_left = shell_position.x + SCREEN_PADDING;
     let content_right = shell_position.x + shell_size.x - SCREEN_PADDING;
     let left_gutter = first_tile_position.x - content_left;

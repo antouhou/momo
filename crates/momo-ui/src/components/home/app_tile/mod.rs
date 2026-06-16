@@ -1,13 +1,11 @@
 mod style;
 
-use crate::components::home::app_icon::{
-    app_icon, app_icon_background_color, app_icon_foreground_color,
-};
+use crate::app_state::AppEntry;
+use crate::components::home::app_icon::{app_icon, app_icon_background_color};
 use crate::components::home::app_tile::style::{tile_style, tile_title_style};
 use crate::components::home::model::{
-    AppEntry, AppLaunch, HOME_LAUNCH_CHANNEL_ID, LaunchRequest, TILE_HEIGHT, TILE_ICON_GLYPH_SIZE,
-    TILE_ICON_SIZE, TILE_WIDTH, color, tile_focus_transform, tile_icon_origin,
-    transformed_local_rect,
+    HOME_LAUNCH_CHANNEL_ID, LaunchRequest, TILE_HEIGHT, TILE_ICON_GLYPH_SIZE, TILE_ICON_SIZE,
+    TILE_WIDTH, tile_focus_transform, tile_icon_origin, transformed_local_rect,
 };
 use daiko::Element;
 use daiko::Vec2;
@@ -16,11 +14,39 @@ use daiko::navigation::{FocusKey, FocusOrigin, NavigationDirection};
 use daiko::style::{BorderRadius, Color, CursorIcon, Style};
 use daiko::widgets::container::{Container, Fit};
 use daiko::widgets::text::Text;
-use std::rc::Rc;
+use std::path::PathBuf;
+use std::sync::Arc;
+
+#[derive(Clone)]
+pub(super) struct AppInfo {
+    pub(super) name: Arc<String>,
+    pub(super) id: Arc<String>,
+    pub(super) icon: Arc<Option<PathBuf>>,
+    pub(super) accent: Color,
+}
+
+impl AppInfo {
+    pub fn new(entry: &AppEntry) -> Self {
+        Self {
+            name: Arc::clone(&entry.name),
+            id: Arc::clone(&entry.id),
+            icon: Arc::clone(&entry.icon),
+            accent: entry.accent,
+        }
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn id(&self) -> &str {
+        &self.id
+    }
+}
 
 #[derive(Clone)]
 pub(super) struct AppTile {
-    pub app: Rc<AppEntry>,
+    pub app: AppInfo,
     pub preferred_focus: bool,
     pub interactions_disabled: bool,
     pub is_hidden_for_launch: bool,
@@ -62,17 +88,16 @@ impl Component for AppTile {
         let is_focus_visible = focusable.is_focus_visible();
         let _is_pressed = !self.interactions_disabled && pointer.is_pressed();
         let paint_decorations = is_focus_visible || is_hovering;
-        let accent = color(self.app.accent);
+        let accent = self.app.accent;
         let icon_background = app_icon_background_color(accent);
-        let icon_text_color = app_icon_foreground_color(accent);
 
         let tile_transform =
             tile_focus_transform(Vec2::new(TILE_WIDTH, TILE_HEIGHT), is_focus_visible, ctx);
 
         let mut style = tile_style(ctx, accent, &tile_transform, is_hovering, is_focus_visible);
 
-        if just_activated {
-            if let Some(layout) = layout {
+        if just_activated
+            && let Some(layout) = layout {
                 let (surface_position, surface_size) = transformed_local_rect(
                     layout.position_absolute,
                     &tile_transform,
@@ -87,17 +112,17 @@ impl Component for AppTile {
                 );
                 let launch_channel = ctx.use_channel_with_id(HOME_LAUNCH_CHANNEL_ID);
                 let _ = launch_channel.send(LaunchRequest {
-                    app: Rc::clone(&self.app),
+                    app: self.app.clone(),
                     position: surface_position,
                     size: surface_size,
                     icon_position,
                     icon_size,
                 });
             }
-            match &self.app.launch {
-                AppLaunch::Mock => println!("Activated app: {}", self.app.name()),
-            }
-        }
+            // TODO: use id to actually launch an app using app launcher
+            // match &self.app.launch {
+            //     AppLaunch::Mock => println!("Activated app: {}", self.app.name()),
+            // }
 
         if is_hovering {
             style.set_cursor(CursorIcon::PointingHand)
@@ -111,18 +136,14 @@ impl Component for AppTile {
                     .with_background_color(icon_background)
                     .with_border_radius(BorderRadius::all(14.0)),
             )
-            .with_content(app_icon(
-                &self.app.icon,
-                TILE_ICON_GLYPH_SIZE,
-                icon_text_color,
-            ));
+            .with_content(app_icon(&self.app.icon, TILE_ICON_GLYPH_SIZE));
 
         let meta = Container::vertical()
             .with_fit(Fit::new().exact_content_size())
             .align_items_center()
             .with_spacing((4.0, 4.0))
             .build()
-            .with_content(Text::new(Rc::clone(&self.app.name)).with_style(tile_title_style()));
+            .with_content(Text::new(Arc::clone(&self.app.name)).with_style(tile_title_style()));
 
         // TODO: better focus ring
         // if is_focus_visible

@@ -1,16 +1,17 @@
+use crate::app_state::{AppEntry, AppLaunch};
+use crate::components::home::app_tile::AppInfo;
+use daiko::Vec2;
 use daiko::animation::{AnimationParameters, transition};
 use daiko::component::ComponentContext;
 use daiko::navigation::FocusKey;
-use daiko::state_management::StateHandle;
 use daiko::style::{Color, Transform};
-use daiko::{Id, Vec2};
 use std::path::PathBuf;
 use std::rc::Rc;
+use std::sync::Arc;
 use std::time::Duration;
 
 pub(super) const HOME_APP_GRID_PAGE_STATE_ID: &str = "momo_home_app_grid_page_state";
 pub(super) const HOME_APP_GRID_FOCUSED_KEY_ID: &str = "momo_home_app_grid_focused_key";
-pub(super) const HOME_APP_ENTRIES_STATE_ID: &str = "momo_home_app_entries";
 pub(super) const HOME_APP_GRID_SCROLL_ACCUMULATOR_ID: &str =
     "momo_home_app_grid_scroll_accumulator";
 pub(super) const HOME_APP_GRID_SMOOTH_OFFSET_ID: &str = "momo_home_app_grid_smooth_offset";
@@ -55,7 +56,6 @@ pub fn home_top_row_settings_focus_key() -> FocusKey {
 #[derive(Clone)]
 pub(super) enum AppIcon {
     BuiltIn(BuiltInAppIcon),
-    #[expect(dead_code)]
     File(PathBuf),
 }
 
@@ -92,52 +92,16 @@ pub(super) enum BuiltInAppIcon {
 }
 
 #[derive(Clone)]
-pub(super) enum AppLaunch {
-    Mock,
-}
-
-#[derive(Clone)]
-pub(super) struct AppEntry {
-    pub id: Rc<String>,
-    pub name: Rc<String>,
-    pub icon: AppIcon,
-    pub launch: AppLaunch,
-    pub accent: [u8; 3],
-}
-
-impl AppEntry {
-    pub(super) fn id(&self) -> &str {
-        self.id.as_str()
-    }
-
-    pub(super) fn name(&self) -> &str {
-        self.name.as_str()
-    }
-}
-
-#[derive(Clone)]
 pub(super) struct LaunchRequest {
-    pub app: Rc<AppEntry>,
+    pub app: AppInfo,
     pub position: Vec2,
     pub size: Vec2,
     pub icon_position: Vec2,
     pub icon_size: Vec2,
 }
 
-pub(super) fn app_entries(ctx: &mut ComponentContext) -> StateHandle<Vec<Rc<AppEntry>>> {
-    ctx.use_global_state(Id::new(HOME_APP_ENTRIES_STATE_ID), default_app_entries)
-}
-
-fn default_app_entries() -> Vec<Rc<AppEntry>> {
-    MOCK_APP_SPECS
-        .iter()
-        .copied()
-        .map(MockAppSpec::to_entry)
-        .collect()
-}
-
-fn app_text(text: &'static str) -> Rc<String> {
-    Rc::new(text.to_owned())
+fn app_text(text: &'static str) -> Arc<String> {
+    Arc::new(text.to_owned())
 }
 
 #[derive(Clone, Copy)]
@@ -153,9 +117,9 @@ impl MockAppSpec {
         Rc::new(AppEntry {
             id: app_text(self.id),
             name: app_text(self.name),
-            icon: AppIcon::BuiltIn(self.icon),
+            icon: Arc::new(None),
             launch: AppLaunch::Mock,
-            accent: self.accent,
+            accent: Color::from_rgb(self.accent[0], self.accent[1], self.accent[2]),
         })
     }
 }

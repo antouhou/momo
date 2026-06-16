@@ -1,11 +1,12 @@
+use crate::app_state::{AppEntry, apps_state};
 use crate::components::home::app_grid::metrics::AppGridMetrics;
 use crate::components::home::app_grid::{
     AppGrid, PAGE_SCROLL_REARM_DURATION, PAGE_SCROLL_THRESHOLD, page_dot_focus_key,
 };
-use crate::components::home::app_tile::AppTile;
+use crate::components::home::app_tile::{AppInfo, AppTile};
 use crate::components::home::model::{
-    AppEntry, GRID_GAP, HOME_APP_GRID_FOCUSED_KEY_ID, HOME_APP_GRID_PAGE_STATE_ID,
-    HOME_APP_GRID_SCROLL_ACCUMULATOR_ID, HOME_APP_GRID_SMOOTH_OFFSET_ID, app_entries,
+    GRID_GAP, HOME_APP_GRID_FOCUSED_KEY_ID, HOME_APP_GRID_PAGE_STATE_ID,
+    HOME_APP_GRID_SCROLL_ACCUMULATOR_ID, HOME_APP_GRID_SMOOTH_OFFSET_ID,
 };
 use daiko::animation::SmoothFollowConfig;
 use daiko::component::{Component, ComponentContext};
@@ -14,7 +15,6 @@ use daiko::navigation::{FocusEntryPolicy, FocusKey, TraversalPolicy};
 use daiko::style::{Overflow, Style};
 use daiko::widgets::container::{Container, Fit};
 use daiko::{Element, Id, Vec2};
-use std::rc::Rc;
 use std::time::{Duration, Instant};
 
 #[derive(Clone)]
@@ -35,15 +35,16 @@ impl Component for AppGridViewport {
         let viewport_layout = ctx.layout();
         let page_state = ctx.use_shared_state(Id::new(HOME_APP_GRID_PAGE_STATE_ID), || 0);
 
-        let apps_handle = app_entries(ctx);
-        let apps = apps_handle.read();
+        let apps_handle = apps_state(ctx);
+        let apps_state = apps_handle.read();
+        let apps = &apps_state.app_entries;
 
         let mut target_page = (*page_state.read()).min(self.metrics.last_page_index());
         let focused_key = focus_scope.focused_child_key();
         if focused_key != *last_focused_key.read() {
             *last_focused_key.write_silent() = focused_key;
             if let Some(focused_page) =
-                focused_page_index(focused_key, self.metrics.tiles_per_page, &apps)
+                focused_page_index(focused_key, self.metrics.tiles_per_page, apps)
             {
                 target_page = focused_page.min(self.metrics.last_page_index());
             }
@@ -83,7 +84,7 @@ impl Component for AppGridViewport {
                 &self.grid,
                 self.metrics,
                 rendered_offset,
-                &apps,
+                apps,
             ))
     }
 }
@@ -97,7 +98,7 @@ struct AppGridScrollState {
 fn focused_page_index(
     focused_key: Option<FocusKey>,
     tiles_per_page: usize,
-    apps: &[Rc<AppEntry>],
+    apps: &[AppEntry],
 ) -> Option<usize> {
     let focused_key = focused_key?;
     apps.iter()
@@ -178,7 +179,7 @@ fn build_page_strip(
     grid: &AppGrid,
     metrics: AppGridMetrics,
     rendered_offset: f32,
-    apps: &[Rc<AppEntry>],
+    apps: &[AppEntry],
 ) -> Element {
     let mut page_strip = Element::new().with_tag("apps-grid-page-strip").with_style(
         Style::new()
@@ -204,7 +205,7 @@ pub(in crate::components::home::app_grid) fn build_page_contents(
     grid: &AppGrid,
     metrics: AppGridMetrics,
     page_index: usize,
-    apps: &[Rc<AppEntry>],
+    apps: &[AppEntry],
 ) -> Element {
     let first_app_index = page_index * metrics.tiles_per_page;
     let page_app_count = apps
@@ -242,7 +243,7 @@ pub(in crate::components::home::app_grid) fn build_page_contents(
         for (column_index, app) in row.iter().enumerate() {
             let app_index = first_app_index + row_index * metrics.columns + column_index;
             row_container.add_content(AppTile {
-                app: Rc::clone(app),
+                app: AppInfo::new(app),
                 preferred_focus: grid.preferred_focus_app_id.as_deref().map(String::as_str)
                     == Some(app.id())
                     || (grid.preferred_focus_app_id.is_none() && app_index == 0),
@@ -264,7 +265,7 @@ pub(in crate::components::home::app_grid) fn build_page_contents(
 
 fn page_edge_focus_target(
     metrics: AppGridMetrics,
-    apps: &[Rc<AppEntry>],
+    apps: &[AppEntry],
     app_index: usize,
     page_delta: isize,
 ) -> Option<FocusKey> {

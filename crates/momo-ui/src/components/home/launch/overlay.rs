@@ -1,6 +1,4 @@
-use crate::components::home::app_icon::{
-    app_icon, app_icon_background_color, app_icon_foreground_color,
-};
+use crate::components::home::app_icon::{app_icon, app_icon_background_color};
 use crate::components::home::launch::{
     AnimatedRect, HOME_HERO_ICON_GLYPH_SIZE, HOME_HERO_ICON_SIZE, HOME_LAUNCH_ANIMATION_ID,
     HOME_LAUNCH_BACKDROP_TAG, HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID, HOME_LAUNCH_SURFACE_RADIUS,
@@ -8,7 +6,7 @@ use crate::components::home::launch::{
     LaunchOverlayEvent, LaunchPhase, LaunchTransitionState,
 };
 use crate::components::home::model::{
-    LaunchRequest, TILE_BORDER_RADIUS, TILE_ICON_GLYPH_SIZE, TILE_ICON_SIZE, color,
+    LaunchRequest, TILE_BORDER_RADIUS, TILE_ICON_GLYPH_SIZE, TILE_ICON_SIZE,
 };
 use daiko::animation::easing::{Easing as _, EasingFunction};
 use daiko::animation::{AnimationParameters, Interpolable as _};
@@ -19,7 +17,7 @@ use daiko::widgets::container::{Container, Fit};
 use daiko::widgets::overlay::Overlay;
 use daiko::widgets::text::{Text, TextStyle};
 use daiko::{Element, Id, Vec2};
-use std::rc::Rc;
+use std::sync::Arc;
 use std::time::Duration;
 
 #[derive(Clone)]
@@ -29,7 +27,7 @@ pub(in crate::components::home) struct LaunchOverlay {
 
 #[derive(Clone, Default)]
 struct LaunchOverlayAnimationState {
-    current_app_id: Option<Rc<String>>,
+    current_app_id: Option<Arc<String>>,
     current_phase: Option<LaunchPhase>,
     expanded_event_sent: bool,
     contracted_event_sent: bool,
@@ -65,7 +63,7 @@ fn update_launch_animation(ctx: &mut ComponentContext, launch: LaunchTransitionS
         != Some(launch.request.app.id())
     {
         animation_state = LaunchOverlayAnimationState {
-            current_app_id: Some(Rc::clone(&launch.request.app.id)),
+            current_app_id: Some(Arc::clone(&launch.request.app.id)),
             current_phase: Some(launch.phase),
             expanded_event_sent: false,
             contracted_event_sent: false,
@@ -99,7 +97,7 @@ fn update_launch_animation(ctx: &mut ComponentContext, launch: LaunchTransitionS
         && !animation_state.expanded_event_sent
     {
         let _ = overlay_event_channel.send(LaunchOverlayEvent::Expanded {
-            app_id: Rc::clone(&launch.request.app.id),
+            app_id: Arc::clone(&launch.request.app.id),
         });
         animation_state.expanded_event_sent = true;
     }
@@ -110,7 +108,7 @@ fn update_launch_animation(ctx: &mut ComponentContext, launch: LaunchTransitionS
         && !animation_state.contracted_event_sent
     {
         let _ = overlay_event_channel.send(LaunchOverlayEvent::Contracted {
-            app_id: Rc::clone(&launch.request.app.id),
+            app_id: Arc::clone(&launch.request.app.id),
         });
         animation_state.contracted_event_sent = true;
     }
@@ -135,7 +133,7 @@ fn render_launch_overlay(
         size: launch.request.size,
     };
     let surface_rect = launch_surface_rect(source, target, animation_progress);
-    let accent = color(launch.request.app.accent);
+    let accent = launch.request.app.accent;
     let surface_background = Color::from_rgb(14, 18, 27);
     let border_color = accent.gamma_multiply(0.9);
     let backdrop_opacity = if launch.phase == LaunchPhase::WaitingForSurface {
@@ -254,9 +252,8 @@ fn render_launch_overlay(
 }
 
 fn build_launch_tile_content(request: LaunchRequest, show_icon: bool) -> Element {
-    let accent = color(request.app.accent);
+    let accent = request.app.accent;
     let icon_background = app_icon_background_color(accent);
-    let icon_foreground = app_icon_foreground_color(accent);
 
     let icon = Element::new()
         .with_style(
@@ -266,11 +263,7 @@ fn build_launch_tile_content(request: LaunchRequest, show_icon: bool) -> Element
                 .with_background_color(icon_background)
                 .with_border_radius(BorderRadius::all(14.0)),
         )
-        .with_content(app_icon(
-            &request.app.icon,
-            TILE_ICON_GLYPH_SIZE,
-            icon_foreground,
-        ));
+        .with_content(app_icon(&request.app.icon, TILE_ICON_GLYPH_SIZE));
 
     let icon_slot = if show_icon {
         icon
@@ -327,7 +320,7 @@ struct LaunchDestinationSharedContentProps {
 }
 
 fn build_launch_destination_shared_content(props: LaunchDestinationSharedContentProps) -> Element {
-    let accent = color(props.request.app.accent);
+    let accent = props.request.app.accent;
     let current_icon_center = Vec2::new(
         props.source_icon_center.x
             + (props.final_icon_center.x - props.source_icon_center.x) * props.motion_progress.x,
@@ -367,7 +360,7 @@ fn build_launch_destination_shared_content(props: LaunchDestinationSharedContent
         .with_content(app_icon(
             &props.request.app.icon,
             icon_glyph_size,
-            with_opacity(app_icon_foreground_color(accent), props.icon_opacity),
+            // with_opacity(app_icon_foreground_color(accent), props.icon_opacity),
         ));
 
     let labels = Container::vertical()
@@ -380,7 +373,7 @@ fn build_launch_destination_shared_content(props: LaunchDestinationSharedContent
         .with_spacing((18.0, 18.0))
         .build()
         .with_content(
-            Text::new(Rc::clone(&props.request.app.name)).with_style(
+            Text::new(Arc::clone(&props.request.app.name)).with_style(
                 TextStyle::default()
                     .with_font_size(34.0)
                     .with_font_color(with_opacity(

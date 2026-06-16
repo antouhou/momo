@@ -1,6 +1,7 @@
-use crate::components::home::model::{AppIcon, BuiltInAppIcon};
+use crate::components::home::model::BuiltInAppIcon;
 use daiko::style::Color;
-use daiko::widgets::image::{Image, ImageParams, ImageSource, ImageType};
+use daiko::widgets::image::{Image, ImageParams, ImageSource};
+use std::path::PathBuf;
 
 pub(super) fn app_icon_background_color(accent: Color) -> Color {
     accent.gamma_multiply(0.2)
@@ -10,21 +11,39 @@ pub(super) fn app_icon_foreground_color(accent: Color) -> Color {
     accent.gamma_multiply(1.1)
 }
 
-pub(super) fn app_icon(icon: &AppIcon, size: usize, fallback_color: Color) -> Image {
-    match icon {
-        AppIcon::BuiltIn(icon) => Image::new(ImageParams {
-            max_width: size,
-            max_height: size,
-            image_type: Some(ImageType::Svg),
-            source: ImageSource::BytesSlice(built_in_app_icon_svg(*icon)),
-        })
-        .fill_color(Some(fallback_color)),
-        AppIcon::File(path) => Image::new(ImageParams {
+pub(super) fn app_icon(icon_path: &Option<PathBuf>, size: usize) -> Image {
+    // match icon {
+    // AppIcon::BuiltIn(icon) => Image::new(ImageParams {
+    //     max_width: size,
+    //     max_height: size,
+    //     image_type: Some(ImageType::Svg),
+    //     source: ImageSource::BytesSlice(built_in_app_icon_svg(*icon)),
+    // })
+    // .fill_color(Some(fallback_color)),
+    // AppIcon::File(icon) => Image::new(ImageParams {
+    //     max_width: size,
+    //     max_height: size,
+    //     image_type: None,
+    //     source: ImageSource::File(path.clone()),
+    // })
+    // }
+    match icon_path {
+        Some(icon_path) => Image::new(ImageParams {
             max_width: size,
             max_height: size,
             image_type: None,
-            source: ImageSource::File(path.clone()),
+            source: ImageSource::File(icon_path.clone()),
         }),
+        None => {
+            Image::new(ImageParams {
+                max_width: size,
+                max_height: size,
+                image_type: Some(daiko::widgets::image::ImageType::Svg),
+                // TODO: make a default executable icon
+                source: ImageSource::BytesSlice(built_in_app_icon_svg(BuiltInAppIcon::Browser)),
+            })
+            .fill_color(Some(Color::WHITE))
+        }
     }
 }
 

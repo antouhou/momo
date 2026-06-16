@@ -1,5 +1,7 @@
+mod app_state;
 mod components;
 
+use crate::app_state::init_app_state;
 use crate::components::home::Home;
 use crate::components::home::bluetooth::initialize_bluetooth_state;
 use crate::components::home::system_status::initialize_system_status_state;
@@ -65,6 +67,7 @@ impl App for MomoUi {
             self.system_control.volume(),
             self.system_control.battery(),
         );
+        init_app_state(app_context);
         Home::new()
     }
 

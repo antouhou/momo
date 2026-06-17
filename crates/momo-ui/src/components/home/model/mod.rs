@@ -305,10 +305,6 @@ pub(super) fn rows_for_height(height: f32) -> usize {
     ((height + GRID_GAP) / slot).floor().max(1.0) as usize
 }
 
-pub(super) fn color(rgb: [u8; 3]) -> Color {
-    Color::from_rgb(rgb[0], rgb[1], rgb[2])
-}
-
 pub(super) fn tile_icon_origin() -> Vec2 {
     Vec2::new(
         (TILE_WIDTH - TILE_ICON_SIZE) / 2.0,

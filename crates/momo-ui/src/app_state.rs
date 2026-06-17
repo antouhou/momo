@@ -25,7 +25,7 @@ impl Default for AppsState {
 pub(crate) fn init_app_state(ctx: &mut AppContext) {
     let state = ctx.peek_global_state(Id::new(APPS_STATE_ID), AppsState::default);
     std::thread::spawn(move || {
-        let provider = appkeeper::mock_app_provider();
+        let provider = appkeeper::app_provider();
         let entries = provider.list();
 
         {
@@ -33,13 +33,15 @@ pub(crate) fn init_app_state(ctx: &mut AppContext) {
             guard.is_loading = false;
             guard.app_entries = entries
                 .into_iter()
-                .map(|entry| AppEntry {
-                    id: Arc::new(entry.id.clone()),
-                    name: Arc::new(entry.name.clone()),
-                    icon: Arc::new(entry.icon_path),
-                    launch: AppLaunch::Mock,
-                    // TODO
-                    accent: Color::from_rgb(0, 125, 215),
+                .map(|entry| {
+                    AppEntry {
+                        id: Arc::new(entry.id.clone()),
+                        name: Arc::new(entry.name.clone()),
+                        icon: Arc::new(entry.icon_for_size(256).map(|icon| icon.path.clone())),
+                        launch: AppLaunch::Mock,
+                        // TODO
+                        accent: Color::from_rgb(0, 125, 215),
+                    }
                 })
                 .collect();
         }

@@ -96,33 +96,32 @@ impl Component for AppTile {
 
         let mut style = tile_style(ctx, accent, &tile_transform, is_hovering, is_focus_visible);
 
-        if just_activated
-            && let Some(layout) = layout {
-                let (surface_position, surface_size) = transformed_local_rect(
-                    layout.position_absolute,
-                    &tile_transform,
-                    Vec2::zero(),
-                    layout.size,
-                );
-                let (icon_position, icon_size) = transformed_local_rect(
-                    layout.position_absolute,
-                    &tile_transform,
-                    tile_icon_origin(),
-                    Vec2::new(TILE_ICON_SIZE, TILE_ICON_SIZE),
-                );
-                let launch_channel = ctx.use_channel_with_id(HOME_LAUNCH_CHANNEL_ID);
-                let _ = launch_channel.send(LaunchRequest {
-                    app: self.app.clone(),
-                    position: surface_position,
-                    size: surface_size,
-                    icon_position,
-                    icon_size,
-                });
-            }
-            // TODO: use id to actually launch an app using app launcher
-            // match &self.app.launch {
-            //     AppLaunch::Mock => println!("Activated app: {}", self.app.name()),
-            // }
+        if just_activated && let Some(layout) = layout {
+            let (surface_position, surface_size) = transformed_local_rect(
+                layout.position_absolute,
+                &tile_transform,
+                Vec2::zero(),
+                layout.size,
+            );
+            let (icon_position, icon_size) = transformed_local_rect(
+                layout.position_absolute,
+                &tile_transform,
+                tile_icon_origin(),
+                Vec2::new(TILE_ICON_SIZE, TILE_ICON_SIZE),
+            );
+            let launch_channel = ctx.use_channel_with_id(HOME_LAUNCH_CHANNEL_ID);
+            let _ = launch_channel.send(LaunchRequest {
+                app: self.app.clone(),
+                position: surface_position,
+                size: surface_size,
+                icon_position,
+                icon_size,
+            });
+        }
+        // TODO: use id to actually launch an app using app launcher
+        // match &self.app.launch {
+        //     AppLaunch::Mock => println!("Activated app: {}", self.app.name()),
+        // }
 
         if is_hovering {
             style.set_cursor(CursorIcon::PointingHand)

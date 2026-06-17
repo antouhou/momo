@@ -6,7 +6,7 @@ use daiko::{AppContext, Id};
 use std::path::PathBuf;
 use std::sync::Arc;
 
-const APPS_STATE_ID: &str = "momo_apps_state";
+pub(crate) const APPS_STATE_ID: &str = "momo_apps_state";
 
 pub(crate) struct AppsState {
     pub app_entries: Vec<AppEntry>,

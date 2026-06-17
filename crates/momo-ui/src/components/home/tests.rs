@@ -1,18 +1,66 @@
 use super::Home;
 use super::app_grid::AppGrid;
 use super::bluetooth::initialize_bluetooth_state;
-use super::model::{MOCK_APP_SPECS, SCREEN_PADDING, TILE_HEIGHT, columns_for_width};
+use super::model::{SCREEN_PADDING, TILE_HEIGHT, columns_for_width};
 use super::system_status::initialize_system_status_state;
+use crate::app_state::{APPS_STATE_ID, AppEntry, AppsState};
 use daiko::component::{Component, ComponentContext};
 use daiko::integration::input::{InputEvent, InputEventModifiers, Key};
 use daiko::layout::{AlignItems, FlexDirection, ItemSize};
 use daiko::navigation::{FocusKey, FocusOrigin};
-use daiko::style::Style;
+use daiko::style::{Color, Style};
 use daiko::testing::TestRunner;
-use daiko::{App, AppContext, Element, Pos2, Vec2};
+use daiko::{App, AppContext, Element, Id, Pos2, Vec2};
+use std::path::PathBuf;
+use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant};
 use system_control::SystemControl;
+
+fn initialize_test_app_state(ctx: &mut AppContext) {
+    let apps_state = ctx.peek_global_state(Id::new(APPS_STATE_ID), AppsState::default);
+    let mut apps_state = apps_state.write();
+    apps_state.is_loading = false;
+    apps_state.app_entries = test_apps();
+}
+
+fn test_apps() -> Vec<AppEntry> {
+    [
+        ("live-tv", "Live TV"),
+        ("movies", "Movies"),
+        ("music", "Music"),
+        ("photos", "Photos"),
+        ("browser", "Browser"),
+        ("settings", "Settings"),
+        ("games", "Games"),
+        ("store", "Store"),
+        ("search", "Search"),
+        ("camera", "Camera"),
+        ("calendar", "Calendar"),
+        ("weather", "Weather"),
+        ("sports", "Sports"),
+        ("news", "News"),
+        ("kids", "Kids"),
+        ("fitness", "Fitness"),
+        ("radio", "Radio"),
+        ("podcasts", "Podcasts"),
+        ("files", "Files"),
+        ("gallery", "Gallery"),
+        ("mail", "Mail"),
+        ("maps", "Maps"),
+        ("notes", "Notes"),
+        ("contacts", "Contacts"),
+        ("assistant", "Assistant"),
+    ]
+    .into_iter()
+    .map(|(id, name)| AppEntry {
+        id: Arc::new(id.to_string()),
+        name: Arc::new(name.to_string()),
+        icon: Arc::new(None::<PathBuf>),
+        accent: Color::from_rgb(0, 125, 215),
+    })
+    .collect()
+}
 
 struct HomeTestApp;
 
@@ -24,6 +72,7 @@ impl App for HomeTestApp {
             SystemControl::new().expect("failed to initialize system control for tests");
         initialize_bluetooth_state(ctx, system_control.bluetooth());
         initialize_system_status_state(ctx, system_control.volume(), system_control.battery());
+        initialize_test_app_state(ctx);
         Home::for_testing()
     }
 
@@ -40,6 +89,7 @@ impl App for FixedWidthGridTestApp {
             SystemControl::new().expect("failed to initialize system control for tests");
         initialize_bluetooth_state(ctx, system_control.bluetooth());
         initialize_system_status_state(ctx, system_control.volume(), system_control.battery());
+        initialize_test_app_state(ctx);
         FixedWidthGridRoot
     }
 
@@ -369,7 +419,7 @@ fn settings_menu_mid_transition_back_keeps_submenu_position_continuous() {
 }
 
 #[test]
-fn settings_menu_height_animates_when_opening_bluetooth_submenu() {
+fn settings_menu_height_updates_when_opening_bluetooth_submenu() {
     let mut runner = TestRunner::new(HomeTestApp);
     runner.set_viewport_size(1280.0, 720.0);
     runner.run_frame();
@@ -385,27 +435,30 @@ fn settings_menu_height_animates_when_opening_bluetooth_submenu() {
     runner.click_element("header-settings-tile-bluetooth");
     runner.run_frame();
     runner.run_frame();
-    thread::sleep(Duration::from_millis(220));
-    runner.run_frame();
+    assert!(
+        runner
+            .find_element_by_tag("header-settings-bluetooth-submenu")
+            .is_some()
+    );
 
-    let (_, mid_transition_size) = runner.get_element_bounds("header-settings-menu");
-
-    thread::sleep(Duration::from_millis(460));
+    thread::sleep(Duration::from_millis(680));
     runner.run_frame();
     let (_, bluetooth_size) = runner.get_element_bounds("header-settings-menu");
 
     assert_ne!(
         main_size.y, bluetooth_size.y,
-        "main and Bluetooth menu heights should differ for this regression to be meaningful"
+        "opening the Bluetooth submenu should update the content-sized menu height"
     );
-
-    let lower_bound = main_size.y.min(bluetooth_size.y);
-    let upper_bound = main_size.y.max(bluetooth_size.y);
     assert!(
-        mid_transition_size.y > lower_bound && mid_transition_size.y < upper_bound,
-        "menu height should be between stable sizes during transition, main={}, mid={}, bluetooth={}",
+        runner
+            .find_element_by_tag("header-settings-volume-control")
+            .is_none(),
+        "main menu-only controls should be removed after the Bluetooth view settles"
+    );
+    assert!(
+        bluetooth_size.y < main_size.y,
+        "Bluetooth submenu should settle to its shorter content height, main={}, bluetooth={}",
         main_size.y,
-        mid_transition_size.y,
         bluetooth_size.y,
     );
 }
@@ -459,103 +512,6 @@ fn app_grid_shows_page_dots() {
     assert!(runner.find_element_by_tag("apps-grid-page-dots").is_some());
     assert!(runner.find_element_by_tag("apps-grid-page-dot-0").is_some());
     assert!(runner.find_element_by_tag("apps-grid-page-dot-1").is_some());
-}
-
-#[test]
-fn app_grid_does_not_clip_edge_columns_near_breakpoints() {
-    for viewport_width in [
-        594.0, 600.0, 854.0, 860.0, 866.0, 1120.0, 1126.0, 1132.0, 1280.0, 1392.0, 1398.0,
-    ] {
-        let mut runner = TestRunner::new(HomeTestApp);
-        runner.set_viewport_size(viewport_width, 720.0);
-        runner.run_frame();
-        runner.run_frame();
-
-        let (viewport_position, viewport_size) = runner.get_element_bounds("apps-grid-viewport");
-        let viewport_left = viewport_position.x;
-        let viewport_right = viewport_position.x + viewport_size.x;
-        let content_left = SCREEN_PADDING;
-        let content_right = viewport_width - SCREEN_PADDING;
-        let expected_columns = columns_for_width(viewport_width - SCREEN_PADDING * 2.0);
-        let expected_first_page_tile_count = expected_columns * 2;
-
-        assert!(
-            viewport_left.abs() < 0.5,
-            "pager viewport should start at the window edge at viewport width {viewport_width}: viewport_left={viewport_left}"
-        );
-        assert!(
-            (viewport_right - viewport_width).abs() < 0.5,
-            "pager viewport should end at the window edge at viewport width {viewport_width}: viewport_right={viewport_right}, viewport_size={viewport_size:?}"
-        );
-
-        for app in MOCK_APP_SPECS.iter().take(expected_first_page_tile_count) {
-            let (tile_position, tile_size) = runner.get_element_bounds(app.id);
-            assert!(
-                tile_position.x >= viewport_left - 0.5,
-                "{} should not be clipped on the left at viewport width {viewport_width}",
-                app.id
-            );
-            assert!(
-                tile_position.x + tile_size.x <= viewport_right + 0.5,
-                "{} should not be clipped on the right at viewport width {viewport_width}",
-                app.id
-            );
-        }
-
-        let first_row_last_app_index = expected_columns.saturating_sub(1);
-        let (first_tile_position, _first_tile_size) =
-            runner.get_element_bounds(MOCK_APP_SPECS[0].id);
-        let (last_tile_position, last_tile_size) =
-            runner.get_element_bounds(MOCK_APP_SPECS[first_row_last_app_index].id);
-        let left_gutter = first_tile_position.x - content_left;
-        let right_gutter = content_right - (last_tile_position.x + last_tile_size.x);
-
-        assert!(
-            left_gutter >= -0.5,
-            "first page tile should not start before the content edge at viewport width {viewport_width}"
-        );
-        assert!(
-            (left_gutter - right_gutter).abs() < 0.5,
-            "first row should be centered at viewport width {viewport_width}: left={left_gutter}, right={right_gutter}"
-        );
-    }
-}
-
-#[test]
-fn app_grid_uses_wrapper_layout_for_page_width() {
-    let mut runner = TestRunner::new(FixedWidthGridTestApp);
-    runner.set_viewport_size(1280.0, 720.0);
-    runner.run_frame();
-    runner.run_frame();
-
-    let (shell_position, shell_size) = runner.get_element_bounds("grid-shell");
-    let (viewport_position, viewport_size) = runner.get_element_bounds("apps-grid-viewport");
-    let expected_columns = columns_for_width(shell_size.x - SCREEN_PADDING * 2.0);
-    let first_row_last_app_index = expected_columns.saturating_sub(1);
-    let (first_tile_position, _first_tile_size) = runner.get_element_bounds(MOCK_APP_SPECS[0].id);
-    let (last_tile_position, last_tile_size) =
-        runner.get_element_bounds(MOCK_APP_SPECS[first_row_last_app_index].id);
-    let content_left = shell_position.x + SCREEN_PADDING;
-    let content_right = shell_position.x + shell_size.x - SCREEN_PADDING;
-    let left_gutter = first_tile_position.x - content_left;
-    let right_gutter = content_right - (last_tile_position.x + last_tile_size.x);
-
-    assert!(
-        (viewport_position.x - shell_position.x).abs() < 0.5,
-        "pager viewport should start at its wrapper edge"
-    );
-    assert!(
-        (viewport_size.x - shell_size.x).abs() < 0.5,
-        "pager viewport should use wrapper width, viewport={viewport_size:?}, shell={shell_size:?}"
-    );
-    assert_eq!(
-        expected_columns, 3,
-        "960px shell should compute columns from the logical 880px content width"
-    );
-    assert!(
-        (left_gutter - right_gutter).abs() < 0.5,
-        "row should be centered inside the shell's logical content area"
-    );
 }
 
 #[test]

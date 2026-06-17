@@ -41,7 +41,7 @@ pub(super) const TILE_FOCUS_SCALE: f32 = 1.05;
 pub(super) const TILE_FOCUS_LIFT_Y: f32 = -3.0;
 pub(super) const TILE_FOCUS_ANIMATION_DURATION_MS: u64 = 100;
 pub(super) const TILE_ICON_SIZE: f32 = 96.0;
-pub(super) const TILE_ICON_GLYPH_SIZE: usize = 64;
+pub(super) const TILE_ICON_GLYPH_SIZE: usize = 96;
 pub(super) const TILE_PADDING: f32 = 16.0;
 pub(super) const TILE_CONTENT_GAP: f32 = 12.0;
 

@@ -1,7 +1,7 @@
 mod style;
 
 use crate::app_state::AppEntry;
-use crate::components::home::app_icon::{app_icon, app_icon_background_color};
+use crate::components::home::app_icon::app_icon;
 use crate::components::home::app_tile::style::{tile_style, tile_title_style};
 use crate::components::home::model::{
     HOME_LAUNCH_CHANNEL_ID, LaunchRequest, TILE_HEIGHT, TILE_ICON_GLYPH_SIZE, TILE_ICON_SIZE,
@@ -11,7 +11,7 @@ use daiko::Element;
 use daiko::Vec2;
 use daiko::component::{Component, ComponentContext};
 use daiko::navigation::{FocusKey, FocusOrigin, NavigationDirection};
-use daiko::style::{BorderRadius, Color, CursorIcon, Style};
+use daiko::style::{Color, CursorIcon, Style};
 use daiko::widgets::container::{Container, Fit};
 use daiko::widgets::text::Text;
 use std::path::PathBuf;
@@ -87,9 +87,7 @@ impl Component for AppTile {
         let is_hovering = !self.interactions_disabled && pointer.is_hovering();
         let is_focus_visible = focusable.is_focus_visible();
         let _is_pressed = !self.interactions_disabled && pointer.is_pressed();
-        let paint_decorations = is_focus_visible || is_hovering;
         let accent = self.app.accent;
-        let icon_background = app_icon_background_color(accent);
 
         let tile_transform =
             tile_focus_transform(Vec2::new(TILE_WIDTH, TILE_HEIGHT), is_focus_visible, ctx);
@@ -131,9 +129,7 @@ impl Component for AppTile {
             .with_style(
                 Style::new()
                     .with_fixed_size(TILE_ICON_SIZE, TILE_ICON_SIZE)
-                    .with_centered_content()
-                    .with_background_color(icon_background)
-                    .with_border_radius(BorderRadius::all(14.0)),
+                    .with_centered_content(),
             )
             .with_content(app_icon(&self.app.icon, TILE_ICON_GLYPH_SIZE));
 
@@ -144,41 +140,10 @@ impl Component for AppTile {
             .build()
             .with_content(Text::new(Arc::clone(&self.app.name)).with_style(tile_title_style()));
 
-        // TODO: better focus ring
-        // if is_focus_visible
-        //     && let Some(focus_ring) = adorners::focus_outline(
-        //         ctx.layout(),
-        //         BorderRadius::all(18.0),
-        //         ctx.theme().focus.outline,
-        //     )
-        // {
-        //     tile.add_content(focus_ring);
-        // }
-
-        let element = Element::new()
+        Element::new()
             .with_tag(self.app.id())
             .with_style(style)
             .with_content(icon)
-            .with_content(meta);
-
-        if paint_decorations {
-            // let color = transition(
-            //     border_color,
-            //     AnimationParameters::default()
-            //         .with_duration(Duration::from_millis(TILE_FOCUS_ANIMATION_DURATION_MS))
-            //         .to_transition_options(),
-            //     ctx,
-            // );
-
-            // element.set_effect(
-            //     BoxShadow::new()
-            //         .with_offset([0.0, 0.0])
-            //         .with_color(Color::BLACK)
-            //         .with_blur_radius(10.0)
-            //         .with_corner_radius(18.0),
-            // )
-        }
-
-        element
+            .with_content(meta)
     }
 }

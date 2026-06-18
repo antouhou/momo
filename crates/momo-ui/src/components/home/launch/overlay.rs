@@ -199,6 +199,10 @@ fn render_launch_overlay(
     let border_radius =
         TILE_BORDER_RADIUS + (HOME_LAUNCH_SURFACE_RADIUS - TILE_BORDER_RADIUS) * radius_progress;
     let border_width = 2.0 * (1.0 - border_progress);
+    let surface_content_size = Vec2::new(
+        (surface_rect.size.x - border_width * 2.0).max(0.0),
+        (surface_rect.size.y - border_width * 2.0).max(0.0),
+    );
 
     let backdrop = Element::new()
         .with_tag(HOME_LAUNCH_BACKDROP_TAG)
@@ -233,7 +237,7 @@ fn render_launch_overlay(
         .with_style(
             Style::new()
                 .with_fixed_position(surface_rect.position)
-                .with_fixed_size(surface_rect.size.x, surface_rect.size.y)
+                .with_fixed_size(surface_content_size.x, surface_content_size.y)
                 .with_background_color(surface_background)
                 .with_border(Border::uniform(Stroke::new(border_width, border_color)))
                 .with_border_radius(BorderRadius::all(border_radius))

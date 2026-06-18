@@ -1,6 +1,6 @@
 mod app_grid;
-mod app_icon;
-mod app_tile;
+pub(crate) mod app_icon;
+pub(crate) mod app_tile;
 pub(crate) mod bluetooth;
 mod clock_chip;
 mod header;
@@ -67,13 +67,18 @@ impl Component for Home {
             }))
             .with_content(AppGrid {
                 interactions_disabled: launch.active_launch.is_some(),
-                hidden_app_id: launch.launched_app_id,
+                hidden_app_id: launch.launched_app_id.clone(),
                 preferred_focus_app_id: launch.preferred_focus_app_id,
+                prefer_first_tile: launch.preferred_dock_focus_key.is_none(),
             })
             .with_content(
                 Element::new()
                     .with_style(Style::new().with_fixed_height(ItemSize::Points(96.0)))
-                    .with_content(Dock {}),
+                    .with_content(Dock {
+                        interactions_disabled: launch.active_launch.is_some(),
+                        hidden_app_id: launch.launched_app_id,
+                        preferred_focus_key: launch.preferred_dock_focus_key,
+                    }),
             );
 
         if should_render_settings_menu {

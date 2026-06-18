@@ -31,7 +31,7 @@ pub(super) const GRID_GAP: f32 = 18.0;
 pub(super) const TILE_WIDTH: f32 = 248.0;
 pub(super) const TILE_HEIGHT: f32 = 176.0;
 pub(super) const TILE_BORDER_RADIUS: f32 = 18.0;
-pub(super) const TILE_BORDER_WIDTH: f32 = 2.0;
+pub(crate) const TILE_BORDER_WIDTH: f32 = 2.0;
 pub(super) const TILE_FOCUS_SCALE: f32 = 1.05;
 pub(super) const TILE_FOCUS_LIFT_Y: f32 = -3.0;
 pub(super) const TILE_FOCUS_ANIMATION_DURATION_MS: u64 = 100;
@@ -51,10 +51,17 @@ pub fn home_top_row_settings_focus_key() -> FocusKey {
 #[derive(Clone)]
 pub(super) struct LaunchRequest {
     pub app: AppInfo,
+    pub restore_focus: LaunchRestoreFocus,
     pub position: Vec2,
     pub size: Vec2,
     pub icon_position: Vec2,
     pub icon_size: Vec2,
+}
+
+#[derive(Clone, Copy)]
+pub(crate) enum LaunchRestoreFocus {
+    AppGrid,
+    Dock(FocusKey),
 }
 
 pub(super) fn columns_for_width(width: f32) -> usize {
@@ -74,7 +81,7 @@ pub(super) fn tile_icon_origin() -> Vec2 {
     )
 }
 
-pub(super) fn tile_focus_transform(
+pub(crate) fn tile_focus_transform(
     size: Vec2,
     is_focused: bool,
     ctx: &mut ComponentContext,

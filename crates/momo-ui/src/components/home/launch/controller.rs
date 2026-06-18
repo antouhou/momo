@@ -1,15 +1,16 @@
 use crate::components::home::launch::{
     HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID, LaunchOverlayEvent, LaunchPhase, LaunchTransitionState,
 };
-use crate::components::home::model::HOME_LAUNCH_CHANNEL_ID;
+use crate::components::home::model::{HOME_LAUNCH_CHANNEL_ID, LaunchRestoreFocus};
 use daiko::component::ComponentContext;
-use daiko::navigation::{FocusOrigin, NavigationInputAction};
+use daiko::navigation::{FocusKey, FocusOrigin, NavigationInputAction};
 use daiko::state_management::StateHandle;
 use std::sync::Arc;
 
 pub(in crate::components::home) struct LaunchControllerOutput {
     pub active_launch: Option<LaunchTransitionState>,
     pub preferred_focus_app_id: Option<Arc<String>>,
+    pub preferred_dock_focus_key: Option<FocusKey>,
     pub launched_app_id: Option<Arc<String>>,
 }
 
@@ -20,6 +21,7 @@ pub(in crate::components::home) fn use_launch_controller(
     let overlay_event_channel = ctx.use_channel_with_id(HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID);
     let launch_state = ctx.use_local_state(|| None::<LaunchTransitionState>);
     let restore_focus_app_id = ctx.use_local_state(|| None::<Arc<String>>);
+    let restore_dock_focus_key = ctx.use_local_state(|| None::<FocusKey>);
     let home_scope = ctx.focus_scope();
     let launch_focusable = ctx.focusable();
 
@@ -58,6 +60,7 @@ pub(in crate::components::home) fn use_launch_controller(
             phase: LaunchPhase::Expanding,
         });
         *restore_focus_app_id.write() = None;
+        *restore_dock_focus_key.write() = None;
         launch_focusable.request_focus(FocusOrigin::Programmatic);
         launch_focusable.engage();
     }
@@ -80,7 +83,17 @@ pub(in crate::components::home) fn use_launch_controller(
                 if overlay_contracted_app_id.as_deref().map(String::as_str)
                     == Some(active_launch.request.app.id())
                 {
-                    *restore_focus_app_id.write() = Some(Arc::clone(&active_launch.request.app.id));
+                    match &active_launch.request.restore_focus {
+                        LaunchRestoreFocus::AppGrid => {
+                            *restore_focus_app_id.write() =
+                                Some(Arc::clone(&active_launch.request.app.id));
+                            *restore_dock_focus_key.write() = None;
+                        }
+                        LaunchRestoreFocus::Dock(focus_key) => {
+                            *restore_focus_app_id.write() = None;
+                            *restore_dock_focus_key.write() = Some(*focus_key);
+                        }
+                    }
                     *launch_state.write() = None;
                     launch_focusable.disengage();
                     launch_focusable.clear_focus();
@@ -109,6 +122,7 @@ pub(in crate::components::home) fn use_launch_controller(
             .as_ref()
             .map(|active| Arc::clone(&active.request.app.id)),
         preferred_focus_app_id: restore_focus_app_id.read().clone(),
+        preferred_dock_focus_key: *restore_dock_focus_key.read(),
         active_launch: launch,
     }
 }

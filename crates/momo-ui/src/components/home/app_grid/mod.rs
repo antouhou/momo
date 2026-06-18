@@ -36,6 +36,7 @@ pub(super) struct AppGrid {
     pub interactions_disabled: bool,
     pub hidden_app_id: Option<Arc<String>>,
     pub preferred_focus_app_id: Option<Arc<String>>,
+    pub prefer_first_tile: bool,
 }
 
 fn app_grid_wrapper_style() -> Style {

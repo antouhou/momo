@@ -1,5 +1,5 @@
 use daiko::Vec2;
-use daiko::layout::JustifyContent;
+use daiko::layout::{AlignItems, FlexDirection, JustifyContent};
 use daiko::style::{BorderRadius, Color, Indent, Style};
 
 pub(super) fn dock_outer_container() -> Style {
@@ -10,6 +10,8 @@ pub(super) fn dock_outer_container() -> Style {
 
 pub(super) fn dock_style() -> Style {
     Style::new()
+        .with_direction(FlexDirection::Row)
+        .with_align_items(AlignItems::Center)
         .with_spacing(Vec2::new(16.0, 0.0))
         .with_padding(Indent::uniform(16.0))
         .with_border_radius(BorderRadius {

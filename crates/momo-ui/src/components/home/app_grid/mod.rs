@@ -1,18 +1,19 @@
 mod app_grid_viewport;
 mod metrics;
 mod page_dots;
+use crate::app_state::apps_state;
 use crate::components::home::app_grid::app_grid_viewport::AppGridViewport;
 use crate::components::home::app_grid::metrics::AppGridMetrics;
 use crate::components::home::app_grid::page_dots::PageDots;
 use crate::components::home::model::{
-    HOME_APP_GRID_PAGE_STATE_ID, SCREEN_PADDING, TILE_HEIGHT, TILE_WIDTH, app_entries,
+    HOME_APP_GRID_PAGE_STATE_ID, SCREEN_PADDING, TILE_HEIGHT, TILE_WIDTH,
 };
 use daiko::component::{Component, ComponentContext};
 use daiko::layout::{AlignItems, FlexDirection, ItemSize, JustifyContent};
 use daiko::navigation::FocusKey;
 use daiko::style::{Overflow, Style};
 use daiko::{Element, Id, Vec2};
-use std::rc::Rc;
+use std::sync::Arc;
 use std::time::Duration;
 
 const PAGE_DOTS_HEIGHT: f32 = 10.0;
@@ -32,8 +33,8 @@ pub(in crate::components::home::app_grid) fn page_dot_focus_key(page_index: usiz
 #[derive(Clone)]
 pub(super) struct AppGrid {
     pub interactions_disabled: bool,
-    pub hidden_app_id: Option<Rc<String>>,
-    pub preferred_focus_app_id: Option<Rc<String>>,
+    pub hidden_app_id: Option<Arc<String>>,
+    pub preferred_focus_app_id: Option<Arc<String>>,
 }
 
 fn app_grid_wrapper_style() -> Style {
@@ -72,7 +73,7 @@ struct AppGridPager {
 
 impl Component for AppGridPager {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        let apps_handle = app_entries(ctx);
+        let apps_handle = apps_state(ctx);
         let apps = apps_handle.read();
         let metrics = AppGridMetrics::from_wrapper_size(
             self.wrapper_size.unwrap_or_else(|| {
@@ -81,7 +82,7 @@ impl Component for AppGridPager {
                     TILE_HEIGHT + PAGE_DOTS_HEIGHT + PAGE_DOTS_TOP_GAP,
                 )
             }),
-            apps.len(),
+            apps.app_entries.len(),
         );
         let page_state = ctx.use_shared_state(Id::new(HOME_APP_GRID_PAGE_STATE_ID), || 0);
         let active_page = (*page_state.read()).min(metrics.last_page_index());

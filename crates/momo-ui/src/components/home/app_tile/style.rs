@@ -12,20 +12,12 @@ use std::time::Duration;
 
 const TILE_TITLE_TEXT_SIZE: f32 = 18.0;
 
-pub fn tile_surface_color() -> Color {
-    Color::from_rgb(14, 18, 27)
-}
-
 pub fn tile_surface_hover_color() -> Color {
     Color::from_rgb(18, 23, 32)
 }
 
 pub fn tile_surface_focus_color() -> Color {
     Color::from_rgb(20, 25, 35)
-}
-
-pub fn tile_border_color() -> Color {
-    Color::from_rgb(52, 65, 89)
 }
 
 pub fn tile_border_hover_color() -> Color {
@@ -56,7 +48,8 @@ pub fn tile_style(
     } else if is_hovering {
         tile_surface_hover_color()
     } else {
-        tile_surface_color()
+        Color::from_rgba_premultiplied(0, 0, 0, 70)
+        // tile_surface_color()
     };
 
     let border_color = if is_focus_visible {
@@ -64,7 +57,8 @@ pub fn tile_style(
     } else if is_hovering {
         tile_border_hover_color()
     } else {
-        tile_border_color()
+        Color::TRANSPARENT
+        //tile_border_color()
     };
 
     Style::new()

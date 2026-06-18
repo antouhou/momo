@@ -5,12 +5,12 @@ use crate::components::home::model::HOME_LAUNCH_CHANNEL_ID;
 use daiko::component::ComponentContext;
 use daiko::navigation::{FocusOrigin, NavigationInputAction};
 use daiko::state_management::StateHandle;
-use std::rc::Rc;
+use std::sync::Arc;
 
 pub(in crate::components::home) struct LaunchControllerOutput {
     pub active_launch: Option<LaunchTransitionState>,
-    pub preferred_focus_app_id: Option<Rc<String>>,
-    pub launched_app_id: Option<Rc<String>>,
+    pub preferred_focus_app_id: Option<Arc<String>>,
+    pub launched_app_id: Option<Arc<String>>,
 }
 
 pub(in crate::components::home) fn use_launch_controller(
@@ -19,7 +19,7 @@ pub(in crate::components::home) fn use_launch_controller(
     let launch_channel = ctx.use_channel_with_id(HOME_LAUNCH_CHANNEL_ID);
     let overlay_event_channel = ctx.use_channel_with_id(HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID);
     let launch_state = ctx.use_local_state(|| None::<LaunchTransitionState>);
-    let restore_focus_app_id = ctx.use_local_state(|| None::<Rc<String>>);
+    let restore_focus_app_id = ctx.use_local_state(|| None::<Arc<String>>);
     let home_scope = ctx.focus_scope();
     let launch_focusable = ctx.focusable();
 
@@ -80,7 +80,7 @@ pub(in crate::components::home) fn use_launch_controller(
                 if overlay_contracted_app_id.as_deref().map(String::as_str)
                     == Some(active_launch.request.app.id())
                 {
-                    *restore_focus_app_id.write() = Some(Rc::clone(&active_launch.request.app.id));
+                    *restore_focus_app_id.write() = Some(Arc::clone(&active_launch.request.app.id));
                     *launch_state.write() = None;
                     launch_focusable.disengage();
                     launch_focusable.clear_focus();
@@ -107,7 +107,7 @@ pub(in crate::components::home) fn use_launch_controller(
     LaunchControllerOutput {
         launched_app_id: launch
             .as_ref()
-            .map(|active| Rc::clone(&active.request.app.id)),
+            .map(|active| Arc::clone(&active.request.app.id)),
         preferred_focus_app_id: restore_focus_app_id.read().clone(),
         active_launch: launch,
     }

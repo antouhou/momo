@@ -142,7 +142,6 @@ fn header_style() -> Style {
 
 fn header_row_style() -> Style {
     Style::new()
-        .with_background_color(Color::from_rgba_premultiplied(12, 16, 18, 178))
         .with_overflow(daiko::style::Overflow::Visible)
         .with_fixed_height(ItemSize::Points(HEADER_MENU_HEIGHT))
         .with_direction(FlexDirection::Row)
@@ -160,7 +159,6 @@ fn header_menu_style() -> Style {
         .with_justify_content(JustifyContent::Center)
         .with_spacing((HEADER_MENU_GAP, HEADER_MENU_GAP))
         .with_padding(Indent::from((HEADER_MENU_PADDING, HEADER_MENU_PADDING)))
-        .with_background_color(Color::from_rgba_unmultiplied(12, 16, 18, 108))
         .with_border(Border::uniform(Stroke::new(
             HEADER_MENU_BORDER_WIDTH,
             Color::from_rgba_unmultiplied(255, 255, 255, 34),

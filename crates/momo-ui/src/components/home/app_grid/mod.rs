@@ -51,7 +51,6 @@ fn app_grid_wrapper_style() -> Style {
 
 impl Component for AppGrid {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        println!("Reber");
         let wrapper_size = ctx
             .layout()
             .map(|layout| layout.size)
@@ -75,7 +74,6 @@ struct AppGridPager {
 
 impl Component for AppGridPager {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        println!("Rebaber");
         let apps_handle = apps_state(ctx);
         let apps = apps_handle.read();
         let metrics = AppGridMetrics::from_wrapper_size(

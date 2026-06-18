@@ -29,7 +29,7 @@ impl Component for Dock {
             let preferred_focus = self.preferred_focus_key.as_ref() == Some(&focus_key);
             dock.add_content(icon::DockIcon {
                 app: AppInfo::new(app),
-                focus_key: focus_key,
+                focus_key,
                 preferred_focus,
                 interactions_disabled: self.interactions_disabled,
                 is_hidden_for_launch: self.hidden_app_id.as_deref().map(String::as_str)

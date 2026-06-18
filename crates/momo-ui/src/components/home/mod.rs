@@ -12,7 +12,8 @@ pub(crate) mod system_status;
 mod tests;
 mod time;
 
-use crate::components::home::app_grid::AppGrid;
+use crate::components::dock::Dock;
+use crate::components::home::app_grid::{AppGrid, PageDots};
 use crate::components::home::header::HomeHeader;
 use crate::components::home::launch::controller::use_launch_controller;
 use crate::components::home::launch::overlay::LaunchOverlay;
@@ -20,7 +21,7 @@ use crate::components::home::model::{HOME_CLOCK_STATE_ID, HOME_CLOCK_THREAD_ID, 
 use crate::components::home::time::{read_system_time, spawn_clock_thread};
 use crate::components::quick_settings::{settings_overlay, should_render_settings_menu};
 use daiko::component::{Component, ComponentContext};
-use daiko::layout::FlexDirection;
+use daiko::layout::{FlexDirection, ItemSize};
 use daiko::style::{Color, LinearGradient, LinearSideOrCorner, Style};
 use daiko::{Element, Id};
 
@@ -60,12 +61,20 @@ impl Component for Home {
         let mut root = Element::new()
             .with_tag("home-root")
             .with_style(home_style())
-            .with_content(HomeHeader)
+            // TODO: make the element inside the header into a view transition
+            .with_content(HomeHeader::new(PageDots {
+                interactions_disabled: true,
+            }))
             .with_content(AppGrid {
                 interactions_disabled: launch.active_launch.is_some(),
                 hidden_app_id: launch.launched_app_id,
                 preferred_focus_app_id: launch.preferred_focus_app_id,
-            });
+            })
+            .with_content(
+                Element::new()
+                    .with_style(Style::new().with_fixed_height(ItemSize::Points(96.0)))
+                    .with_content(Dock {}),
+            );
 
         if should_render_settings_menu {
             root.add_content(settings_overlay(ctx));
@@ -156,13 +165,13 @@ fn home_style() -> Style {
     //     .stop_at_percent(0.90, Color::from_rgb(31, 93, 76))
     //     .stop_at_percent(1.00, Color::from_rgb(83, 125, 106));
     // // Space/copper
-    // let gradient = LinearGradient::to(LinearSideOrCorner::BottomRight)
-    //     .stop_at_percent(0.00, Color::from_rgb(2, 3, 12))
-    //     .stop_at_percent(0.28, Color::from_rgb(6, 10, 27))
-    //     .stop_at_percent(0.52, Color::from_rgb(18, 19, 49))
-    //     .stop_at_percent(0.72, Color::from_rgb(43, 31, 65))
-    //     .stop_at_percent(0.90, Color::from_rgb(82, 51, 66))
-    //     .stop_at_percent(1.00, Color::from_rgb(126, 75, 58));
+    let gradient = LinearGradient::to(LinearSideOrCorner::BottomRight)
+        .stop_at_percent(0.00, Color::from_rgb(2, 3, 12))
+        .stop_at_percent(0.28, Color::from_rgb(6, 10, 27))
+        .stop_at_percent(0.52, Color::from_rgb(18, 19, 49))
+        .stop_at_percent(0.72, Color::from_rgb(43, 31, 65))
+        .stop_at_percent(0.90, Color::from_rgb(82, 51, 66))
+        .stop_at_percent(1.00, Color::from_rgb(126, 75, 58));
     // // Other emerald/dark forest
     // let gradient = LinearGradient::to(LinearSideOrCorner::TopLeft)
     //     .stop_at_percent(0.00, Color::from_rgb(2, 8, 7))
@@ -171,13 +180,14 @@ fn home_style() -> Style {
     //     .stop_at_percent(0.74, Color::from_rgb(15, 68, 54))
     //     .stop_at_percent(0.90, Color::from_rgb(43, 100, 82))
     //     .stop_at_percent(1.00, Color::from_rgb(91, 135, 116));
-    let gradient = LinearGradient::to(LinearSideOrCorner::TopRight)
-        .stop_at_percent(0.00, Color::from_rgb(5, 6, 8))
-        .stop_at_percent(0.30, Color::from_rgb(13, 15, 18))
-        .stop_at_percent(0.55, Color::from_rgb(27, 30, 34))
-        .stop_at_percent(0.76, Color::from_rgb(50, 53, 56))
-        .stop_at_percent(0.92, Color::from_rgb(78, 76, 68))
-        .stop_at_percent(1.00, Color::from_rgb(108, 96, 76));
+
+    // let gradient = LinearGradient::to(LinearSideOrCorner::TopRight)
+    //     .stop_at_percent(0.00, Color::from_rgb(5, 6, 8))
+    //     .stop_at_percent(0.30, Color::from_rgb(13, 15, 18))
+    //     .stop_at_percent(0.55, Color::from_rgb(27, 30, 34))
+    //     .stop_at_percent(0.76, Color::from_rgb(50, 53, 56))
+    //     .stop_at_percent(0.92, Color::from_rgb(78, 76, 68))
+    //     .stop_at_percent(1.00, Color::from_rgb(108, 96, 76));
 
     Style::new()
         .with_background(gradient)

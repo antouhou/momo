@@ -5,7 +5,7 @@ use daiko::Element;
 use daiko::Id;
 use daiko::animation::easing::EasingFunction;
 use daiko::animation::{AnimationParameters, transition};
-use daiko::component::{Component, ComponentContext};
+use daiko::component::{Child, Component, ComponentContext, IntoChild};
 use daiko::layout::{AlignItems, FlexDirection, ItemSize, JustifyContent, SizeConstraint};
 use daiko::navigation::{FocusEntryPolicy, FocusOrigin, TraversalPolicy};
 use daiko::style::{Border, BorderRadius, Color, CursorIcon, Indent, Stroke, Style};
@@ -40,8 +40,17 @@ pub(super) struct HeaderMenuState {
     pub focused_target: Option<HeaderMenuTarget>,
 }
 
-#[derive(Clone, Copy)]
-pub(super) struct HomeHeader;
+pub(super) struct HomeHeader {
+    center: Child,
+}
+
+impl HomeHeader {
+    pub fn new(center: impl IntoChild) -> Self {
+        Self {
+            center: center.into_child(),
+        }
+    }
+}
 
 impl Component for HomeHeader {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
@@ -53,21 +62,19 @@ impl Component for HomeHeader {
         Element::new()
             .with_tag("apps-header")
             .with_style(header_style())
-            .with_content(header_row())
+            .with_content(
+                Element::new()
+                    .with_tag("apps-header-row")
+                    .with_style(header_row_style())
+                    .with_content(HeaderMenu)
+                    .with_content(
+                        Element::new()
+                            .with_content(self.center.clone())
+                            .with_style(central_container_style()),
+                    )
+                    .with_content(ClockChip),
+            )
     }
-}
-
-fn header_row() -> Element {
-    Element::new()
-        .with_tag("apps-header-row")
-        .with_style(header_row_style())
-        .with_content(
-            Element::new()
-                .with_tag("apps-header-left-balance")
-                .with_style(Style::new().with_fixed_size(HEADER_CLOCK_WIDTH, HEADER_MENU_HEIGHT)),
-        )
-        .with_content(HeaderMenu)
-        .with_content(ClockChip)
 }
 
 #[derive(Clone, Copy)]
@@ -120,6 +127,8 @@ impl Component for HeaderMenu {
 
 fn header_style() -> Style {
     Style::new()
+        .with_justify_content(JustifyContent::Center)
+        .with_background_color(Color::from_rgba_premultiplied(12, 16, 18, 178))
         .with_overflow(daiko::style::Overflow::Visible)
         .with_direction(FlexDirection::Column)
         .with_size_constraint(SizeConstraint::exact_content_height())
@@ -133,6 +142,7 @@ fn header_style() -> Style {
 
 fn header_row_style() -> Style {
     Style::new()
+        .with_background_color(Color::from_rgba_premultiplied(12, 16, 18, 178))
         .with_overflow(daiko::style::Overflow::Visible)
         .with_fixed_height(ItemSize::Points(HEADER_MENU_HEIGHT))
         .with_direction(FlexDirection::Row)
@@ -438,4 +448,11 @@ pub(super) fn header_button_style(
         .with_border_radius(BorderRadius::all(metrics.radius))
         .with_cursor(CursorIcon::PointingHand)
         .with_order(1)
+}
+
+fn central_container_style() -> Style {
+    Style::new()
+        .with_justify_content(JustifyContent::Center)
+        .with_align_items(AlignItems::Center)
+        .with_grow(1.0)
 }

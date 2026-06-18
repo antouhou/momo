@@ -1,8 +1,8 @@
+use crate::components::home::app_grid::state::app_grid_state_handle;
 use crate::components::home::app_grid::{
     ACTIVE_PAGE_DOT_WIDTH, PAGE_DOT_FOCUS_BORDER_WIDTH, PAGE_DOT_FOCUS_PADDING, PAGE_DOT_SIZE,
     PAGE_DOTS_GAP, page_dot_focus_key,
 };
-use crate::components::home::model::HOME_APP_GRID_PAGE_STATE_ID;
 use daiko::animation::easing::EasingFunction;
 use daiko::animation::{AnimationParameters, transition};
 use daiko::component::{Component, ComponentContext};
@@ -54,42 +54,44 @@ struct LiquidMorphSpec {
 }
 
 #[derive(Clone, Copy)]
-pub(in crate::components::home::app_grid) struct PageDots {
-    pub(crate) page_count: usize,
-    pub(crate) active_page: usize,
+pub struct PageDots {
     pub(crate) interactions_disabled: bool,
 }
 
 impl Component for PageDots {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
+        let app_grid_state = app_grid_state_handle(ctx);
+        let (active_page, page_count) = {
+            let state = app_grid_state.read();
+            (state.active_page, state.page_count)
+        };
         let mut pointer = ctx.pointer();
         let focus_scope = ctx.focus_scope();
         focus_scope.set_boundary(FocusBoundary::Escape);
-        focus_scope.set_default_focus(page_dot_focus_key(self.active_page));
+        focus_scope.set_default_focus(page_dot_focus_key(active_page));
 
         if !self.interactions_disabled
             && pointer.just_pressed_anywhere()
             && let Some(clicked_page) = clicked_page_index(
                 ctx.app_context.input_state().pointer.interact_position(),
                 ctx.layout(),
-                self.page_count,
+                page_count,
             )
         {
-            *ctx.use_shared_state(Id::new(HOME_APP_GRID_PAGE_STATE_ID), || 0)
-                .write() = clicked_page;
+            app_grid_state.write().active_page = clicked_page;
         }
 
         let hovered_page = *ctx
             .use_shared_state(Id::new(PAGE_DOT_HOVERED_STATE_ID), || None::<usize>)
             .read();
-        let focused_page = focused_page_index(focus_scope.focused_child_key(), self.page_count);
+        let focused_page = focused_page_index(focus_scope.focused_child_key(), page_count);
         let focus_ring_page = if self.interactions_disabled {
             None
         } else {
             hovered_page.or(focused_page)
         };
-        let compact_track_width = page_dots_compact_track_width(self.page_count);
-        let track_width = page_dots_track_width(self.page_count, self.active_page);
+        let compact_track_width = page_dots_compact_track_width(page_count);
+        let track_width = page_dots_track_width(page_count, active_page);
         let track_height = page_dot_target_height();
 
         let mut dots = Container::horizontal()
@@ -103,7 +105,7 @@ impl Component for PageDots {
             .with_spacing((PAGE_DOTS_GAP, PAGE_DOTS_GAP))
             .build();
 
-        for page_index in 0..self.page_count {
+        for page_index in 0..page_count {
             dots.add_content(PageDot {
                 page_index,
                 interactions_disabled: self.interactions_disabled,
@@ -122,14 +124,14 @@ impl Component for PageDots {
         root.add_content(dots);
         root.add_content(page_dot_active_visual(
             ctx,
-            self.page_count,
-            self.active_page,
+            page_count,
+            active_page,
             self.interactions_disabled,
         ));
         root.add_content(page_dot_focus_ring(
             ctx,
-            self.page_count,
-            self.active_page,
+            page_count,
+            active_page,
             focus_ring_page,
             self.interactions_disabled,
         ));
@@ -169,8 +171,7 @@ impl Component for PageDot {
         let just_selected =
             !self.interactions_disabled && (pointer.just_pressed() || focusable.just_activated());
         if just_selected {
-            *ctx.use_shared_state(Id::new(HOME_APP_GRID_PAGE_STATE_ID), || 0)
-                .write() = self.page_index;
+            app_grid_state_handle(ctx).write().active_page = self.page_index;
         }
 
         page_dot(self.page_index, is_hovering, ctx)
@@ -235,8 +236,7 @@ fn page_dot_active_visual(
         Duration::from_millis(PAGE_DOT_ACTIVE_VISUAL_DURATION_MS),
     );
     if !interactions_disabled && pointer.just_pressed() {
-        *ctx.use_shared_state(Id::new(HOME_APP_GRID_PAGE_STATE_ID), || 0)
-            .write() = active_page;
+        app_grid_state_handle(ctx).write().active_page = active_page;
     }
     let source_page = morph_frame.from_page.unwrap_or(active_page);
     let liquid_path = build_liquid_morph_path(
@@ -295,8 +295,7 @@ fn page_dot_focus_ring(
         .or(morph_frame.from_page)
         .unwrap_or(active_page.min(page_count.saturating_sub(1)));
     if !interactions_disabled && pointer.just_pressed() {
-        *ctx.use_shared_state(Id::new(HOME_APP_GRID_PAGE_STATE_ID), || 0)
-            .write() = layout_page;
+        app_grid_state_handle(ctx).write().active_page = layout_page;
     }
     let source_page = morph_frame.from_page.unwrap_or(layout_page);
     let ring_path = build_liquid_ring_path(

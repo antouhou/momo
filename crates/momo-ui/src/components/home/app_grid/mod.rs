@@ -1,18 +1,19 @@
 mod app_grid_viewport;
 mod metrics;
 mod page_dots;
+mod state;
+
 use crate::app_state::apps_state;
-use crate::components::home::app_grid::app_grid_viewport::AppGridViewport;
-use crate::components::home::app_grid::metrics::AppGridMetrics;
-use crate::components::home::app_grid::page_dots::PageDots;
-use crate::components::home::model::{
-    HOME_APP_GRID_PAGE_STATE_ID, SCREEN_PADDING, TILE_HEIGHT, TILE_WIDTH,
-};
+use crate::components::home::model::{SCREEN_PADDING, TILE_HEIGHT, TILE_WIDTH};
+use app_grid_viewport::AppGridViewport;
 use daiko::component::{Component, ComponentContext};
 use daiko::layout::{AlignItems, FlexDirection, ItemSize, JustifyContent};
 use daiko::navigation::FocusKey;
 use daiko::style::{Overflow, Style};
-use daiko::{Element, Id, Vec2};
+use daiko::{Element, Vec2};
+use metrics::AppGridMetrics;
+pub(crate) use page_dots::PageDots;
+use state::app_grid_state_handle;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -50,6 +51,7 @@ fn app_grid_wrapper_style() -> Style {
 
 impl Component for AppGrid {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
+        println!("Reber");
         let wrapper_size = ctx
             .layout()
             .map(|layout| layout.size)
@@ -73,6 +75,7 @@ struct AppGridPager {
 
 impl Component for AppGridPager {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
+        println!("Rebaber");
         let apps_handle = apps_state(ctx);
         let apps = apps_handle.read();
         let metrics = AppGridMetrics::from_wrapper_size(
@@ -84,8 +87,20 @@ impl Component for AppGridPager {
             }),
             apps.app_entries.len(),
         );
-        let page_state = ctx.use_shared_state(Id::new(HOME_APP_GRID_PAGE_STATE_ID), || 0);
-        let active_page = (*page_state.read()).min(metrics.last_page_index());
+
+        let app_grid_state = app_grid_state_handle(ctx);
+        let (state_changed, active_page) = {
+            let guard = app_grid_state.read();
+            let active_page = guard.active_page.min(metrics.last_page_index());
+            let state_changed =
+                guard.active_page != active_page || guard.page_count != metrics.page_count;
+            (state_changed, active_page)
+        };
+        if state_changed {
+            let mut guard = app_grid_state.write();
+            guard.active_page = active_page;
+            guard.page_count = metrics.page_count;
+        }
 
         Element::new()
             .with_tag("apps-grid-pager")
@@ -101,11 +116,6 @@ impl Component for AppGridPager {
                 grid: self.grid.clone(),
                 metrics,
                 animate: self.wrapper_size.is_some(),
-            })
-            .with_content(PageDots {
-                page_count: metrics.page_count,
-                active_page,
-                interactions_disabled: self.grid.interactions_disabled,
             })
     }
 }

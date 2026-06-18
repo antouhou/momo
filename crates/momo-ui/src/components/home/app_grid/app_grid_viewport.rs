@@ -1,12 +1,13 @@
 use crate::app_state::{AppEntry, apps_state};
 use crate::components::home::app_grid::metrics::AppGridMetrics;
+use crate::components::home::app_grid::state::app_grid_state_handle;
 use crate::components::home::app_grid::{
     AppGrid, PAGE_SCROLL_REARM_DURATION, PAGE_SCROLL_THRESHOLD, page_dot_focus_key,
 };
 use crate::components::home::app_tile::{AppInfo, AppTile};
 use crate::components::home::model::{
-    GRID_GAP, HOME_APP_GRID_FOCUSED_KEY_ID, HOME_APP_GRID_PAGE_STATE_ID,
-    HOME_APP_GRID_SCROLL_ACCUMULATOR_ID, HOME_APP_GRID_SMOOTH_OFFSET_ID,
+    GRID_GAP, HOME_APP_GRID_FOCUSED_KEY_ID, HOME_APP_GRID_SCROLL_ACCUMULATOR_ID,
+    HOME_APP_GRID_SMOOTH_OFFSET_ID,
 };
 use daiko::animation::SmoothFollowConfig;
 use daiko::component::{Component, ComponentContext};
@@ -33,13 +34,13 @@ impl Component for AppGridViewport {
         let last_focused_key =
             ctx.use_local_state_with_id(Id::new(HOME_APP_GRID_FOCUSED_KEY_ID), || None::<FocusKey>);
         let viewport_layout = ctx.layout();
-        let page_state = ctx.use_shared_state(Id::new(HOME_APP_GRID_PAGE_STATE_ID), || 0);
+        let page_state = app_grid_state_handle(ctx);
 
         let apps_handle = apps_state(ctx);
         let apps_state = apps_handle.read();
         let apps = &apps_state.app_entries;
 
-        let mut target_page = (*page_state.read()).min(self.metrics.last_page_index());
+        let mut target_page = (page_state.read().active_page).min(self.metrics.last_page_index());
         let focused_key = focus_scope.focused_child_key();
         if focused_key != *last_focused_key.read() {
             *last_focused_key.write_silent() = focused_key;
@@ -57,8 +58,8 @@ impl Component for AppGridViewport {
                 .min(self.metrics.last_page_index());
         }
 
-        if *page_state.read() != target_page {
-            *page_state.write() = target_page;
+        if page_state.read().active_page != target_page {
+            page_state.write().active_page = target_page;
         }
 
         let target_offset = -(target_page as f32) * self.metrics.page_width;

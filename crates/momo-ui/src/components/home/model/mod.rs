@@ -6,7 +6,6 @@ use daiko::navigation::FocusKey;
 use daiko::style::Transform;
 use std::time::Duration;
 
-pub(super) const HOME_APP_GRID_PAGE_STATE_ID: &str = "momo_home_app_grid_page_state";
 pub(super) const HOME_APP_GRID_FOCUSED_KEY_ID: &str = "momo_home_app_grid_focused_key";
 pub(super) const HOME_APP_GRID_SCROLL_ACCUMULATOR_ID: &str =
     "momo_home_app_grid_scroll_accumulator";

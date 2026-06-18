@@ -8,7 +8,7 @@ use daiko::component::{Component, ComponentContext};
 use daiko::integration::input::{InputEvent, InputEventModifiers, Key};
 use daiko::layout::{AlignItems, FlexDirection, ItemSize};
 use daiko::navigation::{FocusKey, FocusOrigin};
-use daiko::style::{Color, Style};
+use daiko::style::{Color, Style, Transform};
 use daiko::testing::TestRunner;
 use daiko::{App, AppContext, Element, Id, Pos2, Vec2};
 use std::path::PathBuf;
@@ -911,6 +911,42 @@ fn activating_tile_creates_launch_overlay_for_that_app() {
 }
 
 #[test]
+fn launch_surface_starts_at_the_focused_tile_visual_bounds() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+
+    runner.focus_element_by_key(FocusKey::new("movies"), FocusOrigin::Navigation);
+    thread::sleep(Duration::from_millis(140));
+    runner.run_frame();
+    let focused_tile_entry = runner
+        .find_element_entry_by_tag("movies")
+        .expect("movies tile should exist before launch");
+    let focused_tile_bounds = rendered_element_bounds(
+        focused_tile_entry.layout.position_absolute,
+        focused_tile_entry.layout.size,
+        focused_tile_entry.effective_transform.as_ref(),
+    );
+
+    runner.press_confirm();
+
+    let launch_surface_entry = runner
+        .find_element_entry_by_tag("launch-overlay-surface")
+        .expect("launch surface should exist after activation");
+    let launch_surface_bounds = rendered_element_bounds(
+        launch_surface_entry.layout.position_absolute,
+        launch_surface_entry.layout.size,
+        launch_surface_entry.effective_transform.as_ref(),
+    );
+
+    assert_rect_near(
+        launch_surface_bounds,
+        focused_tile_bounds,
+        "launch surface should match focused tile",
+    );
+}
+
+#[test]
 fn cancel_reverses_launch_overlay_and_restores_tile_focus() {
     let mut runner = TestRunner::new(HomeTestApp);
     runner.set_viewport_size(1280.0, 720.0);
@@ -928,4 +964,58 @@ fn cancel_reverses_launch_overlay_and_restores_tile_focus() {
 
     assert!(runner.find_element_by_tag("launch-overlay").is_none());
     runner.assert_focused("movies");
+}
+
+fn rendered_element_bounds(
+    position_absolute: Vec2,
+    size: Vec2,
+    effective_transform: Option<&Transform>,
+) -> (Vec2, Vec2) {
+    let Some(transform) = effective_transform else {
+        return (position_absolute, size);
+    };
+    let corners: [(f32, f32); 4] = [
+        transform.transform_local_point2d_to_world(0.0, 0.0),
+        transform.transform_local_point2d_to_world(size.x, 0.0),
+        transform.transform_local_point2d_to_world(0.0, size.y),
+        transform.transform_local_point2d_to_world(size.x, size.y),
+    ];
+    let (min_x, max_x) = corners
+        .iter()
+        .map(|(x, _)| *x)
+        .fold((f32::INFINITY, f32::NEG_INFINITY), |(min_x, max_x), x| {
+            (min_x.min(x), max_x.max(x))
+        });
+    let (min_y, max_y) = corners
+        .iter()
+        .map(|(_, y)| *y)
+        .fold((f32::INFINITY, f32::NEG_INFINITY), |(min_y, max_y), y| {
+            (min_y.min(y), max_y.max(y))
+        });
+
+    (
+        Vec2::new(min_x, min_y),
+        Vec2::new(max_x - min_x, max_y - min_y),
+    )
+}
+
+fn assert_vec2_near(actual: Vec2, expected: Vec2, message: &str) {
+    let delta = actual - expected;
+    assert!(
+        delta.x.abs() <= 0.5 && delta.y.abs() <= 0.5,
+        "{message}: expected {expected:?}, got {actual:?}"
+    );
+}
+
+fn assert_rect_near(actual: (Vec2, Vec2), expected: (Vec2, Vec2), message: &str) {
+    assert_vec2_near(
+        actual.0,
+        expected.0,
+        &format!("{message} position; expected rect {expected:?}, got {actual:?}"),
+    );
+    assert_vec2_near(
+        actual.1,
+        expected.1,
+        &format!("{message} size; expected rect {expected:?}, got {actual:?}"),
+    );
 }

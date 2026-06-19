@@ -14,7 +14,6 @@ pub(in crate::components::home::app_grid) struct AppGridMetrics {
     pub(crate) page_height: f32,
     pub(crate) row_width: f32,
     pub(crate) columns: usize,
-    pub(crate) rows: usize,
     pub(crate) tiles_per_page: usize,
     pub(crate) page_count: usize,
 }
@@ -37,7 +36,6 @@ impl AppGridMetrics {
             page_height,
             row_width,
             columns,
-            rows,
             tiles_per_page,
             page_count,
         }

@@ -122,6 +122,7 @@ impl Component for FixedWidthGridRoot {
                         interactions_disabled: false,
                         hidden_app_id: None,
                         preferred_focus_app_id: None,
+                        prefer_first_tile: true,
                     }),
             )
     }

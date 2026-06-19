@@ -2,11 +2,11 @@ use daiko::style::Color;
 use daiko::widgets::image::{Image, ImageParams, ImageSource};
 use std::path::PathBuf;
 
-pub(super) fn app_icon_background_color(accent: Color) -> Color {
+pub(crate) fn app_icon_background_color(accent: Color) -> Color {
     accent.gamma_multiply(0.2)
 }
 
-pub(super) fn app_icon(icon_path: &Option<PathBuf>, size: usize) -> Image {
+pub(crate) fn app_icon(icon_path: &Option<PathBuf>, size: usize) -> Image {
     // match icon {
     // AppIcon::BuiltIn(icon) => Image::new(ImageParams {
     //     max_width: size,

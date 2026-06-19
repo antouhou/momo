@@ -1,6 +1,9 @@
 mod app_state;
 mod components;
 
+#[cfg(feature = "bench-support")]
+pub use crate::components::home::benchmark_support;
+
 use crate::app_state::init_app_state;
 use crate::components::home::Home;
 use crate::components::home::bluetooth::initialize_bluetooth_state;

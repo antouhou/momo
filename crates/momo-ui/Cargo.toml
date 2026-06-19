@@ -3,6 +3,9 @@ name = "momo-ui"
 version.workspace = true
 edition.workspace = true
 
+[features]
+bench-support = []
+
 [dependencies]
 daiko.workspace = true
 momo-app = { path = "../momo-app" }
@@ -13,6 +16,14 @@ appkeeper = { path = "../../../appkeeper" }
 
 [target.'cfg(target_os = "android")'.dependencies]
 tracing-android = "0.2.0"
+
+[dev-dependencies]
+criterion = "0.5.1"
+
+[[bench]]
+name = "app_grid_paging"
+harness = false
+required-features = ["bench-support"]
 
 [lints]
 workspace = true

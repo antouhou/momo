@@ -192,6 +192,7 @@ fn build_page_strip(
             .with_align_items(AlignItems::FlexStart)
             .with_justify_content(JustifyContent::FlexStart)
             .with_absolute_position(Vec2::new(rendered_offset, 0.0))
+            // .with_transform(Some(Transform::new().then_translate(rendered_offset, 0.0)))
             .with_overflow(Overflow::Visible),
     );
 

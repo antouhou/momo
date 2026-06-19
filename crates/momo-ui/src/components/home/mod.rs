@@ -1,6 +1,8 @@
 mod app_grid;
 pub(crate) mod app_icon;
 pub(crate) mod app_tile;
+#[cfg(feature = "bench-support")]
+pub mod benchmark_support;
 pub(crate) mod bluetooth;
 mod clock_chip;
 mod header;

@@ -86,6 +86,7 @@ impl Component for AppGridViewport {
                 self.metrics,
                 rendered_offset,
                 apps,
+                page_state.read().active_page,
             ))
     }
 }
@@ -181,6 +182,7 @@ fn build_page_strip(
     metrics: AppGridMetrics,
     rendered_offset: f32,
     apps: &[AppEntry],
+    active_page: usize,
 ) -> Element {
     let mut page_strip = Element::new().with_tag("apps-grid-page-strip").with_style(
         Style::new()
@@ -196,8 +198,19 @@ fn build_page_strip(
             .with_overflow(Overflow::Visible),
     );
 
+    let empty_page = Element::new().with_style(
+        Style::new()
+            .with_fixed_size(metrics.page_width, metrics.page_height)
+            .with_overflow(Overflow::Visible),
+    );
+
     for page_index in 0..metrics.page_count {
-        page_strip.add_content(build_page_contents(grid, metrics, page_index, apps));
+        let is_active_or_overscan = page_index.abs_diff(active_page) <= 1;
+        if is_active_or_overscan {
+            page_strip.add_content(build_page_contents(grid, metrics, page_index, apps));
+        } else {
+            page_strip.add_content(empty_page.clone());
+        }
     }
 
     page_strip

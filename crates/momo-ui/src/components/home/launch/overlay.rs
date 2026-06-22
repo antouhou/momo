@@ -348,7 +348,7 @@ fn build_launch_destination_shared_content(props: LaunchDestinationSharedContent
     let icon_glyph_size = (source_icon_glyph_size
         + (HOME_HERO_ICON_GLYPH_SIZE as f32 - source_icon_glyph_size) * props.scale_progress)
         .round()
-        .max(1.0) as usize;
+        .max(1.0);
     let icon = Element::new()
         .with_style(
             Style::new()
@@ -361,11 +361,11 @@ fn build_launch_destination_shared_content(props: LaunchDestinationSharedContent
                 ))
                 .with_border_radius(BorderRadius::all(icon_radius)),
         )
-        .with_content(app_icon(
-            &props.request.app.icon,
-            icon_glyph_size,
-            // with_opacity(app_icon_foreground_color(accent), props.icon_opacity),
-        ));
+        .with_content(
+            app_icon(&props.request.app.icon, HOME_HERO_ICON_GLYPH_SIZE)
+                .with_style(Style::new().with_fixed_size(icon_glyph_size, icon_glyph_size))
+                .fit_to_container(true),
+        );
 
     let labels = Container::vertical()
         .with_fit(

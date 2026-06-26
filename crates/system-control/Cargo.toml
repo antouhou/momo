@@ -6,8 +6,11 @@ edition.workspace = true
 [dependencies]
 futures-util = "0.3.31"
 thiserror = "2.0.17"
-tokio = { version = "1.48.0", features = ["macros", "rt", "rt-multi-thread", "sync"] }
+tokio = { version = "1.48.0", features = ["macros", "rt", "rt-multi-thread", "sync", "time"] }
 tracing = "0.1.44"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 bluer = { version = "0.17.4", features = ["bluetoothd"] }
+
+[lints]
+workspace = true

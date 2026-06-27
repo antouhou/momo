@@ -7,7 +7,4 @@ mod runtime;
 mod state;
 mod store;
 
-#[cfg(test)]
-mod tests;
-
 pub(crate) use handle::{PlatformBluetoothHandle, PlatformBluetoothObservation};

@@ -7,6 +7,12 @@ by standardizing code conventions and such.
 2. Don't make files too large. If a file exceeds around 500 lines, consider splitting it into smaller modules.
 3. Create tests in a separate `tests` file. Writing tests in the same file makes it a bit harder to review.
 4. Run `cargo clippy` and `cargo fmt --fix` before commiting.
+5. When designing module structure or a new feature, try to use domain-driven approach. For example, if you need a 
+controller for whatever functionality you are implementing, don't put it into the controllers module, but create a 
+submodule for that functionality. For example, Bluetooth controller should be in `bluetooth/controller.rs`, not in 
+`controllers/bluetooth_controller.rs`. This makes code much more structured and easier to navigate. You don't have 
+to think "oh I want to work on controllers" when you're working on Bluetooth, you just go to the Bluetooth module 
+and see all the code related to it.
 
 ## Rules for UI development:
 

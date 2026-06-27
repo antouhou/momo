@@ -4,8 +4,9 @@ use std::collections::BTreeMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, Weak};
 use std::thread::JoinHandle;
+use std::time::Duration;
 
-use bluer::{Adapter, AdapterEvent, DeviceEvent};
+use bluer::{Adapter, AdapterEvent, DeviceEvent, Session};
 use futures_util::StreamExt;
 use tokio::runtime::Builder;
 use tokio::sync::Mutex as AsyncMutex;
@@ -23,6 +24,7 @@ use crate::bluetooth::{
 };
 
 type ObserverCallback = Box<dyn Fn(BluetoothFeatureState) + Send + 'static>;
+const BLUETOOTH_RECONNECT_DELAY: Duration = Duration::from_secs(2);
 
 #[derive(Clone)]
 pub(crate) struct PlatformBluetoothHandle {
@@ -45,6 +47,7 @@ struct BackendState {
     current_state: Mutex<BluetoothFeatureState>,
     observers: Mutex<BTreeMap<u64, Arc<Mutex<ObserverCallback>>>>,
     next_observer_id: AtomicU64,
+    active_connection_id: AtomicU64,
 }
 
 struct RuntimeTaskState {
@@ -54,16 +57,28 @@ struct RuntimeTaskState {
 
 enum RuntimeMessage {
     Command(BluetoothCommand),
-    AdapterEvent(AdapterEvent),
-    AdapterEventsEnded,
+    AdapterEvent {
+        connection_id: u64,
+        event: AdapterEvent,
+    },
+    AdapterEventsEnded {
+        connection_id: u64,
+    },
     DeviceEvent {
+        connection_id: u64,
         device_identifier: BluetoothDeviceId,
     },
     DeviceEventsEnded {
+        connection_id: u64,
         device_identifier: BluetoothDeviceId,
     },
-    DiscoveryEvent(AdapterEvent),
-    DiscoveryEnded,
+    DiscoveryEvent {
+        connection_id: u64,
+        event: AdapterEvent,
+    },
+    DiscoveryEnded {
+        connection_id: u64,
+    },
     Shutdown,
 }
 
@@ -92,7 +107,7 @@ impl PlatformBluetoothHandle {
     pub(crate) fn new() -> Result<Self, SystemControlError> {
         let inner = Arc::new(BackendState::new());
         let (command_sender, command_receiver) = unbounded_channel();
-        let runtime_inner = inner.clone();
+        let runtime_inner = Arc::clone(&inner);
         let runtime_sender = command_sender.clone();
         let runtime_thread = std::thread::Builder::new()
             .name("system-control-linux-bluetooth".to_string())
@@ -262,6 +277,7 @@ impl BackendState {
             current_state: Mutex::new(FeatureState::Loading),
             observers: Mutex::new(BTreeMap::new()),
             next_observer_id: AtomicU64::new(1),
+            active_connection_id: AtomicU64::new(0),
         }
     }
 
@@ -270,7 +286,7 @@ impl BackendState {
         self.observers
             .lock()
             .expect("poisoned mutex")
-            .insert(observer_id, observer.clone());
+            .insert(observer_id, Arc::clone(&observer));
 
         let current_state = self.current_state();
         observer.lock().expect("poisoned mutex").as_ref()(current_state);
@@ -305,6 +321,28 @@ impl BackendState {
             observer.lock().expect("poisoned mutex").as_ref()(next_state.clone());
         }
     }
+
+    fn activate_connection(&self, connection_id: u64) {
+        self.active_connection_id
+            .store(connection_id, Ordering::Relaxed);
+    }
+
+    fn deactivate_connection(&self, connection_id: u64) {
+        let _ = self.active_connection_id.compare_exchange(
+            connection_id,
+            0,
+            Ordering::Relaxed,
+            Ordering::Relaxed,
+        );
+    }
+
+    fn clear_active_connection(&self) {
+        self.active_connection_id.store(0, Ordering::Relaxed);
+    }
+
+    fn is_active_connection(&self, connection_id: u64) -> bool {
+        self.active_connection_id.load(Ordering::Relaxed) == connection_id
+    }
 }
 
 impl BluetoothCommand {
@@ -319,20 +357,72 @@ impl BluetoothCommand {
     }
 }
 
+struct ConnectedBluetoothRuntime {
+    _session: Session,
+    adapter: Arc<Adapter>,
+    runtime_state: Arc<RuntimeTaskState>,
+}
+
+enum BluetoothConnectionError {
+    NoAdapter,
+    BackendUnavailable { message: String },
+}
+
+enum ConnectedRuntimeExit {
+    Reconnect,
+    Shutdown,
+}
+
 async fn run_linux_bluetooth_runtime(
     inner: Arc<BackendState>,
     runtime_sender: UnboundedSender<RuntimeMessage>,
     mut command_receiver: UnboundedReceiver<RuntimeMessage>,
 ) {
+    let mut connection_id = 1;
+
+    loop {
+        inner.clear_active_connection();
+
+        match connect_bluetooth_runtime(&inner, &runtime_sender, connection_id).await {
+            Ok(runtime) => {
+                match run_connected_bluetooth_runtime(
+                    &inner,
+                    &runtime_sender,
+                    &mut command_receiver,
+                    connection_id,
+                    runtime,
+                )
+                .await
+                {
+                    ConnectedRuntimeExit::Reconnect => {
+                        connection_id = connection_id.wrapping_add(1);
+                    }
+                    ConnectedRuntimeExit::Shutdown => break,
+                }
+            }
+            Err(error) => {
+                publish_bluetooth_connection_error(&inner, error);
+                connection_id = connection_id.wrapping_add(1);
+            }
+        }
+
+        if !wait_for_bluetooth_reconnect_delay(&mut command_receiver).await {
+            break;
+        }
+    }
+}
+
+async fn connect_bluetooth_runtime(
+    inner: &Arc<BackendState>,
+    runtime_sender: &UnboundedSender<RuntimeMessage>,
+    connection_id: u64,
+) -> Result<ConnectedBluetoothRuntime, BluetoothConnectionError> {
     let session = match bluer::Session::new().await {
         Ok(session) => session,
         Err(error) => {
-            inner.publish(FeatureState::Unavailable(
-                BluetoothUnavailableReason::BackendUnavailable {
-                    message: error.to_string(),
-                },
-            ));
-            return;
+            return Err(BluetoothConnectionError::BackendUnavailable {
+                message: error.to_string(),
+            });
         }
     };
 
@@ -340,17 +430,12 @@ async fn run_linux_bluetooth_runtime(
         Ok(adapter) => adapter,
         Err(error) => {
             if error.kind == bluer::ErrorKind::NotFound {
-                inner.publish(FeatureState::Unsupported(
-                    BluetoothUnsupportedReason::NoBluetoothAdapterPresent,
-                ));
+                return Err(BluetoothConnectionError::NoAdapter);
             } else {
-                inner.publish(FeatureState::Unavailable(
-                    BluetoothUnavailableReason::BackendUnavailable {
-                        message: error.to_string(),
-                    },
-                ));
+                return Err(BluetoothConnectionError::BackendUnavailable {
+                    message: error.to_string(),
+                });
             }
-            return;
         }
     };
 
@@ -363,103 +448,197 @@ async fn run_linux_bluetooth_runtime(
     let initial_state = match load_current_state(adapter.as_ref()).await {
         Ok(state) => state,
         Err(error) => {
-            inner.publish(FeatureState::Unavailable(
-                BluetoothUnavailableReason::BackendUnavailable {
-                    message: error.to_string(),
-                },
-            ));
-            return;
+            return Err(BluetoothConnectionError::BackendUnavailable {
+                message: error.to_string(),
+            });
         }
     };
+    spawn_adapter_watcher(adapter.as_ref(), runtime_sender, connection_id).await?;
+
     let mut device_watchers = runtime_state.device_watchers.lock().await;
     for device in &initial_state.devices {
         spawn_device_watcher(
             adapter.as_ref(),
-            &runtime_sender,
+            runtime_sender,
             &mut device_watchers,
+            connection_id,
             device.device_identifier.clone(),
         );
     }
     drop(device_watchers);
+    inner.activate_connection(connection_id);
     inner.publish(FeatureState::Ready(BluetoothState {
         revision: 1,
         ..initial_state
     }));
 
-    spawn_adapter_watcher(adapter.as_ref(), &runtime_sender).await;
+    Ok(ConnectedBluetoothRuntime {
+        _session: session,
+        adapter,
+        runtime_state,
+    })
+}
 
+async fn run_connected_bluetooth_runtime(
+    inner: &Arc<BackendState>,
+    runtime_sender: &UnboundedSender<RuntimeMessage>,
+    command_receiver: &mut UnboundedReceiver<RuntimeMessage>,
+    connection_id: u64,
+    runtime: ConnectedBluetoothRuntime,
+) -> ConnectedRuntimeExit {
     while let Some(message) = command_receiver.recv().await {
         match message {
             RuntimeMessage::Command(command) => {
-                let inner = inner.clone();
-                let adapter = adapter.clone();
+                let inner = Arc::clone(inner);
+                let adapter = Arc::clone(&runtime.adapter);
                 let runtime_sender = runtime_sender.clone();
-                let runtime_state = runtime_state.clone();
+                let runtime_state = Arc::clone(&runtime.runtime_state);
                 tokio::spawn(async move {
                     handle_command(
                         &inner,
                         adapter.as_ref(),
                         &runtime_sender,
                         &runtime_state,
+                        connection_id,
                         command,
                     )
                     .await;
                 });
             }
-            RuntimeMessage::AdapterEvent(event) | RuntimeMessage::DiscoveryEvent(event) => {
-                let inner = inner.clone();
-                let adapter = adapter.clone();
+            RuntimeMessage::AdapterEvent {
+                connection_id: event_connection_id,
+                event,
+            }
+            | RuntimeMessage::DiscoveryEvent {
+                connection_id: event_connection_id,
+                event,
+            } => {
+                if event_connection_id != connection_id {
+                    continue;
+                }
+                let inner = Arc::clone(inner);
+                let adapter = Arc::clone(&runtime.adapter);
                 let runtime_sender = runtime_sender.clone();
-                let runtime_state = runtime_state.clone();
+                let runtime_state = Arc::clone(&runtime.runtime_state);
                 tokio::spawn(async move {
                     handle_adapter_event(
                         &inner,
                         adapter.as_ref(),
                         &runtime_sender,
                         &runtime_state,
+                        connection_id,
                         event,
                     )
                     .await;
                 });
             }
-            RuntimeMessage::DeviceEvent { device_identifier } => {
-                let inner = inner.clone();
-                let adapter = adapter.clone();
+            RuntimeMessage::DeviceEvent {
+                connection_id: event_connection_id,
+                device_identifier,
+            } => {
+                if event_connection_id != connection_id {
+                    continue;
+                }
+                let inner = Arc::clone(inner);
+                let adapter = Arc::clone(&runtime.adapter);
                 tokio::spawn(async move {
-                    refresh_device_from_identifier(&inner, adapter.as_ref(), device_identifier)
-                        .await;
+                    refresh_device_from_identifier(
+                        &inner,
+                        adapter.as_ref(),
+                        connection_id,
+                        device_identifier,
+                    )
+                    .await;
                 });
             }
-            RuntimeMessage::DeviceEventsEnded { device_identifier } => {
-                runtime_state
+            RuntimeMessage::DeviceEventsEnded {
+                connection_id: event_connection_id,
+                device_identifier,
+            } => {
+                if event_connection_id != connection_id {
+                    continue;
+                }
+                runtime
+                    .runtime_state
                     .device_watchers
                     .lock()
                     .await
                     .remove(&device_identifier);
             }
-            RuntimeMessage::AdapterEventsEnded => {
-                warn!("bluetooth adapter event stream ended");
-                inner.publish(FeatureState::Unavailable(
-                    BluetoothUnavailableReason::BackendUnavailable {
-                        message: "Bluetooth adapter event stream ended".to_string(),
-                    },
-                ));
+            RuntimeMessage::AdapterEventsEnded {
+                connection_id: ended_connection_id,
+            } => {
+                if ended_connection_id != connection_id {
+                    continue;
+                }
+                warn!("bluetooth adapter event stream ended; reconnecting");
+                stop_connected_runtime_tasks(&runtime).await;
+                inner.deactivate_connection(connection_id);
+                inner.publish(FeatureState::Loading);
+                return ConnectedRuntimeExit::Reconnect;
             }
-            RuntimeMessage::DiscoveryEnded => {
+            RuntimeMessage::DiscoveryEnded {
+                connection_id: ended_connection_id,
+            } => {
+                if ended_connection_id != connection_id {
+                    continue;
+                }
+                let mut discovery_task = runtime.runtime_state.discovery_task.lock().await;
+                *discovery_task = None;
                 debug!("bluetooth discovery task ended");
             }
             RuntimeMessage::Shutdown => {
-                if let Some(task) = runtime_state.discovery_task.lock().await.take() {
-                    task.abort();
-                }
-                let device_watchers =
-                    std::mem::take(&mut *runtime_state.device_watchers.lock().await);
-                for watcher in device_watchers.into_values() {
-                    watcher.abort();
-                }
-                break;
+                stop_connected_runtime_tasks(&runtime).await;
+                inner.deactivate_connection(connection_id);
+                return ConnectedRuntimeExit::Shutdown;
             }
         }
+    }
+
+    stop_connected_runtime_tasks(&runtime).await;
+    inner.deactivate_connection(connection_id);
+    ConnectedRuntimeExit::Shutdown
+}
+
+fn publish_bluetooth_connection_error(inner: &Arc<BackendState>, error: BluetoothConnectionError) {
+    match error {
+        BluetoothConnectionError::NoAdapter => {
+            inner.publish(FeatureState::Unsupported(
+                BluetoothUnsupportedReason::NoBluetoothAdapterPresent,
+            ));
+        }
+        BluetoothConnectionError::BackendUnavailable { message } => {
+            inner.publish(FeatureState::Unavailable(
+                BluetoothUnavailableReason::BackendUnavailable { message },
+            ));
+        }
+    }
+}
+
+async fn wait_for_bluetooth_reconnect_delay(
+    command_receiver: &mut UnboundedReceiver<RuntimeMessage>,
+) -> bool {
+    let reconnect_delay = tokio::time::sleep(BLUETOOTH_RECONNECT_DELAY);
+    tokio::pin!(reconnect_delay);
+
+    loop {
+        tokio::select! {
+            () = &mut reconnect_delay => return true,
+            message = command_receiver.recv() => match message {
+                Some(RuntimeMessage::Shutdown) | None => return false,
+                Some(_) => {}
+            },
+        }
+    }
+}
+
+async fn stop_connected_runtime_tasks(runtime: &ConnectedBluetoothRuntime) {
+    if let Some(task) = runtime.runtime_state.discovery_task.lock().await.take() {
+        task.abort();
+    }
+    let device_watchers = std::mem::take(&mut *runtime.runtime_state.device_watchers.lock().await);
+    for watcher in device_watchers.into_values() {
+        watcher.abort();
     }
 }
 
@@ -468,9 +647,15 @@ async fn handle_command(
     adapter: &Adapter,
     runtime_sender: &UnboundedSender<RuntimeMessage>,
     runtime_state: &Arc<RuntimeTaskState>,
+    connection_id: u64,
     command: BluetoothCommand,
 ) {
-    apply_pending_operation(inner, command.operation_id(), command.pending_operation());
+    apply_pending_operation(
+        inner,
+        connection_id,
+        command.operation_id(),
+        command.pending_operation(),
+    );
 
     match command {
         BluetoothCommand::SetPowerEnabled {
@@ -482,10 +667,16 @@ async fn handle_command(
                 {
                     task.abort();
                 }
-                refresh_adapter_state(inner, adapter, Some(operation_id), None).await;
+                refresh_adapter_state(inner, adapter, connection_id, Some(operation_id), None)
+                    .await;
             }
             Err(error) => {
-                finish_operation_with_error(inner, Some(operation_id), error.to_string());
+                finish_operation_with_error(
+                    inner,
+                    connection_id,
+                    Some(operation_id),
+                    error.to_string(),
+                );
             }
         },
         BluetoothCommand::StartDiscovery { operation_id } => {
@@ -496,30 +687,49 @@ async fn handle_command(
                         let sender = runtime_sender.clone();
                         *discovery_task = Some(tokio::spawn(async move {
                             while let Some(event) = discovery_stream.next().await {
-                                if sender.send(RuntimeMessage::DiscoveryEvent(event)).is_err() {
+                                if sender
+                                    .send(RuntimeMessage::DiscoveryEvent {
+                                        connection_id,
+                                        event,
+                                    })
+                                    .is_err()
+                                {
                                     return;
                                 }
                             }
-                            let _ = sender.send(RuntimeMessage::DiscoveryEnded);
+                            let _ = sender.send(RuntimeMessage::DiscoveryEnded { connection_id });
                         }));
                         drop(discovery_task);
-                        refresh_adapter_state(inner, adapter, Some(operation_id), None).await;
+                        refresh_adapter_state(
+                            inner,
+                            adapter,
+                            connection_id,
+                            Some(operation_id),
+                            None,
+                        )
+                        .await;
                     }
                     Err(error) => {
                         drop(discovery_task);
-                        finish_operation_with_error(inner, Some(operation_id), error.to_string());
+                        finish_operation_with_error(
+                            inner,
+                            connection_id,
+                            Some(operation_id),
+                            error.to_string(),
+                        );
                     }
                 }
             } else {
                 drop(discovery_task);
-                refresh_adapter_state(inner, adapter, Some(operation_id), None).await;
+                refresh_adapter_state(inner, adapter, connection_id, Some(operation_id), None)
+                    .await;
             }
         }
         BluetoothCommand::StopDiscovery { operation_id } => {
             if let Some(task) = runtime_state.discovery_task.lock().await.take() {
                 task.abort();
             }
-            refresh_adapter_state(inner, adapter, Some(operation_id), None).await;
+            refresh_adapter_state(inner, adapter, connection_id, Some(operation_id), None).await;
         }
         BluetoothCommand::ConnectDevice {
             operation_id,
@@ -532,17 +742,35 @@ async fn handle_command(
                         adapter,
                         runtime_sender,
                         &mut device_watchers,
+                        connection_id,
                         device_identifier.clone(),
                     );
-                    refresh_device(adapter, inner, device_identifier, Some(operation_id), None)
-                        .await;
+                    refresh_device(
+                        adapter,
+                        inner,
+                        connection_id,
+                        device_identifier,
+                        Some(operation_id),
+                        None,
+                    )
+                    .await;
                 }
                 Err(error) => {
-                    finish_operation_with_error(inner, Some(operation_id), error.to_string());
+                    finish_operation_with_error(
+                        inner,
+                        connection_id,
+                        Some(operation_id),
+                        error.to_string(),
+                    );
                 }
             },
             Err(error) => {
-                finish_operation_with_error(inner, Some(operation_id), error.to_string());
+                finish_operation_with_error(
+                    inner,
+                    connection_id,
+                    Some(operation_id),
+                    error.to_string(),
+                );
             }
         },
         BluetoothCommand::DisconnectDevice {
@@ -551,15 +779,32 @@ async fn handle_command(
         } => match device_from_identifier(adapter, &device_identifier) {
             Ok(device) => match device.disconnect().await {
                 Ok(()) => {
-                    refresh_device(adapter, inner, device_identifier, Some(operation_id), None)
-                        .await;
+                    refresh_device(
+                        adapter,
+                        inner,
+                        connection_id,
+                        device_identifier,
+                        Some(operation_id),
+                        None,
+                    )
+                    .await;
                 }
                 Err(error) => {
-                    finish_operation_with_error(inner, Some(operation_id), error.to_string());
+                    finish_operation_with_error(
+                        inner,
+                        connection_id,
+                        Some(operation_id),
+                        error.to_string(),
+                    );
                 }
             },
             Err(error) => {
-                finish_operation_with_error(inner, Some(operation_id), error.to_string());
+                finish_operation_with_error(
+                    inner,
+                    connection_id,
+                    Some(operation_id),
+                    error.to_string(),
+                );
             }
         },
     }
@@ -570,11 +815,12 @@ async fn handle_adapter_event(
     adapter: &Adapter,
     runtime_sender: &UnboundedSender<RuntimeMessage>,
     runtime_state: &Arc<RuntimeTaskState>,
+    connection_id: u64,
     event: AdapterEvent,
 ) {
     match event {
         AdapterEvent::PropertyChanged(_) => {
-            refresh_adapter_state(inner, adapter, None, None).await;
+            refresh_adapter_state(inner, adapter, connection_id, None, None).await;
         }
         AdapterEvent::DeviceAdded(address) => {
             let device_identifier = BluetoothDeviceId(address.to_string());
@@ -583,10 +829,11 @@ async fn handle_adapter_event(
                 adapter,
                 runtime_sender,
                 &mut device_watchers,
+                connection_id,
                 device_identifier.clone(),
             );
             drop(device_watchers);
-            refresh_device(adapter, inner, device_identifier, None, None).await;
+            refresh_device(adapter, inner, connection_id, device_identifier, None, None).await;
         }
         AdapterEvent::DeviceRemoved(address) => {
             let device_identifier = BluetoothDeviceId(address.to_string());
@@ -598,14 +845,22 @@ async fn handle_adapter_event(
             {
                 task.abort();
             }
-            let is_device_present =
-                refresh_device(adapter, inner, device_identifier.clone(), None, None).await;
+            let is_device_present = refresh_device(
+                adapter,
+                inner,
+                connection_id,
+                device_identifier.clone(),
+                None,
+                None,
+            )
+            .await;
             if is_device_present {
                 let mut device_watchers = runtime_state.device_watchers.lock().await;
                 spawn_device_watcher(
                     adapter,
                     runtime_sender,
                     &mut device_watchers,
+                    connection_id,
                     device_identifier,
                 );
             }
@@ -616,22 +871,30 @@ async fn handle_adapter_event(
 async fn spawn_adapter_watcher(
     adapter: &Adapter,
     runtime_sender: &UnboundedSender<RuntimeMessage>,
-) {
+    connection_id: u64,
+) -> Result<(), BluetoothConnectionError> {
     match adapter.events().await {
         Ok(mut event_stream) => {
             let sender = runtime_sender.clone();
             tokio::spawn(async move {
                 while let Some(event) = event_stream.next().await {
-                    if sender.send(RuntimeMessage::AdapterEvent(event)).is_err() {
+                    if sender
+                        .send(RuntimeMessage::AdapterEvent {
+                            connection_id,
+                            event,
+                        })
+                        .is_err()
+                    {
                         return;
                     }
                 }
-                let _ = sender.send(RuntimeMessage::AdapterEventsEnded);
+                let _ = sender.send(RuntimeMessage::AdapterEventsEnded { connection_id });
             });
+            Ok(())
         }
-        Err(error) => {
-            warn!("failed to subscribe to bluetooth adapter events: {error}");
-        }
+        Err(error) => Err(BluetoothConnectionError::BackendUnavailable {
+            message: format!("failed to subscribe to bluetooth adapter events: {error}"),
+        }),
     }
 }
 
@@ -639,6 +902,7 @@ fn spawn_device_watcher(
     adapter: &Adapter,
     runtime_sender: &UnboundedSender<RuntimeMessage>,
     device_watchers: &mut BTreeMap<BluetoothDeviceId, tokio::task::JoinHandle<()>>,
+    connection_id: u64,
     device_identifier: BluetoothDeviceId,
 ) {
     if device_watchers.contains_key(&device_identifier) {
@@ -663,6 +927,7 @@ fn spawn_device_watcher(
                         DeviceEvent::PropertyChanged(_) => {
                             if sender
                                 .send(RuntimeMessage::DeviceEvent {
+                                    connection_id,
                                     device_identifier: watcher_identifier.clone(),
                                 })
                                 .is_err()
@@ -679,6 +944,7 @@ fn spawn_device_watcher(
         }
 
         let _ = sender.send(RuntimeMessage::DeviceEventsEnded {
+            connection_id,
             device_identifier: watcher_identifier,
         });
     });
@@ -729,11 +995,15 @@ async fn load_current_state(adapter: &Adapter) -> bluer::Result<BluetoothState> 
 async fn refresh_adapter_state(
     inner: &Arc<BackendState>,
     adapter: &Adapter,
+    connection_id: u64,
     completed_operation_id: Option<BluetoothOperationId>,
     last_error: Option<BluetoothUserVisibleError>,
 ) {
     match load_current_state(adapter).await {
         Ok(mut next_state) => {
+            if !inner.is_active_connection(connection_id) {
+                return;
+            }
             let current_state = inner.current_state();
             let FeatureState::Ready(current_ready_state) = current_state else {
                 return;
@@ -748,7 +1018,12 @@ async fn refresh_adapter_state(
             inner.publish(FeatureState::Ready(next_state));
         }
         Err(error) => {
-            finish_operation_with_error(inner, completed_operation_id, error.to_string());
+            finish_operation_with_error(
+                inner,
+                connection_id,
+                completed_operation_id,
+                error.to_string(),
+            );
         }
     }
 }
@@ -756,11 +1031,15 @@ async fn refresh_adapter_state(
 async fn refresh_device(
     adapter: &Adapter,
     inner: &Arc<BackendState>,
+    connection_id: u64,
     device_identifier: BluetoothDeviceId,
     completed_operation_id: Option<BluetoothOperationId>,
     next_error: Option<BluetoothUserVisibleError>,
 ) -> bool {
     let updated_device = load_device(adapter, device_identifier.0.clone()).await;
+    if !inner.is_active_connection(connection_id) {
+        return false;
+    }
     let current_state = inner.current_state();
     let FeatureState::Ready(mut ready_state) = current_state else {
         return false;
@@ -841,16 +1120,22 @@ fn finalize_ready_state(
 async fn refresh_device_from_identifier(
     inner: &Arc<BackendState>,
     adapter: &Adapter,
+    connection_id: u64,
     device_identifier: BluetoothDeviceId,
 ) {
-    refresh_device(adapter, inner, device_identifier, None, None).await;
+    refresh_device(adapter, inner, connection_id, device_identifier, None, None).await;
 }
 
 fn apply_pending_operation(
     inner: &Arc<BackendState>,
+    connection_id: u64,
     operation_id: BluetoothOperationId,
     operation_kind: BluetoothOperationKind,
 ) {
+    if !inner.is_active_connection(connection_id) {
+        return;
+    }
+
     let current_state = inner.current_state();
     let FeatureState::Ready(mut ready_state) = current_state else {
         return;
@@ -920,9 +1205,14 @@ fn apply_pending_states(state: &mut BluetoothState) {
 
 fn finish_operation_with_error(
     inner: &Arc<BackendState>,
+    connection_id: u64,
     operation_id: Option<BluetoothOperationId>,
     message: String,
 ) {
+    if !inner.is_active_connection(connection_id) {
+        return;
+    }
+
     let current_state = inner.current_state();
     let FeatureState::Ready(mut ready_state) = current_state else {
         return;

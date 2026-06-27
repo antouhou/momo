@@ -59,7 +59,7 @@ impl PlatformVolumeHandle {
             next_observer_id: AtomicU64::new(1),
         });
         let (command_sender, command_receiver) = channel();
-        let worker_inner = inner.clone();
+        let worker_inner = Arc::clone(&inner);
         let runtime_sender = command_sender.clone();
         std::thread::Builder::new()
             .name("system-control-linux-volume".to_string())
@@ -357,7 +357,7 @@ impl PlatformBatteryHandle {
             next_observer_id: AtomicU64::new(1),
         });
         let (command_sender, command_receiver) = channel();
-        let worker_inner = inner.clone();
+        let worker_inner = Arc::clone(&inner);
         std::thread::Builder::new()
             .name("system-control-linux-battery".to_string())
             .spawn(move || run_battery_runtime(worker_inner, command_receiver))

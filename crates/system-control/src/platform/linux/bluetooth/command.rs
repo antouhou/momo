@@ -1,9 +1,3 @@
-use std::sync::Arc;
-
-use bluer::{Adapter, AdapterEvent};
-use futures_util::StreamExt;
-use tokio::sync::mpsc::UnboundedSender;
-
 use super::device::device_from_identifier;
 use super::events::spawn_device_watcher;
 use super::runtime::RuntimeTaskState;
@@ -11,7 +5,18 @@ use super::state::{
     apply_pending_operation, finish_operation_with_error, refresh_adapter_state, refresh_device,
 };
 use super::store::BackendState;
-use crate::bluetooth::{BluetoothDeviceId, BluetoothOperationId, BluetoothOperationKind};
+use crate::bluetooth::{
+    BluetoothDeviceId, BluetoothOperationId, BluetoothOperationKind, BluetoothUserVisibleError,
+};
+use bluer::{Adapter, AdapterEvent};
+use futures_util::StreamExt;
+use std::sync::Arc;
+use std::time::Duration;
+use tokio::sync::mpsc::UnboundedSender;
+use tokio::time::timeout;
+
+const BLUETOOTH_CONNECT_TIMEOUT: Duration = Duration::from_secs(20);
+const BLUETOOTH_CONNECT_CANCEL_TIMEOUT: Duration = Duration::from_secs(5);
 
 pub(super) enum RuntimeMessage {
     Command(BluetoothCommand),
@@ -165,45 +170,18 @@ pub(super) async fn handle_command(
         BluetoothCommand::ConnectDevice {
             operation_id,
             device_identifier,
-        } => match device_from_identifier(adapter, &device_identifier) {
-            Ok(device) => match device.connect().await {
-                Ok(()) => {
-                    let mut device_watchers = runtime_state.device_watchers.lock().await;
-                    spawn_device_watcher(
-                        adapter,
-                        runtime_sender,
-                        &mut device_watchers,
-                        connection_id,
-                        device_identifier.clone(),
-                    );
-                    refresh_device(
-                        adapter,
-                        inner,
-                        connection_id,
-                        device_identifier,
-                        Some(operation_id),
-                        None,
-                    )
-                    .await;
-                }
-                Err(error) => {
-                    finish_operation_with_error(
-                        inner,
-                        connection_id,
-                        Some(operation_id),
-                        error.to_string(),
-                    );
-                }
-            },
-            Err(error) => {
-                finish_operation_with_error(
-                    inner,
-                    connection_id,
-                    Some(operation_id),
-                    error.to_string(),
-                );
-            }
-        },
+        } => {
+            handle_connect_device(
+                inner,
+                adapter,
+                runtime_sender,
+                runtime_state,
+                connection_id,
+                operation_id,
+                device_identifier,
+            )
+            .await;
+        }
         BluetoothCommand::DisconnectDevice {
             operation_id,
             device_identifier,
@@ -238,6 +216,85 @@ pub(super) async fn handle_command(
                 );
             }
         },
+    }
+}
+
+async fn handle_connect_device(
+    inner: &Arc<BackendState>,
+    adapter: &Adapter,
+    runtime_sender: &UnboundedSender<RuntimeMessage>,
+    runtime_state: &Arc<RuntimeTaskState>,
+    connection_id: u64,
+    operation_id: BluetoothOperationId,
+    device_identifier: BluetoothDeviceId,
+) {
+    let device = match device_from_identifier(adapter, &device_identifier) {
+        Ok(device) => device,
+        Err(error) => {
+            finish_operation_with_error(
+                inner,
+                connection_id,
+                Some(operation_id),
+                error.to_string(),
+            );
+            return;
+        }
+    };
+
+    match timeout(BLUETOOTH_CONNECT_TIMEOUT, device.connect()).await {
+        Ok(Ok(())) => {
+            let mut device_watchers = runtime_state.device_watchers.lock().await;
+            spawn_device_watcher(
+                adapter,
+                runtime_sender,
+                &mut device_watchers,
+                connection_id,
+                device_identifier.clone(),
+            );
+            refresh_device(
+                adapter,
+                inner,
+                connection_id,
+                device_identifier,
+                Some(operation_id),
+                None,
+            )
+            .await;
+        }
+        Ok(Err(error)) => {
+            finish_operation_with_error(
+                inner,
+                connection_id,
+                Some(operation_id),
+                error.to_string(),
+            );
+        }
+        Err(_) => {
+            let cancellation_error =
+                match timeout(BLUETOOTH_CONNECT_CANCEL_TIMEOUT, device.disconnect()).await {
+                    Ok(Ok(())) => None,
+                    Ok(Err(error)) => Some(format!("failed to cancel connection request: {error}")),
+                    Err(_) => Some("connection cancellation timed out".to_string()),
+                };
+            let message = match cancellation_error {
+                Some(cancellation_error) => {
+                    format!("Bluetooth connection timed out; {cancellation_error}")
+                }
+                None => "Bluetooth connection timed out".to_string(),
+            };
+            refresh_device(
+                adapter,
+                inner,
+                connection_id,
+                device_identifier,
+                Some(operation_id),
+                Some(BluetoothUserVisibleError {
+                    operation_id: Some(operation_id),
+                    message,
+                }),
+            )
+            .await;
+        }
     }
 }
 

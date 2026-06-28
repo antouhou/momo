@@ -1,3 +1,4 @@
+use appkeeper::app_launcher::{AppLauncher, LaunchOptions};
 use appkeeper::app_provider::AppProvider;
 use daiko::component::ComponentContext;
 use daiko::state_management::StateHandle;
@@ -5,12 +6,19 @@ use daiko::style::Color;
 use daiko::{AppContext, Id};
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::sync::mpsc::Sender;
+use tracing::error;
 
 pub(crate) const APPS_STATE_ID: &str = "momo_apps_state";
+
+pub enum AppCommand {
+    LaunchApp(String),
+}
 
 pub(crate) struct AppsState {
     pub app_entries: Vec<AppEntry>,
     pub is_loading: bool,
+    pub command_sender: Option<Sender<AppCommand>>,
 }
 
 impl Default for AppsState {
@@ -18,6 +26,7 @@ impl Default for AppsState {
         Self {
             app_entries: vec![],
             is_loading: true,
+            command_sender: None,
         }
     }
 }
@@ -27,6 +36,12 @@ pub(crate) fn init_app_state(ctx: &mut AppContext) {
     std::thread::spawn(move || {
         let provider = appkeeper::app_provider();
         let entries = provider.list();
+        let launcher = appkeeper::app_launcher();
+        let (sender, receiver) = std::sync::mpsc::channel::<AppCommand>();
+        {
+            let mut guard = state.write();
+            guard.command_sender = Some(sender);
+        }
 
         {
             let mut guard = state.write();
@@ -49,6 +64,35 @@ pub(crate) fn init_app_state(ctx: &mut AppContext) {
         // provider.subscribe(move |event| {
         //     let mut guard = subscription_state.write();
         // });
+
+        while let Ok(cmd) = receiver.recv() {
+            match cmd {
+                AppCommand::LaunchApp(id) => {
+                    // TODO: this is stupid, refactor this
+                    if let Some(entry) = provider.entry(id.clone()) {
+                        // TODO: do something with options
+                        let launch_result = launcher.launch(
+                            &entry,
+                            LaunchOptions {
+                                files: vec![],
+                                urls: vec![],
+                            },
+                        );
+                        match launch_result {
+                            Ok(()) => {
+                                // TODO: Notify the state that the app has launched
+                            }
+                            Err(err) => {
+                                error!("Error while launching the app: {}", err);
+                                // TODO: Notify the state that the app launch failed
+                            }
+                        }
+                    } else {
+                        error!("Can't find app {} in the list for launch", id);
+                    }
+                }
+            }
+        }
     });
 }
 

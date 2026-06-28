@@ -16,6 +16,7 @@ pub struct SettingsMenuState {
     pub is_animating: bool,
     pub last_active_view: SettingsMenuViewType,
     pub active_view: SettingsMenuViewType,
+    pub just_started_closing: bool,
 }
 
 impl Default for SettingsMenuState {
@@ -27,6 +28,7 @@ impl Default for SettingsMenuState {
             is_animating: false,
             last_active_view: SettingsMenuViewType::Main,
             active_view: SettingsMenuViewType::Main,
+            just_started_closing: false,
         }
     }
 }

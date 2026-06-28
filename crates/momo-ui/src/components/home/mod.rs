@@ -64,9 +64,7 @@ impl Component for Home {
             .with_tag("home-root")
             .with_style(home_style())
             // TODO: make the element inside the header into a view transition
-            .with_content(HomeHeader::new(PageDots {
-                interactions_disabled: true,
-            }))
+            .with_content(HomeHeader::new(PageDots))
             .with_content(AppGrid {
                 interactions_disabled: launch.active_launch.is_some(),
                 hidden_app_id: launch.launched_app_id.clone(),

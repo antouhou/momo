@@ -75,14 +75,6 @@ impl Component for SettingsMenuPanel {
                 || close_from_focus_leave;
 
             if should_close || just_opened {
-                let opened_from_trigger_press = state.read().opened_from_trigger_press;
-                if close_from_navigation && opened_from_trigger_press {
-                    ctx.navigation().request_focus_by_key(
-                        crate::components::home::model::home_top_row_settings_focus_key(),
-                        FocusOrigin::Navigation,
-                    );
-                }
-
                 if should_close
                     && state.read().active_view == SettingsMenuViewType::Bluetooth
                     && let Err(error) = bluetooth_handle(ctx).stop_discovery()
@@ -116,6 +108,7 @@ impl Component for SettingsMenuPanel {
 #[derive(Clone, Copy, Default)]
 struct SettingsMenuMotionState {
     previous_open: Option<bool>,
+    clear_just_started_closing_next_frame: bool,
 }
 
 #[derive(Clone, Copy)]
@@ -278,6 +271,13 @@ pub(crate) fn settings_overlay(ctx: &mut ComponentContext) -> Overlay {
 fn settings_menu_visibility(ctx: &mut ComponentContext, is_open: bool) -> SettingsMenuVisibility {
     let motion_state = ctx.use_local_state(SettingsMenuMotionState::default);
     let mut motion = *motion_state.read();
+    let state = ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
+    if motion.clear_just_started_closing_next_frame {
+        state.write_silent().just_started_closing = false;
+        motion.clear_just_started_closing_next_frame = false;
+        *motion_state.write_silent() = motion;
+    }
+
     let animation = ctx.animation_with_id(
         Id::new(SETTINGS_MENU_ANIMATION_ID),
         AnimationParameters::default()
@@ -301,6 +301,8 @@ fn settings_menu_visibility(ctx: &mut ComponentContext, is_open: bool) -> Settin
             if is_open {
                 animation.play_forward();
             } else {
+                state.write_silent().just_started_closing = true;
+                motion.clear_just_started_closing_next_frame = true;
                 animation.play_backward();
             }
             *motion_state.write_silent() = motion;

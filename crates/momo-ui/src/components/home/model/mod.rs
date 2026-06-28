@@ -22,8 +22,8 @@ pub(super) const HOME_VOLUME_HANDLE_ID: &str = "momo_home_volume_handle";
 pub(super) const HOME_VOLUME_OBSERVATION_ID: &str = "momo_home_volume_observation";
 pub(super) const HOME_VOLUME_STATE_ID: &str = "momo_home_volume_state";
 pub(super) const HOME_LAUNCH_CHANNEL_ID: &str = "momo_home_launch_channel";
-pub(super) const HOME_TOP_ROW_APPS_FOCUS_KEY_ID: &str = "momo_home_top_row_apps";
-pub(super) const HOME_TOP_ROW_SETTINGS_FOCUS_KEY_ID: &str = "momo_home_top_row_settings";
+// pub(super) const HOME_TOP_ROW_APPS_FOCUS_KEY_ID: &str = "momo_home_top_row_apps";
+// pub(super) const HOME_TOP_ROW_SETTINGS_FOCUS_KEY_ID: &str = "momo_home_top_row_settings";
 
 pub(super) const SCREEN_PADDING: f32 = 40.0;
 pub(super) const SECTION_GAP: f32 = 24.0;
@@ -40,13 +40,13 @@ pub(super) const TILE_ICON_GLYPH_SIZE: usize = 96;
 pub(super) const TILE_PADDING: f32 = 16.0;
 pub(super) const TILE_CONTENT_GAP: f32 = 12.0;
 
-pub fn home_top_row_apps_focus_key() -> FocusKey {
-    FocusKey::new(HOME_TOP_ROW_APPS_FOCUS_KEY_ID)
-}
+// pub fn home_top_row_apps_focus_key() -> FocusKey {
+//     FocusKey::new(HOME_TOP_ROW_APPS_FOCUS_KEY_ID)
+// }
 
-pub fn home_top_row_settings_focus_key() -> FocusKey {
-    FocusKey::new(HOME_TOP_ROW_SETTINGS_FOCUS_KEY_ID)
-}
+// pub fn home_top_row_settings_focus_key() -> FocusKey {
+//     FocusKey::new(HOME_TOP_ROW_SETTINGS_FOCUS_KEY_ID)
+// }
 
 #[derive(Clone)]
 pub(super) struct LaunchRequest {

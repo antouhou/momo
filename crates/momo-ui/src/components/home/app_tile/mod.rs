@@ -1,6 +1,6 @@
 mod style;
 
-use crate::app_state::{APPS_STATE_ID, AppCommand, AppEntry, AppsState};
+use crate::app_state::{AppCommand, AppEntry, use_apps_state};
 use crate::components::home::app_icon::app_icon;
 use crate::components::home::app_tile::style::{tile_style, tile_title_style};
 use crate::components::home::model::{
@@ -103,10 +103,16 @@ pub(crate) fn send_app_launch_request(
     icon_origin: Vec2,
     icon_size: Vec2,
 ) {
-    let apps_state = ctx.use_shared_state(Id::new(APPS_STATE_ID), AppsState::default);
-    if let Some(sender) = apps_state.read().command_sender.as_ref() {
-        let _ = sender.send(AppCommand::LaunchApp(app.id.to_string()));
+    let apps_state = use_apps_state(ctx);
+
+    {
+        let mut apps = apps_state.write_silent();
+        if let Some(sender) = apps.command_sender.as_ref() {
+            let _ = sender.send(AppCommand::LaunchApp(app.id.to_string()));
+        }
+        apps.currently_launching_app = Some(Arc::clone(&app.id));
     }
+
     let (surface_position, surface_size) = transformed_local_rect(
         layout.position_absolute,
         transform,

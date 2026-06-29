@@ -1,3 +1,4 @@
+use crate::app_state::use_apps_state;
 use crate::components::home::launch::{
     HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID, LaunchOverlayEvent, LaunchPhase, LaunchTransitionState,
 };
@@ -12,10 +13,7 @@ pub trait LaunchStateExtension {
 }
 
 impl LaunchStateExtension for StateHandle<Option<LaunchTransitionState>> {
-    fn set_phase(
-        &self,
-        phase: LaunchPhase,
-    ) {
+    fn set_phase(&self, phase: LaunchPhase) {
         let mut guard = self.write();
         if let Some(state) = guard.as_mut() {
             state.phase = phase;
@@ -33,11 +31,12 @@ pub(in crate::components::home) struct LaunchControllerOutput {
 pub(in crate::components::home) fn use_launch_controller(
     ctx: &mut ComponentContext,
 ) -> LaunchControllerOutput {
+    println!("Hehe");
     let launch_channel = ctx.use_channel_with_id(HOME_LAUNCH_CHANNEL_ID);
     let overlay_event_channel = ctx.use_channel_with_id(HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID);
     let launch_state_handle = ctx.use_local_state(|| None::<LaunchTransitionState>);
     let restore_focus_app_id = ctx.use_local_state(|| None::<Arc<String>>);
-    let restore_dock_focus_key = ctx.use_local_state(|| None::<FocusKey>);
+    let restore_dock_focus_key = ctx.use_local_state(|| None::<(Arc<String>, FocusKey)>);
     let home_scope = ctx.focus_scope();
     let home_focusable_handle = ctx.focusable();
 
@@ -55,20 +54,47 @@ pub(in crate::components::home) fn use_launch_controller(
         }
     }
 
-    let launch_is_active = launch_state_handle.read().is_some() || next_launch_request.is_some();
+    let mut launch_transition_state = launch_state_handle.read().clone();
+    let launch_is_active = launch_transition_state.is_some() || next_launch_request.is_some();
+
     home_focusable_handle.set_navigation_enabled(launch_is_active);
     home_focusable_handle.capture_when_engaged(if launch_is_active {
         &[NavigationInputAction::Cancel, NavigationInputAction::Back]
     } else {
         &[]
     });
-    let should_reverse_launch = home_focusable_handle.just_cancelled()
-        || home_focusable_handle.drain_captured_actions().any(|action| {
+
+    let just_pressed_cancel = home_focusable_handle
+        .drain_captured_actions()
+        .any(|action| {
             matches!(
                 action,
                 NavigationInputAction::Cancel | NavigationInputAction::Back
             )
         });
+    let mut should_reverse_launch = home_focusable_handle.just_cancelled() || just_pressed_cancel;
+
+    let apps_state_handle = use_apps_state(ctx);
+    let mut current_launch_finished = false;
+
+    {
+        let mut apps = apps_state_handle.write_silent();
+        let current_launching_id = apps.currently_launching_app.as_ref().map(|id| Arc::clone(id));
+        let res = &mut apps.app_ops_results;
+        for launch_result in res.drain(..) {
+            // TODO: print error message on errors
+            current_launch_finished = current_launching_id
+                .as_ref()
+                .map(|id| launch_result.id() == id.as_str())
+                .unwrap_or_default();
+        }
+    }
+
+    if launch_is_active && current_launch_finished {
+        next_launch_request = None;
+        should_reverse_launch = true;
+        apps_state_handle.write_silent().currently_launching_app = None;
+    }
 
     if let Some(request) = next_launch_request {
         *launch_state_handle.write() = Some(LaunchTransitionState {
@@ -105,7 +131,10 @@ pub(in crate::components::home) fn use_launch_controller(
                         }
                         LaunchRestoreFocus::Dock(focus_key) => {
                             *restore_focus_app_id.write() = None;
-                            *restore_dock_focus_key.write() = Some(*focus_key);
+                            *restore_dock_focus_key.write() = Some((
+                                Arc::clone(&current_launch_transition_state.request.app.id),
+                                *focus_key,
+                            ));
                         }
                     }
                     *launch_state_handle.write() = None;
@@ -136,7 +165,7 @@ pub(in crate::components::home) fn use_launch_controller(
             .as_ref()
             .map(|active| Arc::clone(&active.request.app.id)),
         preferred_focus_app_id: restore_focus_app_id.read().clone(),
-        preferred_dock_focus_key: *restore_dock_focus_key.read(),
+        preferred_dock_focus_key: restore_dock_focus_key.read().as_ref().map(|val| val.1),
         active_launch: launch_transition_state,
     }
 }

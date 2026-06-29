@@ -3,7 +3,7 @@ mod metrics;
 mod page_dots;
 mod state;
 
-use crate::app_state::apps_state;
+use crate::app_state::use_apps_state;
 use crate::components::home::model::{SCREEN_PADDING, TILE_HEIGHT, TILE_WIDTH};
 use app_grid_viewport::AppGridViewport;
 use daiko::component::{Component, ComponentContext};
@@ -75,7 +75,7 @@ struct AppGridPager {
 
 impl Component for AppGridPager {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        let apps_handle = apps_state(ctx);
+        let apps_handle = use_apps_state(ctx);
         let apps = apps_handle.read();
         let metrics = AppGridMetrics::from_wrapper_size(
             self.wrapper_size.unwrap_or_else(|| {

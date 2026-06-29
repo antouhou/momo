@@ -1,4 +1,4 @@
-use crate::app_state::{AppEntry, apps_state};
+use crate::app_state::{AppEntry, use_apps_state};
 use crate::components::home::app_grid::metrics::AppGridMetrics;
 use crate::components::home::app_grid::state::app_grid_state_handle;
 use crate::components::home::app_grid::{
@@ -36,7 +36,7 @@ impl Component for AppGridViewport {
         let viewport_layout = ctx.layout();
         let page_state = app_grid_state_handle(ctx);
 
-        let apps_handle = apps_state(ctx);
+        let apps_handle = use_apps_state(ctx);
         let apps_state = apps_handle.read();
         let apps = &apps_state.app_entries;
 

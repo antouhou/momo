@@ -1,4 +1,4 @@
-use appkeeper::app_launcher::{AppLauncher, LaunchOptions};
+use appkeeper::app_launcher::{AppLauncher, LaunchError, LaunchOptions};
 use appkeeper::app_provider::AppProvider;
 use daiko::component::ComponentContext;
 use daiko::state_management::StateHandle;
@@ -15,10 +15,33 @@ pub enum AppCommand {
     LaunchApp(String),
 }
 
+pub enum AppOpResult {
+    LaunchedApp(String),
+    LaunchFailed(String, LaunchError),
+}
+
+impl AppOpResult {
+    pub fn is_for_app(&self, app_id: &str) -> bool {
+        match self {
+            AppOpResult::LaunchedApp(id) => id == app_id,
+            AppOpResult::LaunchFailed(id, _) => false,
+        }
+    }
+
+    pub fn id(&self) -> &str {
+        match self {
+            AppOpResult::LaunchedApp(id) => id.as_str(),
+            AppOpResult::LaunchFailed(id, _) => id.as_str(),
+        }
+    }
+}
+
 pub(crate) struct AppsState {
     pub app_entries: Vec<AppEntry>,
     pub is_loading: bool,
     pub command_sender: Option<Sender<AppCommand>>,
+    pub app_ops_results: Vec<AppOpResult>,
+    pub currently_launching_app: Option<Arc<String>>,
 }
 
 impl Default for AppsState {
@@ -27,12 +50,15 @@ impl Default for AppsState {
             app_entries: vec![],
             is_loading: true,
             command_sender: None,
+            app_ops_results: vec![],
+            currently_launching_app: None,
         }
     }
 }
 
 pub(crate) fn init_app_state(ctx: &mut AppContext) {
     let state = ctx.peek_global_state(Id::new(APPS_STATE_ID), AppsState::default);
+
     std::thread::spawn(move || {
         let provider = appkeeper::app_provider();
         let entries = provider.list();
@@ -80,11 +106,18 @@ pub(crate) fn init_app_state(ctx: &mut AppContext) {
                         );
                         match launch_result {
                             Ok(()) => {
-                                // TODO: Notify the state that the app has launched
+                                println!("Successfully launchd app {}", id);
+                                state
+                                    .write()
+                                    .app_ops_results
+                                    .push(AppOpResult::LaunchedApp(id.clone()));
                             }
                             Err(err) => {
-                                error!("Error while launching the app: {}", err);
-                                // TODO: Notify the state that the app launch failed
+                                eprintln!("Error while launching the app: {}", err);
+                                state
+                                    .write()
+                                    .app_ops_results
+                                    .push(AppOpResult::LaunchFailed(id.clone(), err));
                             }
                         }
                     } else {
@@ -96,7 +129,7 @@ pub(crate) fn init_app_state(ctx: &mut AppContext) {
     });
 }
 
-pub(crate) fn apps_state(ctx: &mut ComponentContext) -> StateHandle<AppsState> {
+pub(crate) fn use_apps_state(ctx: &mut ComponentContext) -> StateHandle<AppsState> {
     ctx.use_global_state(Id::new(APPS_STATE_ID), AppsState::default)
 }
 

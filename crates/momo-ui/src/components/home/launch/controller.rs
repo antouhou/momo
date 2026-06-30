@@ -1,4 +1,4 @@
-use crate::app_state::use_apps_state;
+use crate::app_state::{AppOpResult, use_apps_state};
 use crate::components::home::launch::{
     HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID, LaunchOverlayEvent, LaunchPhase, LaunchTransitionState,
 };
@@ -6,6 +6,7 @@ use crate::components::home::model::{HOME_LAUNCH_CHANNEL_ID, LaunchRestoreFocus}
 use daiko::component::ComponentContext;
 use daiko::navigation::{FocusKey, FocusOrigin, NavigationInputAction};
 use daiko::state_management::StateHandle;
+use daiko::window_events::WindowEventData;
 use std::sync::Arc;
 
 pub trait LaunchStateExtension {
@@ -31,7 +32,7 @@ pub(in crate::components::home) struct LaunchControllerOutput {
 pub(in crate::components::home) fn use_launch_controller(
     ctx: &mut ComponentContext,
 ) -> LaunchControllerOutput {
-    println!("Hehe");
+    let handoff_signal = detect_launch_handoff_signal(ctx);
     let launch_channel = ctx.use_channel_with_id(HOME_LAUNCH_CHANNEL_ID);
     let overlay_event_channel = ctx.use_channel_with_id(HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID);
     let launch_state_handle = ctx.use_local_state(|| None::<LaunchTransitionState>);
@@ -54,7 +55,7 @@ pub(in crate::components::home) fn use_launch_controller(
         }
     }
 
-    let mut launch_transition_state = launch_state_handle.read().clone();
+    let launch_transition_state = launch_state_handle.read().clone();
     let launch_is_active = launch_transition_state.is_some() || next_launch_request.is_some();
 
     home_focusable_handle.set_navigation_enabled(launch_is_active);
@@ -75,25 +76,27 @@ pub(in crate::components::home) fn use_launch_controller(
     let mut should_reverse_launch = home_focusable_handle.just_cancelled() || just_pressed_cancel;
 
     let apps_state_handle = use_apps_state(ctx);
-    let mut current_launch_finished = false;
+    let mut current_launch_failed = false;
 
     {
         let mut apps = apps_state_handle.write_silent();
-        let current_launching_id = apps.currently_launching_app.as_ref().map(|id| Arc::clone(id));
         let res = &mut apps.app_ops_results;
         for launch_result in res.drain(..) {
-            // TODO: print error message on errors
-            current_launch_finished = current_launching_id
+            let result_is_for_current_launch = launch_transition_state
                 .as_ref()
-                .map(|id| launch_result.id() == id.as_str())
+                .map(|state| launch_result.is_for_app(state.request.app.id()))
                 .unwrap_or_default();
+            if result_is_for_current_launch && let AppOpResult::LaunchFailed(_, err) = launch_result
+            {
+                eprintln!("Error while launching the app: {}", err);
+                current_launch_failed = true;
+            }
         }
     }
 
-    if launch_is_active && current_launch_finished {
+    if launch_transition_state.is_some() && (current_launch_failed || handoff_signal.is_some()) {
         next_launch_request = None;
         should_reverse_launch = true;
-        apps_state_handle.write_silent().currently_launching_app = None;
     }
 
     if let Some(request) = next_launch_request {
@@ -168,4 +171,16 @@ pub(in crate::components::home) fn use_launch_controller(
         preferred_dock_focus_key: restore_dock_focus_key.read().as_ref().map(|val| val.1),
         active_launch: launch_transition_state,
     }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum LaunchHandoffSignal {
+    WindowFocusLost,
+}
+
+fn detect_launch_handoff_signal(ctx: &mut ComponentContext) -> Option<LaunchHandoffSignal> {
+    ctx.window_events()
+        .iter()
+        .any(|event| matches!(event.data, WindowEventData::FocusLost))
+        .then_some(LaunchHandoffSignal::WindowFocusLost)
 }

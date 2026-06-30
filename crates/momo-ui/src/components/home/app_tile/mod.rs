@@ -7,6 +7,7 @@ use crate::components::home::model::{
     HOME_LAUNCH_CHANNEL_ID, LaunchRequest, LaunchRestoreFocus, TILE_HEIGHT, TILE_ICON_GLYPH_SIZE,
     TILE_ICON_SIZE, TILE_WIDTH, tile_focus_transform, tile_icon_origin, transformed_local_rect,
 };
+use daiko::Element;
 use daiko::Vec2;
 use daiko::component::{Component, ComponentContext};
 use daiko::layout::Layout;
@@ -14,7 +15,6 @@ use daiko::navigation::{FocusKey, FocusOrigin};
 use daiko::style::{Color, CursorIcon, Style};
 use daiko::widgets::container::{Container, Fit};
 use daiko::widgets::text::Text;
-use daiko::{Element, Id};
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -106,11 +106,10 @@ pub(crate) fn send_app_launch_request(
     let apps_state = use_apps_state(ctx);
 
     {
-        let mut apps = apps_state.write_silent();
+        let apps = apps_state.write_silent();
         if let Some(sender) = apps.command_sender.as_ref() {
             let _ = sender.send(AppCommand::LaunchApp(app.id.to_string()));
         }
-        apps.currently_launching_app = Some(Arc::clone(&app.id));
     }
 
     let (surface_position, surface_size) = transformed_local_rect(

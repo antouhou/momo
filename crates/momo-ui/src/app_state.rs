@@ -16,22 +16,14 @@ pub enum AppCommand {
 }
 
 pub enum AppOpResult {
-    LaunchedApp(String),
+    LaunchSpawned(String),
     LaunchFailed(String, LaunchError),
 }
 
 impl AppOpResult {
     pub fn is_for_app(&self, app_id: &str) -> bool {
         match self {
-            AppOpResult::LaunchedApp(id) => id == app_id,
-            AppOpResult::LaunchFailed(id, _) => false,
-        }
-    }
-
-    pub fn id(&self) -> &str {
-        match self {
-            AppOpResult::LaunchedApp(id) => id.as_str(),
-            AppOpResult::LaunchFailed(id, _) => id.as_str(),
+            AppOpResult::LaunchSpawned(id) | AppOpResult::LaunchFailed(id, _) => id == app_id,
         }
     }
 }
@@ -41,7 +33,6 @@ pub(crate) struct AppsState {
     pub is_loading: bool,
     pub command_sender: Option<Sender<AppCommand>>,
     pub app_ops_results: Vec<AppOpResult>,
-    pub currently_launching_app: Option<Arc<String>>,
 }
 
 impl Default for AppsState {
@@ -51,7 +42,6 @@ impl Default for AppsState {
             is_loading: true,
             command_sender: None,
             app_ops_results: vec![],
-            currently_launching_app: None,
         }
     }
 }
@@ -106,14 +96,12 @@ pub(crate) fn init_app_state(ctx: &mut AppContext) {
                         );
                         match launch_result {
                             Ok(()) => {
-                                println!("Successfully launchd app {}", id);
                                 state
                                     .write()
                                     .app_ops_results
-                                    .push(AppOpResult::LaunchedApp(id.clone()));
+                                    .push(AppOpResult::LaunchSpawned(id.clone()));
                             }
                             Err(err) => {
-                                eprintln!("Error while launching the app: {}", err);
                                 state
                                     .write()
                                     .app_ops_results

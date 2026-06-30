@@ -10,6 +10,7 @@ use daiko::layout::{AlignItems, FlexDirection, ItemSize};
 use daiko::navigation::{FocusKey, FocusOrigin};
 use daiko::style::{Color, Style, Transform};
 use daiko::testing::TestRunner;
+use daiko::window_events::WindowEvent;
 use daiko::{App, AppContext, Element, Id, Pos2, Vec2};
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -965,6 +966,29 @@ fn cancel_reverses_launch_overlay_and_restores_tile_focus() {
 
     assert!(runner.find_element_by_tag("launch-overlay").is_none());
     runner.assert_focused("movies");
+}
+
+#[test]
+fn window_focus_loss_reverses_launch_overlay() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+
+    runner.click_element("movies");
+    runner.run_frame();
+    thread::sleep(Duration::from_millis(420));
+    runner.run_frame();
+
+    runner
+        .app_runner_mut()
+        .context
+        .add_window_event(WindowEvent::focus_lost(Instant::now()));
+    runner.run_frame();
+    thread::sleep(Duration::from_millis(420));
+    runner.run_frame();
+    runner.run_frame();
+
+    assert!(runner.find_element_by_tag("launch-overlay").is_none());
 }
 
 fn rendered_element_bounds(

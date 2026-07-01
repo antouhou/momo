@@ -1,7 +1,7 @@
 mod icon;
 mod style;
 
-use crate::app_state::apps_state;
+use crate::app_state::use_apps_state;
 use crate::components::home::app_tile::AppInfo;
 use daiko::Element;
 use daiko::component::{Component, ComponentContext};
@@ -16,7 +16,7 @@ pub struct Dock {
 
 impl Component for Dock {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        let apps_handle = apps_state(ctx);
+        let apps_handle = use_apps_state(ctx);
         let apps = apps_handle.read();
         let docked_apps = apps.app_entries.iter().take(3);
 

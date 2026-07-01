@@ -1,4 +1,4 @@
-use crate::app_state::{AppEntry, apps_state};
+use crate::app_state::{AppEntry, use_apps_state};
 use crate::components::home::app_grid::metrics::AppGridMetrics;
 use crate::components::home::app_grid::state::app_grid_state_handle;
 use crate::components::home::app_grid::{
@@ -11,7 +11,7 @@ use crate::components::home::model::{
 };
 use daiko::animation::SmoothFollowConfig;
 use daiko::component::{Component, ComponentContext};
-use daiko::layout::{AlignItems, FlexDirection, JustifyContent, Layout};
+use daiko::layout::{AlignItems, FlexDirection, JustifyContent};
 use daiko::navigation::{FocusEntryPolicy, FocusKey, TraversalPolicy};
 use daiko::style::{Overflow, Style};
 use daiko::widgets::container::{Container, Fit};
@@ -33,10 +33,9 @@ impl Component for AppGridViewport {
         ));
         let last_focused_key =
             ctx.use_local_state_with_id(Id::new(HOME_APP_GRID_FOCUSED_KEY_ID), || None::<FocusKey>);
-        let viewport_layout = ctx.layout();
         let page_state = app_grid_state_handle(ctx);
 
-        let apps_handle = apps_state(ctx);
+        let apps_handle = use_apps_state(ctx);
         let apps_state = apps_handle.read();
         let apps = &apps_state.app_entries;
 
@@ -51,7 +50,7 @@ impl Component for AppGridViewport {
             }
         }
 
-        if let Some(page_delta) = scroll_page_delta(ctx, viewport_layout) {
+        if let Some(page_delta) = scroll_page_delta(ctx) {
             target_page = self
                 .metrics
                 .offset_page(target_page, page_delta)
@@ -108,15 +107,12 @@ fn focused_page_index(
         .map(|app_index| app_index / tiles_per_page)
 }
 
-fn scroll_page_delta(ctx: &mut ComponentContext, viewport_layout: Option<Layout>) -> Option<isize> {
+fn scroll_page_delta(ctx: &mut ComponentContext) -> Option<isize> {
     let scroll_state = ctx.use_local_state_with_id(
         Id::new(HOME_APP_GRID_SCROLL_ACCUMULATOR_ID),
         AppGridScrollState::default,
     );
     let scroll_delta = ctx.consume_scroll()?;
-    if !pointer_is_inside_layout(ctx, viewport_layout) {
-        return None;
-    }
 
     let scroll_axis_delta = scroll_axis_delta(scroll_delta);
     if scroll_axis_delta.abs() <= f32::EPSILON {
@@ -141,21 +137,6 @@ fn scroll_page_delta(ctx: &mut ComponentContext, viewport_layout: Option<Layout>
         scroll_state.locked_until = Some(now + PAGE_SCROLL_REARM_DURATION);
     }
     page_delta
-}
-
-fn pointer_is_inside_layout(ctx: &mut ComponentContext, viewport_layout: Option<Layout>) -> bool {
-    let Some(layout) = viewport_layout else {
-        return false;
-    };
-    let Some(pointer_position) = ctx.app_context.input_state().pointer.interact_position() else {
-        return false;
-    };
-    let visible_area = layout.visible_area;
-
-    pointer_position.x >= visible_area.min.x
-        && pointer_position.x <= visible_area.max.x
-        && pointer_position.y >= visible_area.min.y
-        && pointer_position.y <= visible_area.max.y
 }
 
 fn page_delta_for_scroll(accumulated_delta: f32) -> Option<isize> {

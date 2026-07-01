@@ -1,6 +1,6 @@
 mod style;
 
-use crate::app_state::AppEntry;
+use crate::app_state::{AppCommand, AppEntry, use_apps_state};
 use crate::components::home::app_icon::app_icon;
 use crate::components::home::app_tile::style::{tile_style, tile_title_style};
 use crate::components::home::model::{
@@ -103,6 +103,15 @@ pub(crate) fn send_app_launch_request(
     icon_origin: Vec2,
     icon_size: Vec2,
 ) {
+    let apps_state = use_apps_state(ctx);
+
+    {
+        let apps = apps_state.write_silent();
+        if let Some(sender) = apps.command_sender.as_ref() {
+            let _ = sender.send(AppCommand::LaunchApp(app.id.to_string()));
+        }
+    }
+
     let (surface_position, surface_size) = transformed_local_rect(
         layout.position_absolute,
         transform,
@@ -169,10 +178,6 @@ impl Component for AppTile {
             button.is_hovering,
             button.is_focus_visible,
         );
-        // TODO: use id to actually launch an app using app launcher
-        // match &self.app.launch {
-        //     AppLaunch::Mock => println!("Activated app: {}", self.app.name()),
-        // }
 
         if button.is_hovering {
             style.set_cursor(CursorIcon::PointingHand)

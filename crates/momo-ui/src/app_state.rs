@@ -1,3 +1,4 @@
+use appkeeper::app_entry::AppEntry as LaunchCommandEntry;
 use appkeeper::app_launcher::{AppLauncher, LaunchError, LaunchOptions};
 use appkeeper::app_provider::AppProvider;
 use daiko::component::ComponentContext;
@@ -15,15 +16,21 @@ pub enum AppCommand {
     LaunchApp(String),
 }
 
+#[derive(Debug)]
+pub struct LaunchErr {
+    pub error: LaunchError,
+    pub launch_command_entry: LaunchCommandEntry,
+}
+
 pub enum AppOpResult {
     LaunchSpawned(String),
-    LaunchFailed(String, LaunchError),
+    LaunchFailed(String, Box<LaunchErr>),
 }
 
 impl AppOpResult {
     pub fn is_for_app(&self, app_id: &str) -> bool {
         match self {
-            AppOpResult::LaunchSpawned(id) | AppOpResult::LaunchFailed(id, _) => id == app_id,
+            Self::LaunchSpawned(id) | Self::LaunchFailed(id, _) => id == app_id,
         }
     }
 }
@@ -105,7 +112,13 @@ pub(crate) fn init_app_state(ctx: &mut AppContext) {
                                 state
                                     .write()
                                     .app_ops_results
-                                    .push(AppOpResult::LaunchFailed(id.clone(), err));
+                                    .push(AppOpResult::LaunchFailed(
+                                        id.clone(),
+                                        Box::new(LaunchErr {
+                                            error: err,
+                                            launch_command_entry: entry.clone(),
+                                        }),
+                                    ));
                             }
                         }
                     } else {

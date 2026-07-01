@@ -8,6 +8,7 @@ use daiko::navigation::{FocusKey, FocusOrigin, NavigationInputAction};
 use daiko::state_management::StateHandle;
 use daiko::window_events::WindowEventData;
 use std::sync::Arc;
+use tracing::error;
 
 pub trait LaunchStateExtension {
     fn set_phase(&self, phase: LaunchPhase);
@@ -81,14 +82,21 @@ pub(in crate::components::home) fn use_launch_controller(
     {
         let mut apps = apps_state_handle.write_silent();
         let res = &mut apps.app_ops_results;
-        for launch_result in res.drain(..) {
-            let result_is_for_current_launch = launch_transition_state
-                .as_ref()
-                .map(|state| launch_result.is_for_app(state.request.app.id()))
-                .unwrap_or_default();
-            if result_is_for_current_launch && let AppOpResult::LaunchFailed(_, err) = launch_result
+        let mut launch_results = res.drain(..);
+        if let Some(state) = launch_transition_state.as_ref() {
+            let current_launch_result = launch_results
+                .find(|launch_result| launch_result.is_for_app(state.request.app.id()));
+
+            if let Some(launch_result) = current_launch_result
+                && let AppOpResult::LaunchFailed(_, err) = launch_result
             {
-                eprintln!("Error while launching the app: {}", err);
+                error!(
+                    "Error while launching the app {}({}): {:?}\nLaunch info: {:?}",
+                    state.request.app.name.as_str(),
+                    state.request.app.id(),
+                    err.error,
+                    err.launch_command_entry
+                );
                 current_launch_failed = true;
             }
         }

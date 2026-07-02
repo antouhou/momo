@@ -6,7 +6,9 @@ members = [
     "crates/momo-compositor",
     "crates/system-control",
     "crates/momo-ui",
+    "crates/momo-greeter-lib",
     "crates/momo-wayfire",
+    "apps/momo-greeter",
 ]
 resolver = "3"
 

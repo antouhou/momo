@@ -1,6 +1,6 @@
 use crate::components::home::clock_chip::ClockChip;
 use crate::components::home::model::SCREEN_PADDING;
-// use crate::components::home::settings_button::HeaderSettingsTrigger;
+// use crate::components::login_screen::settings_button::HeaderSettingsTrigger;
 use daiko::Element;
 use daiko::animation::easing::EasingFunction;
 use daiko::animation::{AnimationParameters, transition};

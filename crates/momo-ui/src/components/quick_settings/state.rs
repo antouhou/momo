@@ -6,6 +6,7 @@ pub enum SettingsMenuViewType {
     #[default]
     Main,
     Bluetooth,
+    Power,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

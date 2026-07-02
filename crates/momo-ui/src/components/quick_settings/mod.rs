@@ -2,11 +2,13 @@ mod bluetooth_submenu;
 mod common;
 mod main_menu;
 mod panel;
+mod power_submenu;
 mod quick_action_button;
 mod settings_tile_button;
 pub mod state;
 mod status_chip;
 mod style;
+mod submenu;
 mod submenu_button;
 mod volume_control;
 

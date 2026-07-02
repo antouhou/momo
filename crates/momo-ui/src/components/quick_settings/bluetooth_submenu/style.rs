@@ -1,10 +1,7 @@
 use super::super::style::{
-    CONTROL_TRANSITION_MS, SETTINGS_COMPACT_CONTENT_GAP, SETTINGS_MENU_CONTENT_WIDTH,
-    SETTINGS_MENU_GAP, SETTINGS_MENU_HORIZONTAL_PADDING, SETTINGS_SCROLLABLE_FOCUS_PADDING,
-    SETTINGS_SUBMENU_DEVICE_ICON_RING_SIZE, SETTINGS_SUBMENU_SECTION_LABEL_HEIGHT,
-    SETTINGS_SUBMENU_SECTION_PADDING, SETTINGS_SUBMENU_SECTION_TITLE_TEXT_SIZE,
-    settings_accent_border_color, settings_accent_color, settings_accent_text_color,
-    settings_label_text_style, settings_submenu_device_available_border_color,
+    CONTROL_TRANSITION_MS, SETTINGS_SUBMENU_DEVICE_ICON_RING_SIZE, settings_accent_border_color,
+    settings_accent_color, settings_accent_text_color,
+    settings_submenu_device_available_border_color,
     settings_submenu_device_available_surface_color,
     settings_submenu_device_unavailable_border_color,
     settings_submenu_device_unavailable_surface_color, settings_surface_muted_color,
@@ -14,9 +11,8 @@ use super::super::style::{
 use daiko::animation::easing::EasingFunction;
 use daiko::animation::{AnimationParameters, transition};
 use daiko::component::ComponentContext;
-use daiko::layout::{AlignItems, FlexDirection, ItemSize, JustifyContent, SizeConstraint};
-use daiko::style::{Border, BorderRadius, Indent, Stroke, Style};
-use daiko::widgets::text::TextStyle;
+use daiko::layout::{AlignItems, FlexDirection, JustifyContent};
+use daiko::style::{Border, BorderRadius, Stroke, Style};
 use std::time::Duration;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -26,41 +22,6 @@ pub(super) enum DeviceRowAvailability {
     Disconnecting,
     Available,
     Unavailable,
-}
-
-pub(super) fn bluetooth_submenu_body_style() -> Style {
-    Style::new()
-        .with_size_constraint(
-            SizeConstraint::exact_content_height().with_exact_width(SETTINGS_MENU_CONTENT_WIDTH),
-        )
-        .with_direction(FlexDirection::Column)
-        .with_padding(Indent::new(
-            SETTINGS_MENU_HORIZONTAL_PADDING,
-            SETTINGS_SCROLLABLE_FOCUS_PADDING,
-            SETTINGS_MENU_HORIZONTAL_PADDING,
-            SETTINGS_SCROLLABLE_FOCUS_PADDING,
-        ))
-        .with_spacing((SETTINGS_MENU_GAP, SETTINGS_MENU_GAP))
-}
-
-pub(super) fn submenu_section_style() -> Style {
-    Style::new()
-        .with_direction(FlexDirection::Column)
-        .with_spacing((SETTINGS_COMPACT_CONTENT_GAP, SETTINGS_COMPACT_CONTENT_GAP))
-}
-
-pub(super) fn submenu_section_label_style() -> Style {
-    Style::new()
-        .with_padding(SETTINGS_SUBMENU_SECTION_PADDING)
-        .with_fixed_height(ItemSize::Points(SETTINGS_SUBMENU_SECTION_LABEL_HEIGHT))
-        .with_direction(FlexDirection::Row)
-        .with_align_items(AlignItems::Center)
-        .with_justify_content(JustifyContent::FlexStart)
-}
-
-pub(super) fn submenu_section_title_style() -> TextStyle {
-    settings_label_text_style(settings_surface_muted_color())
-        .with_font_size(SETTINGS_SUBMENU_SECTION_TITLE_TEXT_SIZE)
 }
 
 pub(super) fn submenu_device_icon_ring_style(

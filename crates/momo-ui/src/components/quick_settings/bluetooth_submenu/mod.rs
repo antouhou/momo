@@ -1,9 +1,8 @@
 mod style;
 
 use self::style::{
-    DeviceRowAvailability, bluetooth_submenu_body_style, submenu_device_icon_color,
-    submenu_device_icon_ring_style, submenu_device_label_color, submenu_section_label_style,
-    submenu_section_style, submenu_section_title_style,
+    DeviceRowAvailability, submenu_device_icon_color, submenu_device_icon_ring_style,
+    submenu_device_label_color,
 };
 use super::common::{
     QuickSettingsControlState, QuickSettingsGlyph, glyph_element, settings_bottom_row, settings_row,
@@ -13,6 +12,10 @@ use super::style::{
     SETTINGS_COMPACT_CONTENT_GAP, SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE,
     SETTINGS_ROUND_BUTTON_SIZE, settings_content_container_style, settings_text_color,
 };
+use super::submenu::{
+    handle_submenu_back_navigation, submenu_body_style, submenu_section_label_style,
+    submenu_section_style, submenu_section_title_style,
+};
 use super::submenu_button::{
     SubmenuButton, SubmenuButtonState, SubmenuButtonSurface, submenu_button_glyph,
     submenu_button_leading_slot, submenu_button_surface_glyph, submenu_toggle_switch,
@@ -21,7 +24,7 @@ use crate::components::home::bluetooth::{
     BluetoothDeviceSection, BluetoothDeviceState, bluetooth_handle, bluetooth_state,
 };
 use daiko::component::{Component, ComponentContext};
-use daiko::navigation::{FocusEntryPolicy, FocusOrigin, NavigationInputAction};
+use daiko::navigation::FocusOrigin;
 use daiko::widgets::scrollable::Scrollable;
 use daiko::widgets::text::Text;
 use daiko::{Element, Id};
@@ -59,25 +62,7 @@ pub(super) struct BluetoothSubmenu {
 
 impl Component for BluetoothSubmenu {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        let focus_scope = ctx.focus_scope();
-        focus_scope.set_entry_policy(FocusEntryPolicy::Remembered);
-        focus_scope.capture_when_contains_focus(&[
-            NavigationInputAction::Cancel,
-            NavigationInputAction::Back,
-        ]);
-
-        let state =
-            ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
-        let should_go_back = focus_scope.drain_captured_actions().any(|action| {
-            matches!(
-                action,
-                NavigationInputAction::Cancel | NavigationInputAction::Back
-            )
-        });
-
-        if should_go_back && state.read().active_view == SettingsMenuViewType::Bluetooth {
-            state.write().set_active_view(SettingsMenuViewType::Main);
-        }
+        handle_submenu_back_navigation(ctx, SettingsMenuViewType::Bluetooth);
 
         Element::new()
             .with_tag("header-settings-bluetooth-submenu")
@@ -104,7 +89,7 @@ impl Component for BluetoothSubmenuBody {
         let bluetooth_state = bluetooth_state.read();
 
         Element::new()
-            .with_style(bluetooth_submenu_body_style())
+            .with_style(submenu_body_style())
             .with_content(device_section(
                 "Recent",
                 &bluetooth_state.recent_devices,

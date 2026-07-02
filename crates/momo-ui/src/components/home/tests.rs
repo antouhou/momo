@@ -217,7 +217,7 @@ fn settings_menu_anchors_near_the_top_right_corner() {
 }
 
 #[test]
-fn settings_menu_renders_the_mock_power_button() {
+fn settings_menu_renders_the_power_button() {
     let mut runner = TestRunner::new(HomeTestApp);
     runner.set_viewport_size(1280.0, 720.0);
     runner.run_frame();
@@ -228,7 +228,7 @@ fn settings_menu_renders_the_mock_power_button() {
 
     assert!(
         runner
-            .find_element_by_tag("header-settings-exit-button")
+            .find_element_by_tag("header-settings-power-button")
             .is_some()
     );
 }
@@ -255,12 +255,12 @@ fn settings_sections_remember_the_last_focused_control_when_reentering() {
     runner.run_frame();
     runner.navigate_right();
     runner.run_frame();
-    runner.assert_focused("header-settings-exit-button");
+    runner.assert_focused("header-settings-power-button");
 
     runner.navigate_down();
     runner.assert_focused("header-settings-volume-control");
     runner.navigate_up();
-    runner.assert_focused("header-settings-exit-button");
+    runner.assert_focused("header-settings-power-button");
 
     runner.navigate_down();
     runner.assert_focused("header-settings-volume-control");

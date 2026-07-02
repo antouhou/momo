@@ -3,6 +3,7 @@ mod style;
 use self::style::settings_menu_style;
 use super::bluetooth_submenu::BluetoothSubmenu;
 use super::main_menu::MainMenu;
+use super::power_submenu::PowerSubmenu;
 use super::state::{
     SETTINGS_MENU_STATE_ID, SETTINGS_VIEW_TRANSITION_ID, SettingsMenuState, SettingsMenuViewType,
 };
@@ -130,6 +131,7 @@ fn settings_view(
             show_scroll_bars_when_overflowing,
         }
         .into_child(),
+        SettingsMenuViewType::Power => PowerSubmenu.into_child(),
     }
 }
 
@@ -225,9 +227,7 @@ fn settings_menu_view_transition_direction(
     to: SettingsMenuViewType,
 ) -> ViewTransitionDirection {
     match (from, to) {
-        (SettingsMenuViewType::Bluetooth, SettingsMenuViewType::Main) => {
-            ViewTransitionDirection::Backward
-        }
+        (_, SettingsMenuViewType::Main) => ViewTransitionDirection::Backward,
         _ => ViewTransitionDirection::Forward,
     }
 }

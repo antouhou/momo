@@ -14,7 +14,7 @@ impl Component for PowerButton {
         let mut pointer = ctx.pointer();
         let focusable = ctx.focusable();
 
-        if pointer.just_pressed() { 
+        if pointer.just_pressed() {
             focusable.request_focus(FocusOrigin::Pointer);
         }
 

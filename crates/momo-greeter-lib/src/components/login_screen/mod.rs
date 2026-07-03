@@ -1,4 +1,5 @@
 mod action_button;
+mod clock;
 mod login_panel;
 mod power_button;
 mod profile_tile;
@@ -7,13 +8,14 @@ mod style;
 #[cfg(test)]
 mod tests;
 
+use crate::components::login_screen::clock::Clock;
 use crate::components::login_screen::login_panel::LoginPanel;
 use crate::components::login_screen::power_button::PowerButton;
 use crate::components::login_screen::profile_tile::ProfileTile;
 use crate::components::login_screen::state::{GreeterState, GreeterView, PROFILE_ACTIONS};
 use crate::components::login_screen::style::{
-    brand_text_style, footer_style, header_style, hint_text_style, main_content_style,
-    profile_row_style, root_style, subtitle_text_style, title_block_style, title_text_style,
+    footer_style, header_style, main_content_style, profile_row_style, root_style,
+    title_block_style, title_text_style,
 };
 use daiko::Element;
 use daiko::component::{Component, ComponentContext};
@@ -21,11 +23,18 @@ use daiko::navigation::{FocusBoundary, FocusEntryPolicy, TraversalPolicy};
 use daiko::widgets::text::Text;
 
 #[derive(Clone, Copy)]
-pub struct LoginScreen;
+pub struct LoginScreen {
+    live_clock: bool,
+}
 
 impl LoginScreen {
     pub fn new() -> Self {
-        Self
+        Self { live_clock: true }
+    }
+
+    #[cfg(test)]
+    fn for_testing() -> Self {
+        Self { live_clock: false }
     }
 }
 
@@ -47,7 +56,7 @@ impl Component for LoginScreen {
                 Element::new()
                     .with_tag("greeter-header")
                     .with_style(header_style())
-                    .with_content(Text::new("MOMO").with_style(brand_text_style())),
+                    .with_content(Clock::new(self.live_clock)),
             )
             .with_content(match view {
                 GreeterView::Profiles => profile_picker(greeter_state),
@@ -59,11 +68,7 @@ impl Component for LoginScreen {
                 Element::new()
                     .with_tag("greeter-footer")
                     .with_style(footer_style())
-                    .with_content(PowerButton)
-                    .with_content(
-                        Text::new("Enter / A  Select    •    Arrows / D-pad  Navigate")
-                            .with_style(hint_text_style()),
-                    ),
+                    .with_content(PowerButton),
             )
     }
 }
@@ -83,8 +88,7 @@ fn profile_picker(greeter_state: daiko::state_management::StateHandle<GreeterSta
         .with_content(
             Element::new()
                 .with_style(title_block_style())
-                .with_content(Text::new("Welcome back").with_style(title_text_style()))
-                .with_content(Text::new("Who's signing in?").with_style(subtitle_text_style())),
+                .with_content(Text::new("Welcome back").with_style(title_text_style())),
         )
         .with_content(profile_row)
 }

@@ -9,7 +9,7 @@ impl App for LoginScreenTestApp {
     type RootComponent = LoginScreen;
 
     fn create(&mut self, _ctx: &mut AppContext) -> Self::RootComponent {
-        LoginScreen::new()
+        LoginScreen::for_testing()
     }
 
     fn stop(&mut self, _ctx: &mut AppContext) {}

@@ -1,18 +1,15 @@
 use daiko::layout::{AlignItems, FlexDirection, ItemSize, JustifyContent, SizeConstraint};
 use daiko::style::{Color, Indent, Style};
-use daiko::widgets::text::{TextStyle, TextWrap, Weight};
+use daiko::widgets::text::{TextStyle, TextWrap};
 use momo_kit::style::shell_background_gradient;
 
 pub(super) const SCREEN_PADDING: f32 = 42.0;
 pub(super) const SECTION_GAP: f32 = 28.0;
 pub(super) const CONTROL_GAP: f32 = 18.0;
-pub(super) const HEADER_HEIGHT: f32 = 72.0;
 pub(super) const FOOTER_HEIGHT: f32 = 88.0;
 
 const TITLE_SIZE: f32 = 44.0;
 const SUBTITLE_SIZE: f32 = 22.0;
-const BRAND_SIZE: f32 = 17.0;
-const HINT_SIZE: f32 = 15.0;
 
 pub(super) fn text_primary_color() -> Color {
     Color::from_rgb(244, 247, 255)
@@ -34,11 +31,16 @@ pub(super) fn root_style() -> Style {
 
 pub(super) fn header_style() -> Style {
     Style::new()
-        .with_fixed_height(ItemSize::Points(HEADER_HEIGHT))
+        .with_size_constraint(SizeConstraint::exact_content_height())
         .with_direction(FlexDirection::Row)
-        .with_align_items(AlignItems::Center)
+        .with_align_items(AlignItems::FlexEnd)
         .with_justify_content(JustifyContent::FlexEnd)
-        .with_padding(Indent::new(SCREEN_PADDING, 0.0, SCREEN_PADDING, 0.0))
+        .with_padding(Indent::new(
+            SCREEN_PADDING,
+            SCREEN_PADDING,
+            SCREEN_PADDING,
+            0.0,
+        ))
 }
 
 pub(super) fn main_content_style() -> Style {
@@ -73,8 +75,7 @@ pub(super) fn footer_style() -> Style {
         .with_fixed_height(ItemSize::Points(FOOTER_HEIGHT))
         .with_direction(FlexDirection::Row)
         .with_align_items(AlignItems::Center)
-        .with_justify_content(JustifyContent::SpaceBetween)
-        .with_padding(Indent::new(SCREEN_PADDING, 0.0, SCREEN_PADDING, 0.0))
+        .with_justify_content(JustifyContent::Center)
 }
 
 pub(super) fn title_text_style() -> TextStyle {
@@ -84,21 +85,6 @@ pub(super) fn title_text_style() -> TextStyle {
 pub(super) fn subtitle_text_style() -> TextStyle {
     TextStyle::default()
         .with_font_size(SUBTITLE_SIZE)
-        .with_font_color(text_secondary_color())
-        .with_wrap(TextWrap::NoWrap)
-}
-
-pub(super) fn brand_text_style() -> TextStyle {
-    TextStyle::default()
-        .with_font_size(BRAND_SIZE)
-        .with_weight(Weight::BOLD)
-        .with_font_color(text_primary_color())
-        .with_wrap(TextWrap::NoWrap)
-}
-
-pub(super) fn hint_text_style() -> TextStyle {
-    TextStyle::default()
-        .with_font_size(HINT_SIZE)
         .with_font_color(text_secondary_color())
         .with_wrap(TextWrap::NoWrap)
 }

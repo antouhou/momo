@@ -161,7 +161,11 @@ fn root_matches_viewport_size() {
     runner.set_viewport_size(1280.0, 720.0);
     runner.run_frame();
 
-    runner.assert_element_bounds("login_screen-root", Vec2::new(0.0, 0.0), Vec2::new(1280.0, 720.0));
+    runner.assert_element_bounds(
+        "login_screen-root",
+        Vec2::new(0.0, 0.0),
+        Vec2::new(1280.0, 720.0),
+    );
 }
 
 #[test]

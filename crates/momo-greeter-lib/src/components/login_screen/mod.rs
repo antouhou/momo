@@ -26,13 +26,11 @@ use daiko::state_management::StateHandle;
 use daiko::widgets::text::Text;
 
 #[derive(Clone, Copy)]
-pub struct LoginScreen {
-    live_clock: bool,
-}
+pub struct LoginScreen {}
 
 impl LoginScreen {
     pub fn new() -> Self {
-        Self { live_clock: true }
+        Self {}
     }
 }
 
@@ -54,7 +52,7 @@ impl Component for LoginScreen {
                 Element::new()
                     .with_tag("greeter-header")
                     .with_style(header_style())
-                    .with_content(Clock::new(self.live_clock)),
+                    .with_content(Clock::new(true)),
             )
             .with_content(match view {
                 GreeterView::Profiles => profile_picker(ctx, greeter_state),

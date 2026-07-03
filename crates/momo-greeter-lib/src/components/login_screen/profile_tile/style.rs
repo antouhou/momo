@@ -1,4 +1,4 @@
-use crate::components::login_screen::state::{ProfileAction, UserProfile};
+use crate::components::login_screen::profile_tile::{AvatarTone, GlyphScale};
 use crate::components::login_screen::style::{text_primary_color, text_secondary_color};
 use daiko::animation::easing::EasingFunction;
 use daiko::animation::{AnimationParameters, transition};
@@ -43,7 +43,7 @@ pub(super) fn tile_style(ctx: &mut ComponentContext, is_highlighted: bool) -> St
 
 pub(super) fn avatar_style(
     ctx: &mut ComponentContext,
-    action: ProfileAction,
+    avatar_tone: AvatarTone,
     is_highlighted: bool,
 ) -> Style {
     let border_color = transition(
@@ -62,17 +62,16 @@ pub(super) fn avatar_style(
     Style::new()
         .with_fixed_size(AVATAR_SIZE, AVATAR_SIZE)
         .with_centered_content()
-        .with_background_color(avatar_color(action))
+        .with_background_color(avatar_color(avatar_tone))
         .with_border(Border::uniform(Stroke::new(BORDER_WIDTH, border_color)))
         .with_border_radius(BorderRadius::all(AVATAR_RADIUS))
 }
 
-pub(super) fn avatar_text_style(action: ProfileAction) -> TextStyle {
+pub(super) fn avatar_text_style(glyph_scale: GlyphScale) -> TextStyle {
     TextStyle::default()
-        .with_font_size(if matches!(action, ProfileAction::AddUser) {
-            ADD_USER_TEXT_SIZE
-        } else {
-            AVATAR_TEXT_SIZE
+        .with_font_size(match glyph_scale {
+            GlyphScale::Standard => AVATAR_TEXT_SIZE,
+            GlyphScale::Large => ADD_USER_TEXT_SIZE,
         })
         .with_weight(Weight::LIGHT)
         .with_font_color(text_primary_color())
@@ -92,11 +91,11 @@ pub(super) fn label_text_style(is_highlighted: bool) -> TextStyle {
         .with_wrap(TextWrap::NoWrap)
 }
 
-fn avatar_color(action: ProfileAction) -> Color {
-    match action {
-        ProfileAction::Login(UserProfile::Anton) => Color::from_rgb(34, 105, 152),
-        ProfileAction::Login(UserProfile::Maya) => Color::from_rgb(118, 65, 135),
-        ProfileAction::Login(UserProfile::Guest) => Color::from_rgb(54, 91, 82),
-        ProfileAction::AddUser => Color::from_rgba_unmultiplied(255, 255, 255, 28),
+fn avatar_color(avatar_tone: AvatarTone) -> Color {
+    match avatar_tone {
+        AvatarTone::Blue => Color::from_rgb(34, 105, 152),
+        AvatarTone::Violet => Color::from_rgb(118, 65, 135),
+        AvatarTone::Green => Color::from_rgb(54, 91, 82),
+        AvatarTone::Neutral => Color::from_rgba_unmultiplied(255, 255, 255, 28),
     }
 }

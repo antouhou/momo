@@ -29,31 +29,6 @@ pub(super) enum ProfileAction {
     AddUser,
 }
 
-impl ProfileAction {
-    pub(super) const fn tag(self) -> &'static str {
-        match self {
-            Self::Login(UserProfile::Anton) => "profile-anton",
-            Self::Login(UserProfile::Maya) => "profile-maya",
-            Self::Login(UserProfile::Guest) => "profile-guest",
-            Self::AddUser => "profile-add-user",
-        }
-    }
-
-    pub(super) const fn label(self) -> &'static str {
-        match self {
-            Self::Login(profile) => profile.name(),
-            Self::AddUser => "Add user",
-        }
-    }
-
-    pub(super) const fn glyph(self) -> &'static str {
-        match self {
-            Self::Login(profile) => profile.initials(),
-            Self::AddUser => "+",
-        }
-    }
-}
-
 pub(super) const PROFILE_ACTIONS: &[ProfileAction] = &[
     ProfileAction::Login(UserProfile::Anton),
     ProfileAction::Login(UserProfile::Maya),

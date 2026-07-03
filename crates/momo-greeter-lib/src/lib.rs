@@ -1,8 +1,5 @@
 mod components;
 
-#[cfg(feature = "bench-support")]
-pub use crate::components::login_screen::benchmark_support;
-
 use crate::components::login_screen::LoginScreen;
 use daiko::{App, AppContext};
 use momo_app::ShellViewModel;
@@ -38,14 +35,14 @@ pub fn init_tracing() {
 
 pub struct MomoGreeter {
     view_model: ShellViewModel,
-    system_control: SystemControl,
+    _system_control: SystemControl,
 }
 
 impl MomoGreeter {
     pub fn new(view_model: ShellViewModel, system_control: SystemControl) -> Self {
         Self {
             view_model,
-            system_control,
+            _system_control: system_control,
         }
     }
 
@@ -64,6 +61,6 @@ impl App for MomoGreeter {
     }
 
     fn stop(&mut self, _app_context: &mut AppContext) {
-        println!("Stopping MomoUi");
+        println!("Stopping MomoGreeter");
     }
 }

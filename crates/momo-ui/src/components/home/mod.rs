@@ -24,8 +24,9 @@ use crate::components::home::time::{read_system_time, spawn_clock_thread};
 use crate::components::quick_settings::{settings_overlay, should_render_settings_menu};
 use daiko::component::{Component, ComponentContext};
 use daiko::layout::{FlexDirection, ItemSize};
-use daiko::style::{Color, LinearGradient, LinearSideOrCorner, Style};
+use daiko::style::Style;
 use daiko::{Element, Id};
+use momo_kit::style::shell_background_gradient;
 
 #[derive(Clone, Copy)]
 pub struct Home {
@@ -170,13 +171,7 @@ fn home_style() -> Style {
     //     .stop_at_percent(0.90, Color::from_rgb(31, 93, 76))
     //     .stop_at_percent(1.00, Color::from_rgb(83, 125, 106));
     // // Space/copper
-    let gradient = LinearGradient::to(LinearSideOrCorner::BottomRight)
-        .stop_at_percent(0.00, Color::from_rgb(2, 3, 12))
-        .stop_at_percent(0.28, Color::from_rgb(6, 10, 27))
-        .stop_at_percent(0.52, Color::from_rgb(18, 19, 49))
-        .stop_at_percent(0.72, Color::from_rgb(43, 31, 65))
-        .stop_at_percent(0.90, Color::from_rgb(82, 51, 66))
-        .stop_at_percent(1.00, Color::from_rgb(126, 75, 58));
+    let gradient = shell_background_gradient();
     // // Other emerald/dark forest
     // let gradient = LinearGradient::to(LinearSideOrCorner::TopLeft)
     //     .stop_at_percent(0.00, Color::from_rgb(2, 8, 7))

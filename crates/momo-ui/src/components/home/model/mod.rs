@@ -1,9 +1,9 @@
 use crate::components::home::app_tile::AppInfo;
 use daiko::Vec2;
-use daiko::animation::{AnimationParameters, transition};
 use daiko::component::ComponentContext;
 use daiko::navigation::FocusKey;
 use daiko::style::Transform;
+use momo_kit::animation::focus_transform;
 use std::time::Duration;
 
 pub(super) const HOME_APP_GRID_FOCUSED_KEY_ID: &str = "momo_home_app_grid_focused_key";
@@ -86,25 +86,15 @@ pub(crate) fn tile_focus_transform(
     is_focused: bool,
     ctx: &mut ComponentContext,
 ) -> Transform {
-    let scale = transition(
-        if is_focused { TILE_FOCUS_SCALE } else { 1.0 },
-        AnimationParameters::default()
-            .with_duration(Duration::from_millis(TILE_FOCUS_ANIMATION_DURATION_MS))
-            .to_transition_options(),
+    focus_transform(
+        size.x,
+        size.y,
+        is_focused,
+        TILE_FOCUS_SCALE,
+        TILE_FOCUS_LIFT_Y,
+        Duration::from_millis(TILE_FOCUS_ANIMATION_DURATION_MS),
         ctx,
-    );
-    let lift_y = transition(
-        if is_focused { TILE_FOCUS_LIFT_Y } else { 0.0 },
-        AnimationParameters::default()
-            .with_duration(Duration::from_millis(TILE_FOCUS_ANIMATION_DURATION_MS))
-            .to_transition_options(),
-        ctx,
-    );
-
-    Transform::new()
-        .with_origin(size.x * 0.5, size.y * 0.5)
-        .then_scale(scale, scale)
-        .then_translate(0.0, lift_y)
+    )
 }
 
 pub(super) fn transformed_local_rect(

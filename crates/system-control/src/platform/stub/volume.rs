@@ -48,7 +48,7 @@ impl PlatformVolumeHandle {
             next_observer_id: AtomicU64::new(1),
         });
         let (command_sender, command_receiver) = channel();
-        let worker_inner = inner.clone();
+        let worker_inner = Arc::clone(&inner);
         std::thread::Builder::new()
             .name("system-control-stub-volume".to_string())
             .spawn(move || run_volume_runtime(worker_inner, command_receiver))

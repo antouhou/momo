@@ -2173,13 +2173,20 @@ dependencies = [
 name = "momo-greeter-lib"
 version = "0.1.0"
 dependencies = [
- "criterion",
  "daiko",
  "momo-app",
+ "momo-kit",
  "system-control",
  "tracing",
  "tracing-android",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "momo-kit"
+version = "0.1.0"
+dependencies = [
+ "daiko",
 ]
 
 [[package]]
@@ -2203,6 +2210,7 @@ dependencies = [
  "criterion",
  "daiko",
  "momo-app",
+ "momo-kit",
  "system-control",
  "tracing",
  "tracing-android",

@@ -9,6 +9,7 @@ bench-support = []
 [dependencies]
 daiko.workspace = true
 momo-app = { path = "../momo-app" }
+momo-kit = { path = "../momo-kit" }
 system-control = { path = "../system-control" }
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 tracing = "0.1.44"

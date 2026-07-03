@@ -1,0 +1,10 @@
+[package]
+name = "momo-kit"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+daiko.workspace = true
+
+[lints]
+workspace = true

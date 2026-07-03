@@ -14,6 +14,7 @@ use super::submenu_button::{
 use daiko::component::{Component, ComponentContext};
 use daiko::navigation::{FocusEntryPolicy, FocusOrigin, NavigationInputAction};
 use daiko::{Element, Id};
+use momo_kit::interaction::ButtonBehavior;
 
 const BACK_ICON: &[u8] = include_bytes!("../../../../assets/chevron-left.svg");
 
@@ -25,8 +26,6 @@ pub(super) struct SubmenuBackButton {
 
 impl Component for SubmenuBackButton {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        let mut pointer = ctx.pointer();
-        let focusable = ctx.focusable();
         let state =
             ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
         let (is_active, should_receive_handoff_focus) = {
@@ -38,18 +37,16 @@ impl Component for SubmenuBackButton {
             )
         };
 
-        if pointer.just_pressed() {
-            focusable.request_focus(FocusOrigin::Pointer);
+        let button = ButtonBehavior::new(ctx)
+            .with_enabled(is_active)
+            .with_requested_focus(should_receive_handoff_focus.then_some(FocusOrigin::Programmatic))
+            .apply();
+
+        if should_receive_handoff_focus && button.is_focused {
+            state.write_silent().complete_view_focus_handoff();
         }
 
-        if should_receive_handoff_focus {
-            focusable.request_focus(FocusOrigin::Programmatic);
-            if focusable.is_focused() {
-                state.write_silent().complete_view_focus_handoff();
-            }
-        }
-
-        if is_active && (pointer.just_pressed() || focusable.just_activated()) {
+        if button.just_activated {
             state.write().set_active_view(SettingsMenuViewType::Main);
         }
 
@@ -58,8 +55,8 @@ impl Component for SubmenuBackButton {
             label: "Back".to_string(),
             label_color: None,
             control: QuickSettingsControlState {
-                is_hovered: pointer.is_hovering(),
-                is_focused: focusable.is_focused(),
+                is_hovered: button.is_hovering,
+                is_focused: button.is_focused,
             },
             surface: SubmenuButtonSurface::Standard,
             state: SubmenuButtonState::Enabled,

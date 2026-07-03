@@ -1,7 +1,6 @@
 use crate::components::home::app_icon::app_icon;
 use crate::components::home::app_tile::{
-    AppButtonBehavior, AppButtonSurfaceMetrics, AppInfo, app_button_surface_style,
-    send_app_launch_request, use_app_button_behavior,
+    AppButtonSurfaceMetrics, AppInfo, app_button_surface_style, send_app_launch_request,
 };
 use crate::components::home::model::{LaunchRestoreFocus, TILE_BORDER_WIDTH, tile_focus_transform};
 use daiko::Element;
@@ -9,6 +8,7 @@ use daiko::Vec2;
 use daiko::component::{Component, ComponentContext};
 use daiko::navigation::FocusKey;
 use daiko::style::{Color, CursorIcon, Style};
+use momo_kit::interaction::ButtonBehavior;
 
 const DOCK_BUTTON_SIZE: f32 = 72.0;
 const DOCK_BUTTON_RADIUS: f32 = 16.0;
@@ -25,14 +25,11 @@ pub struct DockIcon {
 
 impl Component for DockIcon {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        let button = use_app_button_behavior(
-            ctx,
-            AppButtonBehavior {
-                focus_key: self.focus_key,
-                preferred_focus: self.preferred_focus,
-                interactions_disabled: self.interactions_disabled,
-            },
-        );
+        let button = ButtonBehavior::new(ctx)
+            .with_focus_key(self.focus_key)
+            .with_preferred_focus(self.preferred_focus)
+            .with_enabled(!self.interactions_disabled)
+            .apply();
 
         if self.is_hidden_for_launch {
             return Element::new()

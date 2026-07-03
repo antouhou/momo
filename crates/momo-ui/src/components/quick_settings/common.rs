@@ -3,7 +3,6 @@ use super::style::{SETTINGS_MENU_VERTICAL_PADDING, settings_inset_section_style}
 use daiko::Element;
 use daiko::Id;
 use daiko::component::{Component, ComponentContext};
-use daiko::navigation::FocusOrigin;
 use daiko::style::{Color, Style};
 use daiko::widgets::image::{Image, ImageParams, ImageSource, ImageType};
 
@@ -63,20 +62,6 @@ fn settings_row_with_padding(
     Element::new()
         .with_style(settings_inset_section_style(top_padding, bottom_padding))
         .with_content(content)
-}
-
-pub(super) fn control_state(ctx: &mut ComponentContext) -> QuickSettingsControlState {
-    let mut pointer = ctx.pointer();
-    let focusable = ctx.focusable();
-
-    if pointer.just_pressed() {
-        focusable.request_focus(FocusOrigin::Pointer);
-    }
-
-    QuickSettingsControlState {
-        is_hovered: pointer.is_hovering(),
-        is_focused: focusable.is_focused(),
-    }
 }
 
 pub(super) fn is_menu_view_active(ctx: &mut ComponentContext, view: SettingsMenuViewType) -> bool {

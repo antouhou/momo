@@ -14,7 +14,7 @@ use super::submenu_button::{
 };
 use daiko::Element;
 use daiko::component::{Component, ComponentContext};
-use daiko::navigation::FocusOrigin;
+use momo_kit::interaction::ButtonBehavior;
 
 const POWER_ICON: &[u8] = include_bytes!("../../../../assets/power.svg");
 const MOON_ICON: &[u8] = include_bytes!("../../../../assets/moon.svg");
@@ -95,14 +95,9 @@ struct PowerActionButton {
 
 impl Component for PowerActionButton {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        let mut pointer = ctx.pointer();
-        let focusable = ctx.focusable();
+        let button = ButtonBehavior::new(ctx).apply();
 
-        if pointer.just_pressed() {
-            focusable.request_focus(FocusOrigin::Pointer);
-        }
-
-        if pointer.just_pressed() || focusable.just_activated() {
+        if button.just_activated {
             println!("Power action selected: {}", self.spec.label);
         }
 
@@ -117,8 +112,8 @@ impl Component for PowerActionButton {
             label: self.spec.label.to_string(),
             label_color: Some(foreground_color),
             control: QuickSettingsControlState {
-                is_hovered: pointer.is_hovering(),
-                is_focused: focusable.is_focused(),
+                is_hovered: button.is_hovering,
+                is_focused: button.is_focused,
             },
             surface: SubmenuButtonSurface::Standard,
             state: SubmenuButtonState::Enabled,

@@ -3,26 +3,21 @@ mod style;
 use crate::components::login_screen::power_button::style::{power_button_style, power_text_style};
 use daiko::Element;
 use daiko::component::{Component, ComponentContext};
-use daiko::navigation::FocusOrigin;
 use daiko::widgets::text::Text;
+use momo_kit::interaction::ButtonBehavior;
 
 #[derive(Clone, Copy)]
 pub(super) struct PowerButton;
 
 impl Component for PowerButton {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        let mut pointer = ctx.pointer();
-        let focusable = ctx.focusable();
+        let button = ButtonBehavior::new(ctx).apply();
 
-        if pointer.just_pressed() {
-            focusable.request_focus(FocusOrigin::Pointer);
-        }
-
-        if pointer.just_pressed() || focusable.just_activated() {
+        if button.just_activated {
             println!("Pressed power button");
         }
 
-        let is_highlighted = pointer.is_hovering() || focusable.is_focus_visible();
+        let is_highlighted = button.is_hovering || button.is_focus_visible;
 
         Element::new()
             .with_tag("power-button")

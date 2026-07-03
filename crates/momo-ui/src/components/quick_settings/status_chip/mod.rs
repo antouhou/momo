@@ -1,7 +1,9 @@
 mod style;
 
 use self::style::{settings_status_chip_style, status_chip_content_style, status_value_style};
-use super::common::{QuickSettingsGlyph, control_state, glyph_element, is_menu_view_active};
+use super::common::{
+    QuickSettingsControlState, QuickSettingsGlyph, glyph_element, is_menu_view_active,
+};
 use super::state::SettingsMenuViewType;
 use super::style::{
     SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_danger_text_color, settings_text_color,
@@ -10,6 +12,7 @@ use crate::components::home::system_status::battery_state;
 use daiko::Element;
 use daiko::component::{Component, ComponentContext};
 use daiko::widgets::text::Text;
+use momo_kit::interaction::ButtonBehavior;
 use system_control::BatteryChargingState;
 
 const BATTERY_0_ICON: &[u8] = include_bytes!("../../../../assets/battery-0.svg");
@@ -27,11 +30,15 @@ pub(super) struct StatusChip;
 
 impl Component for StatusChip {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        let focusable = ctx.focusable();
         let is_active = is_menu_view_active(ctx, SettingsMenuViewType::Main);
-        focusable.set_preferred_focus(is_active);
-        focusable.set_navigation_enabled(is_active);
-        let state = control_state(ctx);
+        let button = ButtonBehavior::new(ctx)
+            .with_preferred_focus(is_active)
+            .with_enabled(is_active)
+            .apply();
+        let state = QuickSettingsControlState {
+            is_hovered: button.is_hovering,
+            is_focused: button.is_focused,
+        };
 
         Element::new()
             .with_tag(SETTINGS_STATUS_CHIP_TAG)

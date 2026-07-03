@@ -15,6 +15,7 @@ use daiko::navigation::FocusOrigin;
 use daiko::style::{Color, Style};
 use daiko::widgets::text::{Text, TextStyle, TextWrap};
 use daiko::{Element, Id};
+use momo_kit::interaction::ButtonBehavior;
 use tracing::warn;
 
 #[derive(Clone, Copy)]
@@ -25,26 +26,21 @@ impl Component for ClockChip {
         let local_state = ctx.use_local_state(ClockButtonLocalState::default);
         let lost_focus_due_to_settings_menu_open =
             local_state.read().lost_focus_due_to_settings_menu_open;
-        let mut pointer = ctx.pointer();
-        let focusable = ctx.focusable();
         let clock_text = ctx.use_global_state(Id::new(HOME_CLOCK_STATE_ID), read_system_time);
-        let just_pressed = pointer.just_pressed();
         let settings_overlay_state =
             ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
         let settings_overlay_started_to_close = settings_overlay_state.read().just_started_closing;
+        let should_restore_focus =
+            settings_overlay_started_to_close && lost_focus_due_to_settings_menu_open;
+        let button = ButtonBehavior::new(ctx)
+            .with_requested_focus(should_restore_focus.then_some(FocusOrigin::Programmatic))
+            .apply();
 
-        if just_pressed {
-            focusable.request_focus(FocusOrigin::Pointer);
-        }
-
-        if settings_overlay_started_to_close && lost_focus_due_to_settings_menu_open {
+        if should_restore_focus {
             local_state.write().lost_focus_due_to_settings_menu_open = false;
-            focusable.request_focus(FocusOrigin::Programmatic);
         }
 
-        let just_activated = just_pressed || focusable.just_activated();
-
-        if just_activated {
+        if button.just_activated {
             local_state.write().lost_focus_due_to_settings_menu_open = true;
             let (is_open, is_animating) = {
                 let state = settings_overlay_state.read();
@@ -70,9 +66,9 @@ impl Component for ClockChip {
 
         let state = HeaderButtonState {
             is_active: false,
-            is_pressed: pointer.is_pressed(),
-            is_hovered: pointer.is_hovering(),
-            is_focused: focusable.is_focused(),
+            is_pressed: button.is_pressed,
+            is_hovered: button.is_hovering,
+            is_focused: button.is_focused,
         };
         let text_color = if state.is_pressed || state.is_hovered || state.is_focused {
             Color::from_rgb(10, 13, 18)

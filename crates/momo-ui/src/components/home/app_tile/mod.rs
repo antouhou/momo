@@ -11,10 +11,11 @@ use daiko::Element;
 use daiko::Vec2;
 use daiko::component::{Component, ComponentContext};
 use daiko::layout::Layout;
-use daiko::navigation::{FocusKey, FocusOrigin};
+use daiko::navigation::FocusKey;
 use daiko::style::{Color, CursorIcon, Style};
 use daiko::widgets::container::{Container, Fit};
 use daiko::widgets::text::Text;
+use momo_kit::interaction::ButtonBehavior;
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -49,49 +50,6 @@ pub(super) struct AppTile {
     pub preferred_focus: bool,
     pub interactions_disabled: bool,
     pub is_hidden_for_launch: bool,
-}
-
-pub(crate) struct AppButtonBehavior {
-    pub(crate) focus_key: FocusKey,
-    pub(crate) preferred_focus: bool,
-    pub(crate) interactions_disabled: bool,
-}
-
-pub(crate) struct AppButtonState {
-    pub(crate) is_hovering: bool,
-    pub(crate) is_focus_visible: bool,
-    pub(crate) just_activated: bool,
-    pub(crate) layout: Option<Layout>,
-}
-
-pub(crate) fn use_app_button_behavior(
-    ctx: &mut ComponentContext,
-    behavior: AppButtonBehavior,
-) -> AppButtonState {
-    let mut pointer = ctx.pointer();
-    let focusable = ctx.focusable();
-    let layout = ctx.layout();
-
-    focusable.set_navigation_enabled(!behavior.interactions_disabled);
-    focusable.set_focus_key(behavior.focus_key);
-    focusable.set_preferred_focus(behavior.preferred_focus);
-
-    let pointer_activated = !behavior.interactions_disabled && pointer.just_pressed();
-    let focus_activated = !behavior.interactions_disabled && focusable.just_activated();
-
-    if pointer_activated {
-        focusable.request_focus(FocusOrigin::Pointer);
-    }
-
-    let is_hovering = !behavior.interactions_disabled && pointer.is_hovering();
-    let is_focus_visible = focusable.is_focus_visible();
-
-    AppButtonState {
-        is_hovering,
-        is_focus_visible,
-        just_activated: pointer_activated || focus_activated,
-        layout,
-    }
 }
 
 pub(crate) fn send_app_launch_request(
@@ -133,14 +91,11 @@ pub(crate) fn send_app_launch_request(
 
 impl Component for AppTile {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        let button = use_app_button_behavior(
-            ctx,
-            AppButtonBehavior {
-                focus_key: FocusKey::new(self.app.id()),
-                preferred_focus: self.preferred_focus,
-                interactions_disabled: self.interactions_disabled,
-            },
-        );
+        let button = ButtonBehavior::new(ctx)
+            .with_focus_key(FocusKey::new(self.app.id()))
+            .with_preferred_focus(self.preferred_focus)
+            .with_enabled(!self.interactions_disabled)
+            .apply();
 
         if self.is_hidden_for_launch {
             return Element::new().with_tag(self.app.id()).with_style(

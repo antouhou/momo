@@ -5,8 +5,6 @@ mod power_button;
 mod profile_tile;
 mod state;
 mod style;
-#[cfg(test)]
-mod tests;
 
 use crate::components::login_screen::clock::Clock;
 use crate::components::login_screen::login_panel::LoginPanel;

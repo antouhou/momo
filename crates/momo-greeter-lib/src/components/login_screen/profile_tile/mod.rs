@@ -8,7 +8,7 @@ use crate::components::login_screen::state::{
 };
 use daiko::Element;
 use daiko::component::{Component, ComponentContext};
-use daiko::navigation::{FocusKey, FocusOrigin};
+use daiko::navigation::FocusOrigin;
 use daiko::state_management::StateHandle;
 use daiko::widgets::text::Text;
 
@@ -43,7 +43,6 @@ impl Component for ProfileTile {
         let focusable = ctx.focusable();
         let tag = self.action.tag();
 
-        focusable.set_focus_key(FocusKey::new(tag));
         focusable.set_preferred_focus(matches!(
             self.action,
             ProfileAction::Login(UserProfile::Anton)

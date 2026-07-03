@@ -6,7 +6,7 @@ use crate::components::login_screen::action_button::style::{
 use daiko::Element;
 use daiko::channel::Channel;
 use daiko::component::{Component, ComponentContext};
-use daiko::navigation::{FocusKey, FocusOrigin};
+use daiko::navigation::FocusOrigin;
 use daiko::widgets::text::Text;
 
 pub(super) struct ActionButton {
@@ -43,7 +43,6 @@ impl Component for ActionButton {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         let mut pointer = ctx.pointer();
         let focusable = ctx.focusable();
-        focusable.set_focus_key(FocusKey::new(self.tag));
         focusable.set_preferred_focus(self.is_preferred_focus);
 
         if pointer.just_pressed() {

@@ -61,7 +61,7 @@ impl Component for Home {
         let should_render_settings_menu = should_render_settings_menu(ctx);
 
         let mut root = Element::new()
-            .with_tag("home-root")
+            .with_tag("login_screen-root")
             .with_style(home_style())
             // TODO: make the element inside the header into a view transition
             .with_content(HomeHeader::new(PageDots))

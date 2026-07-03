@@ -2157,6 +2157,32 @@ name = "momo-compositor"
 version = "0.1.0"
 
 [[package]]
+name = "momo-greeter"
+version = "0.1.0"
+dependencies = [
+ "daiko",
+ "log",
+ "momo-app",
+ "momo-greeter-lib",
+ "momo-wayfire",
+ "system-control",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "momo-greeter-lib"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+ "daiko",
+ "momo-app",
+ "system-control",
+ "tracing",
+ "tracing-android",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "momo-shell"
 version = "0.1.0"
 dependencies = [

@@ -13,13 +13,12 @@ use daiko::channel::Channel;
 use daiko::component::{Component, ComponentContext};
 use daiko::navigation::FocusOrigin;
 use daiko::{Element, Id};
+use momo_kit::assets::POWER_ICON;
 use momo_kit::interaction::ButtonBehavior;
 
 const MOON_ICON: &[u8] = include_bytes!("../../../../assets/moon.svg");
 const GEAR_ICON: &[u8] = include_bytes!("../../../../assets/gear-solid-full.svg");
 const EYE_ICON: &[u8] = include_bytes!("../../../../assets/eye.svg");
-const POWER_ICON: &[u8] = include_bytes!("../../../../assets/power.svg");
-
 pub(super) const FOCUS_ACTION: QuickActionSpec = QuickActionSpec {
     tag: None,
     glyph: QuickSettingsGlyph::Asset(EYE_ICON),

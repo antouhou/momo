@@ -14,9 +14,9 @@ use super::submenu_button::{
 };
 use daiko::Element;
 use daiko::component::{Component, ComponentContext};
+use momo_kit::assets::POWER_ICON;
 use momo_kit::interaction::ButtonBehavior;
 
-const POWER_ICON: &[u8] = include_bytes!("../../../../assets/power.svg");
 const MOON_ICON: &[u8] = include_bytes!("../../../../assets/moon.svg");
 const REBOOT_ICON: &[u8] = include_bytes!("../../../../assets/plug-circle-bolt.svg");
 

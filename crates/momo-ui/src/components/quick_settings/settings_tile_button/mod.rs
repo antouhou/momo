@@ -11,6 +11,7 @@ use daiko::channel::Channel;
 use daiko::component::{Component, ComponentContext};
 use daiko::navigation::{FocusKey, FocusOrigin};
 use daiko::widgets::text::Text;
+use momo_kit::interaction::ButtonBehavior;
 
 #[derive(Clone, Copy)]
 pub(super) struct SettingsTileSpec {
@@ -53,26 +54,21 @@ impl SettingsTileButton {
 
 impl Component for SettingsTileButton {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        let mut pointer = ctx.pointer();
-        let focusable = ctx.focusable();
-
-        focusable.set_focus_key(FocusKey::new(self.spec.focus_key_id));
-        focusable.set_preferred_focus(self.spec.is_preferred_focus);
-
-        if pointer.just_pressed() {
-            focusable.request_focus(FocusOrigin::Pointer);
-        }
-
-        if self.should_request_focus {
-            focusable.request_focus(FocusOrigin::Programmatic);
-        }
+        let button = ButtonBehavior::new(ctx)
+            .with_focus_key(FocusKey::new(self.spec.focus_key_id))
+            .with_preferred_focus(self.spec.is_preferred_focus)
+            .with_requested_focus(
+                self.should_request_focus
+                    .then_some(FocusOrigin::Programmatic),
+            )
+            .apply();
 
         let state = QuickSettingsControlState {
-            is_hovered: pointer.is_hovering(),
-            is_focused: focusable.is_focused(),
+            is_hovered: button.is_hovering,
+            is_focused: button.is_focused,
         };
 
-        if (pointer.just_pressed() || focusable.just_activated())
+        if button.just_activated
             && let Some(channel) = &self.activation_channel
         {
             let _ = channel.send(());

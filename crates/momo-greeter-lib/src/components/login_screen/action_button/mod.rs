@@ -6,8 +6,8 @@ use crate::components::login_screen::action_button::style::{
 use daiko::Element;
 use daiko::channel::Channel;
 use daiko::component::{Component, ComponentContext};
-use daiko::navigation::FocusOrigin;
 use daiko::widgets::text::Text;
+use momo_kit::interaction::ButtonBehavior;
 
 pub(super) struct ActionButton {
     tag: &'static str,
@@ -41,19 +41,15 @@ impl ActionButton {
 
 impl Component for ActionButton {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        let mut pointer = ctx.pointer();
-        let focusable = ctx.focusable();
-        focusable.set_preferred_focus(self.is_preferred_focus);
+        let button = ButtonBehavior::new(ctx)
+            .with_preferred_focus(self.is_preferred_focus)
+            .apply();
 
-        if pointer.just_pressed() {
-            focusable.request_focus(FocusOrigin::Pointer);
-        }
-
-        if pointer.just_pressed() || focusable.just_activated() {
+        if button.just_activated {
             let _ = self.activation_channel.send(());
         }
 
-        let is_highlighted = pointer.is_hovering() || focusable.is_focus_visible();
+        let is_highlighted = button.is_hovering || button.is_focus_visible;
 
         Element::new()
             .with_tag(self.tag)

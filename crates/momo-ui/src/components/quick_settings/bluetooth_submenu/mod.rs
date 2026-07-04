@@ -28,6 +28,7 @@ use daiko::navigation::FocusOrigin;
 use daiko::widgets::scrollable::Scrollable;
 use daiko::widgets::text::Text;
 use daiko::{Element, Id};
+use momo_kit::interaction::ButtonBehavior;
 use system_control::{BluetoothConnectionState, BluetoothDeviceCategory};
 use tracing::warn;
 
@@ -110,8 +111,6 @@ struct BluetoothToggleRow;
 
 impl Component for BluetoothToggleRow {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        let mut pointer = ctx.pointer();
-        let focusable = ctx.focusable();
         let state =
             ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
         let (is_active, should_receive_handoff_focus) = {
@@ -126,31 +125,24 @@ impl Component for BluetoothToggleRow {
         let bluetooth_state = bluetooth_state.read();
         let toggle_enabled = bluetooth_state.can_toggle_power;
         let toggle_value = bluetooth_state.is_enabled;
+        let button = ButtonBehavior::new(ctx)
+            .with_enabled(is_active && toggle_enabled)
+            .with_requested_focus(should_receive_handoff_focus.then_some(FocusOrigin::Programmatic))
+            .apply();
 
-        if pointer.just_pressed() {
-            focusable.request_focus(FocusOrigin::Pointer);
+        if should_receive_handoff_focus && button.is_focused {
+            state.write_silent().complete_view_focus_handoff();
         }
 
-        if should_receive_handoff_focus {
-            focusable.request_focus(FocusOrigin::Programmatic);
-            if focusable.is_focused() {
-                state.write_silent().complete_view_focus_handoff();
-            }
-        }
-
-        let activated = pointer.just_pressed() || focusable.just_activated();
-
-        if is_active
-            && toggle_enabled
-            && activated
+        if button.just_activated
             && let Err(error) = bluetooth_handle(ctx).set_power_enabled(!toggle_value)
         {
             warn!("failed to toggle bluetooth power: {error:?}");
         }
 
         let control = QuickSettingsControlState {
-            is_hovered: pointer.is_hovering(),
-            is_focused: focusable.is_focused(),
+            is_hovered: button.is_hovering,
+            is_focused: button.is_focused,
         };
 
         SubmenuButton {
@@ -179,16 +171,11 @@ struct BluetoothSettingsButton;
 
 impl Component for BluetoothSettingsButton {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        let mut pointer = ctx.pointer();
-        let focusable = ctx.focusable();
-
-        if pointer.just_pressed() {
-            focusable.request_focus(FocusOrigin::Pointer);
-        }
+        let button = ButtonBehavior::new(ctx).apply();
 
         let control = QuickSettingsControlState {
-            is_hovered: pointer.is_hovering(),
-            is_focused: focusable.is_focused(),
+            is_hovered: button.is_hovering,
+            is_focused: button.is_focused,
         };
 
         SubmenuButton {
@@ -217,16 +204,14 @@ struct BluetoothDeviceRow {
 
 impl Component for BluetoothDeviceRow {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        let mut pointer = ctx.pointer();
-        let focusable = ctx.focusable();
         let availability =
             effective_device_availability(&self.bluetooth_device, self.is_bluetooth_enabled);
+        let button_state = button_state_for_device(self.is_bluetooth_enabled);
+        let button = ButtonBehavior::new(ctx)
+            .with_enabled(button_state == SubmenuButtonState::Enabled)
+            .apply();
 
-        if pointer.just_pressed() {
-            focusable.request_focus(FocusOrigin::Pointer);
-        }
-
-        if pointer.just_pressed() || focusable.just_activated() {
+        if button.just_activated {
             match self.bluetooth_device.connection_state {
                 BluetoothConnectionState::Connected => {
                     if let Err(error) = bluetooth_handle(ctx)
@@ -252,8 +237,8 @@ impl Component for BluetoothDeviceRow {
         }
 
         let control = QuickSettingsControlState {
-            is_hovered: pointer.is_hovering(),
-            is_focused: focusable.is_focused(),
+            is_hovered: button.is_hovering,
+            is_focused: button.is_focused,
         };
 
         SubmenuButton {
@@ -262,7 +247,7 @@ impl Component for BluetoothDeviceRow {
             label_color: Some(submenu_device_label_color(availability)),
             control,
             surface: SubmenuButtonSurface::Standard,
-            state: button_state_for_device(self.is_bluetooth_enabled),
+            state: button_state,
             leading: submenu_button_leading_slot(
                 Element::new()
                     .with_style(submenu_device_icon_ring_style(availability, ctx))

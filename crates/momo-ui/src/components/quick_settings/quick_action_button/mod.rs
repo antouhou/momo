@@ -13,6 +13,7 @@ use daiko::channel::Channel;
 use daiko::component::{Component, ComponentContext};
 use daiko::navigation::FocusOrigin;
 use daiko::{Element, Id};
+use momo_kit::interaction::ButtonBehavior;
 
 const MOON_ICON: &[u8] = include_bytes!("../../../../assets/moon.svg");
 const GEAR_ICON: &[u8] = include_bytes!("../../../../assets/gear-solid-full.svg");
@@ -89,30 +90,27 @@ impl QuickActionButton {
 
 impl Component for QuickActionButton {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        let mut pointer = ctx.pointer();
-        let focusable = ctx.focusable();
-        focusable.set_navigation_enabled(is_menu_view_active(ctx, SettingsMenuViewType::Main));
+        let is_enabled = is_menu_view_active(ctx, SettingsMenuViewType::Main);
+        let button = ButtonBehavior::new(ctx)
+            .with_enabled(is_enabled)
+            .with_requested_focus(
+                self.should_request_focus
+                    .then_some(FocusOrigin::Programmatic),
+            )
+            .apply();
 
-        if pointer.just_pressed() {
-            focusable.request_focus(FocusOrigin::Pointer);
-        }
-
-        if self.should_request_focus {
-            focusable.request_focus(FocusOrigin::Programmatic);
-        }
-
-        if self.should_complete_focus_handoff_when_focused && focusable.is_focused() {
+        if self.should_complete_focus_handoff_when_focused && button.is_focused {
             let state =
                 ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
             state.write_silent().complete_view_focus_handoff();
         }
 
         let state = QuickSettingsControlState {
-            is_hovered: pointer.is_hovering(),
-            is_focused: focusable.is_focused(),
+            is_hovered: button.is_hovering,
+            is_focused: button.is_focused,
         };
 
-        if (pointer.just_pressed() || focusable.just_activated())
+        if button.just_activated
             && let Some(channel) = &self.activation_channel
         {
             let _ = channel.send(());

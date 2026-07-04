@@ -1,7 +1,20 @@
 This is a set of guidelines and rules for contributing to the project. They are intended to make collaboration easier 
 by standardizing code conventions and such.
 
-## General rules to follow when writing code:
+Repo structure:
+- `apps` directory: contains launchable apps. Right now there are two of them: a shell that launches apps and a greeter 
+to be used as a wayland/wayfire greeter. The apps are just runtimes, the actual UI and integrations are libraries
+located in the `crates` directory.
+- `crates` directory that contains libraries:
+  - [`crates/momo-app`] - Wrapper over the shell UI that initializes integration based on how the app is launch
+  - [`crates/momo-compositor`] - Compositor integration. Right now only one compositor integration is available - Wayfire
+  - [`crates/momo-greeter-lib`] - Greeter UI. 
+  - [`crates/momo-kit`] - Shared UI code. Includes styles, behaviors, components and assets.
+  - [`crates/momo-ui`] - Shell/Launcher app UI.
+  - [`crates/momo-wayfire`] - Wayfire compositor integration
+  - [`crates/system-control`] - The library for controlling various system functions: Bluetooth, network, sound volume, etc.
+
+## General rules to follow when writing code
 
 1. Use `thiserror` for error handling.
 2. Don't make files too large. If a file exceeds around 500 lines, consider splitting it into smaller modules.
@@ -13,6 +26,8 @@ submodule for that functionality. For example, Bluetooth controller should be in
 `controllers/bluetooth_controller.rs`. This makes code much more structured and easier to navigate. You don't have 
 to think "oh I want to work on controllers" when you're working on Bluetooth, you just go to the Bluetooth module 
 and see all the code related to it.
+6. Try to generalize behaviors and styles, so it can be shared across components, crates, and apps. Generalized 
+behaviors, components and styles are located in the [`crates/momo-kit`](crates/momo-kit).
 
 ## Rules for UI development:
 

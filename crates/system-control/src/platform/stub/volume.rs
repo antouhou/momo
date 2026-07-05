@@ -4,7 +4,7 @@ use std::sync::mpsc::{Receiver, Sender, channel};
 use std::sync::{Arc, Mutex, Weak};
 
 use crate::SystemControlError;
-use crate::bluetooth::FeatureState;
+use crate::feature_state::FeatureState;
 use crate::volume::{VolumeFeatureState, VolumeRequestError, VolumeState};
 
 const STUB_VOLUME_PERCENTAGE: u8 = 40;

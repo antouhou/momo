@@ -12,20 +12,20 @@ use crate::components::login_screen::power_button::PowerButton;
 use crate::components::login_screen::profile_tile::{
     AvatarTone, GlyphScale, ProfileTile, ProfileTilePresentation,
 };
-use crate::components::login_screen::state::{
-    GreeterState, GreeterView, PROFILE_ACTIONS, ProfileAction, UserProfile,
-};
+use crate::components::login_screen::state::{GreeterState, GreeterView};
 use crate::components::login_screen::style::{
     footer_style, header_style, main_content_style, profile_row_style, root_style,
-    title_block_style, title_text_style,
+    subtitle_text_style, title_block_style, title_text_style,
 };
-use daiko::Element;
+use crate::users::{GreeterUser, GreeterUsersStatus, use_greeter_users_state};
 use daiko::component::{Component, ComponentContext};
 use daiko::navigation::{FocusBoundary, FocusEntryPolicy, TraversalPolicy};
 use daiko::state_management::StateHandle;
 use daiko::widgets::text::Text;
+use daiko::{Element, StringOrReference};
+use std::sync::Arc;
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct LoginScreen {}
 
 impl LoginScreen {
@@ -42,6 +42,8 @@ impl Component for LoginScreen {
             TraversalPolicy::RectilinearDistance,
         ));
 
+        let users_state = use_greeter_users_state(ctx);
+        let users_guard = users_state.read();
         let greeter_state = ctx.use_local_state(GreeterState::default);
         let view = greeter_state.read().view;
 
@@ -54,12 +56,7 @@ impl Component for LoginScreen {
                     .with_style(header_style())
                     .with_content(Clock::new(true)),
             )
-            .with_content(match view {
-                GreeterView::Profiles => profile_picker(ctx, greeter_state),
-                GreeterView::Credentials(profile) => Element::new()
-                    .with_style(main_content_style())
-                    .with_content(LoginPanel::new(profile, greeter_state)),
-            })
+            .with_content(login_content(ctx, greeter_state, view, &users_guard.status))
             .with_content(
                 Element::new()
                     .with_tag("greeter-footer")
@@ -69,15 +66,55 @@ impl Component for LoginScreen {
     }
 }
 
-fn profile_picker(ctx: &mut ComponentContext, greeter_state: StateHandle<GreeterState>) -> Element {
+fn login_content(
+    ctx: &mut ComponentContext,
+    greeter_state: StateHandle<GreeterState>,
+    view: GreeterView,
+    users_status: &GreeterUsersStatus,
+) -> Element {
+    match (view, users_status) {
+        (_, GreeterUsersStatus::Loading) => status_content("Loading users", "Please wait"),
+        (_, GreeterUsersStatus::Unavailable(message)) => {
+            status_content("Unable to load users", Arc::clone(message))
+        }
+        (_, GreeterUsersStatus::Empty) => {
+            status_content("No users found", "No login-capable local users were found")
+        }
+        (GreeterView::Profiles, GreeterUsersStatus::Ready(users)) => {
+            profile_picker(ctx, greeter_state, users)
+        }
+        (GreeterView::Credentials { user_index }, GreeterUsersStatus::Ready(_)) => Element::new()
+            .with_style(main_content_style())
+            .with_content(LoginPanel::new(user_index, greeter_state)),
+    }
+}
+
+fn status_content(title: &'static str, subtitle: impl Into<StringOrReference>) -> Element {
+    Element::new()
+        .with_tag("greeter-status")
+        .with_style(main_content_style())
+        .with_content(
+            Element::new()
+                .with_style(title_block_style())
+                .with_content(Text::new(title).with_style(title_text_style()))
+                .with_content(Text::new(subtitle).with_style(subtitle_text_style())),
+        )
+}
+
+fn profile_picker(
+    ctx: &mut ComponentContext,
+    greeter_state: StateHandle<GreeterState>,
+    users: &[GreeterUser],
+) -> Element {
     let mut profile_row = Element::new()
         .with_tag("profile-row")
         .with_style(profile_row_style());
 
-    for action in PROFILE_ACTIONS {
-        let profile_tile = ProfileTile::new(ctx, profile_tile_presentation(*action));
+    for (index, user) in users.iter().enumerate() {
+        let profile_tile = ProfileTile::new(ctx, profile_tile_presentation(user, index));
         if profile_tile.activated() {
-            handle_profile_action(*action, &greeter_state);
+            println!("Selected user {}", user.username);
+            greeter_state.write().view = GreeterView::Credentials { user_index: index };
         }
         profile_row.add_content(profile_tile);
     }
@@ -93,49 +130,20 @@ fn profile_picker(ctx: &mut ComponentContext, greeter_state: StateHandle<Greeter
         .with_content(profile_row)
 }
 
-fn handle_profile_action(action: ProfileAction, greeter_state: &StateHandle<GreeterState>) {
-    match action {
-        ProfileAction::Login(profile) => {
-            println!("Selected user {}", profile.name());
-            greeter_state.write().view = GreeterView::Credentials(profile);
-        }
-        ProfileAction::AddUser => println!("Pressed add user button"),
+fn profile_tile_presentation(user: &GreeterUser, index: usize) -> ProfileTilePresentation {
+    ProfileTilePresentation {
+        label: Arc::clone(&user.display_name),
+        glyph: Arc::clone(&user.initials),
+        avatar_tone: avatar_tone(index),
+        glyph_scale: GlyphScale::Standard,
+        is_preferred_focus: index == 0,
     }
 }
 
-fn profile_tile_presentation(action: ProfileAction) -> ProfileTilePresentation {
-    match action {
-        ProfileAction::Login(UserProfile::Anton) => ProfileTilePresentation {
-            tag: "profile-anton",
-            label: UserProfile::Anton.name(),
-            glyph: UserProfile::Anton.initials(),
-            avatar_tone: AvatarTone::Blue,
-            glyph_scale: GlyphScale::Standard,
-            is_preferred_focus: true,
-        },
-        ProfileAction::Login(UserProfile::Maya) => ProfileTilePresentation {
-            tag: "profile-maya",
-            label: UserProfile::Maya.name(),
-            glyph: UserProfile::Maya.initials(),
-            avatar_tone: AvatarTone::Violet,
-            glyph_scale: GlyphScale::Standard,
-            is_preferred_focus: false,
-        },
-        ProfileAction::Login(UserProfile::Guest) => ProfileTilePresentation {
-            tag: "profile-guest",
-            label: UserProfile::Guest.name(),
-            glyph: UserProfile::Guest.initials(),
-            avatar_tone: AvatarTone::Green,
-            glyph_scale: GlyphScale::Standard,
-            is_preferred_focus: false,
-        },
-        ProfileAction::AddUser => ProfileTilePresentation {
-            tag: "profile-add-user",
-            label: "Add user",
-            glyph: "+",
-            avatar_tone: AvatarTone::Neutral,
-            glyph_scale: GlyphScale::Large,
-            is_preferred_focus: false,
-        },
+fn avatar_tone(user_index: usize) -> AvatarTone {
+    match user_index % 3 {
+        0 => AvatarTone::Blue,
+        1 => AvatarTone::Violet,
+        _ => AvatarTone::Green,
     }
 }

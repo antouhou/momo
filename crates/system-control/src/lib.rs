@@ -1,6 +1,8 @@
 mod battery;
 mod bluetooth;
+mod feature_state;
 mod platform;
+mod users;
 mod volume;
 
 use thiserror::Error;
@@ -15,7 +17,11 @@ pub use bluetooth::{
     BluetoothHandle, BluetoothObservation, BluetoothOperationId, BluetoothOperationKind,
     BluetoothOperationReceipt, BluetoothPendingOperation, BluetoothPowerState,
     BluetoothRequestError, BluetoothState, BluetoothUnavailableReason, BluetoothUnsupportedReason,
-    BluetoothUserVisibleError, FeatureState,
+    BluetoothUserVisibleError,
+};
+pub use feature_state::FeatureState;
+pub use users::{
+    SystemUser, UserHandle, UserListFeatureState, UserUnavailableReason, UserUnsupportedReason,
 };
 pub use volume::{
     VolumeFeatureState, VolumeHandle, VolumeObservation, VolumeRequestError, VolumeState,
@@ -26,6 +32,7 @@ pub use volume::{
 pub struct SystemControl {
     battery: BatteryHandle,
     bluetooth: BluetoothHandle,
+    users: UserHandle,
     volume: VolumeHandle,
 }
 
@@ -34,6 +41,7 @@ impl SystemControl {
         Ok(Self {
             battery: BatteryHandle::new()?,
             bluetooth: BluetoothHandle::new()?,
+            users: UserHandle::new()?,
             volume: VolumeHandle::new()?,
         })
     }
@@ -44,6 +52,10 @@ impl SystemControl {
 
     pub fn bluetooth(&self) -> BluetoothHandle {
         self.bluetooth.clone()
+    }
+
+    pub fn users(&self) -> UserHandle {
+        self.users.clone()
     }
 
     pub fn volume(&self) -> VolumeHandle {

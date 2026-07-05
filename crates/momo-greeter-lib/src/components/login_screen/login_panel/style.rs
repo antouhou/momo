@@ -1,4 +1,3 @@
-use crate::components::login_screen::state::UserProfile;
 use crate::components::login_screen::style::{
     CONTROL_GAP, SECTION_GAP, text_primary_color, text_secondary_color,
 };
@@ -41,11 +40,11 @@ pub(super) fn panel_style() -> Style {
         .with_border_radius(BorderRadius::all(PANEL_RADIUS))
 }
 
-pub(super) fn avatar_style(profile: UserProfile) -> Style {
+pub(super) fn avatar_style(user_index: usize) -> Style {
     Style::new()
         .with_fixed_size(AVATAR_SIZE, AVATAR_SIZE)
         .with_centered_content()
-        .with_background_color(profile_color(profile))
+        .with_background_color(profile_color(user_index))
         .with_border_radius(BorderRadius::all(AVATAR_RADIUS))
 }
 
@@ -86,10 +85,10 @@ pub(super) fn actions_style() -> Style {
         .with_spacing((CONTROL_GAP, CONTROL_GAP))
 }
 
-fn profile_color(profile: UserProfile) -> Color {
-    match profile {
-        UserProfile::Anton => Color::from_rgb(34, 105, 152),
-        UserProfile::Maya => Color::from_rgb(118, 65, 135),
-        UserProfile::Guest => Color::from_rgb(54, 91, 82),
+fn profile_color(user_index: usize) -> Color {
+    match user_index % 3 {
+        0 => Color::from_rgb(34, 105, 152),
+        1 => Color::from_rgb(118, 65, 135),
+        _ => Color::from_rgb(54, 91, 82),
     }
 }

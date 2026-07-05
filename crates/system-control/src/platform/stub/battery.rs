@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex, Weak};
 
 use crate::SystemControlError;
 use crate::battery::{BatteryChargingState, BatteryFeatureState, BatteryState};
-use crate::bluetooth::FeatureState;
+use crate::feature_state::FeatureState;
 
 const STUB_BATTERY_PERCENTAGE: u8 = 96;
 

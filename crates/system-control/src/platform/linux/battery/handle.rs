@@ -6,7 +6,7 @@ use super::runtime::{BatteryRuntimeMessage, run_battery_runtime};
 use super::state::LinuxBatteryState;
 use crate::SystemControlError;
 use crate::battery::BatteryFeatureState;
-use crate::bluetooth::FeatureState;
+use crate::feature_state::FeatureState;
 
 #[derive(Clone)]
 pub(crate) struct PlatformBatteryHandle {

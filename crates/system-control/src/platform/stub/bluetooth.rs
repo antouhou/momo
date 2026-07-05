@@ -1,8 +1,9 @@
 use crate::SystemControlError;
 use crate::bluetooth::{
     BluetoothDeviceId, BluetoothFeatureState, BluetoothOperationReceipt, BluetoothRequestError,
-    BluetoothUnsupportedReason, FeatureState,
+    BluetoothUnsupportedReason,
 };
+use crate::feature_state::FeatureState;
 
 #[derive(Clone)]
 pub(crate) struct PlatformBluetoothHandle;

@@ -1,6 +1,6 @@
 use daiko::hot_reloading::DynApp;
-use momo_app::{ShellApp, ShellConfiguration, ShellMode};
-use momo_greeter_lib::MomoGreeter;
+pub use momo_app::{ShellApp, ShellConfiguration, ShellMode};
+use momo_greeter_lib::{GreeterUserSource, MomoGreeter};
 use momo_wayfire::WayfireBackend;
 use std::sync::Once;
 use system_control::SystemControl;
@@ -46,7 +46,9 @@ pub fn create_app() -> DynApp {
     let app = ShellApp::new(configuration, backend);
     let system_control =
         SystemControl::new().expect("failed to initialize system control services");
-    let ui = MomoGreeter::new(app.initial_view_model(), system_control);
+    // TODO: do this properly
+    let user_source = GreeterUserSource::from_args(std::env::args().skip(1));
+    let ui = MomoGreeter::new(app.initial_view_model(), system_control, user_source);
 
     DynApp::new(ui)
 }

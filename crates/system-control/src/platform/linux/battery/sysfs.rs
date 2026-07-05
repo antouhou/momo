@@ -5,7 +5,7 @@ use crate::battery::{
     BatteryChargingState, BatteryFeatureState, BatteryState, BatteryUnavailableReason,
     BatteryUnsupportedReason,
 };
-use crate::bluetooth::FeatureState;
+use crate::feature_state::FeatureState;
 
 const POWER_SUPPLY_PATH: &str = "/sys/class/power_supply";
 

@@ -6,10 +6,12 @@ mod stub;
 #[cfg(target_os = "linux")]
 pub(crate) use linux::{
     PlatformBatteryHandle, PlatformBatteryObservation, PlatformBluetoothHandle,
-    PlatformBluetoothObservation, PlatformVolumeHandle, PlatformVolumeObservation,
+    PlatformBluetoothObservation, PlatformUserHandle, PlatformVolumeHandle,
+    PlatformVolumeObservation,
 };
 #[cfg(not(target_os = "linux"))]
 pub(crate) use stub::{
     PlatformBatteryHandle, PlatformBatteryObservation, PlatformBluetoothHandle,
-    PlatformBluetoothObservation, PlatformVolumeHandle, PlatformVolumeObservation,
+    PlatformBluetoothObservation, PlatformUserHandle, PlatformVolumeHandle,
+    PlatformVolumeObservation,
 };

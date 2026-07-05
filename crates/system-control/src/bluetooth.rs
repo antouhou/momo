@@ -1,14 +1,7 @@
 use crate::SystemControlError;
+use crate::feature_state::FeatureState;
 use crate::platform;
 use thiserror::Error;
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum FeatureState<T, UnsupportedReason, UnavailableReason> {
-    Loading,
-    Unsupported(UnsupportedReason),
-    Unavailable(UnavailableReason),
-    Ready(T),
-}
 
 pub type BluetoothFeatureState =
     FeatureState<BluetoothState, BluetoothUnsupportedReason, BluetoothUnavailableReason>;

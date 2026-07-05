@@ -1,6 +1,6 @@
 use std::process::Command;
 
-use crate::bluetooth::FeatureState;
+use crate::feature_state::FeatureState;
 use crate::volume::{VolumeFeatureState, VolumeRequestError, VolumeState, VolumeUnavailableReason};
 
 const DEFAULT_AUDIO_SINK: &str = "@DEFAULT_AUDIO_SINK@";

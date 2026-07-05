@@ -8,8 +8,8 @@ use crate::bluetooth::{
     BluetoothAdapterState, BluetoothCapabilities, BluetoothConnectionState, BluetoothDevice,
     BluetoothDeviceId, BluetoothDiscoveryState, BluetoothOperationId, BluetoothOperationKind,
     BluetoothPendingOperation, BluetoothPowerState, BluetoothState, BluetoothUserVisibleError,
-    FeatureState,
 };
+use crate::feature_state::FeatureState;
 
 pub(super) async fn load_current_state(adapter: &Adapter) -> bluer::Result<BluetoothState> {
     let adapter_identifier = adapter.name().to_string();

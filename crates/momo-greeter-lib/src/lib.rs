@@ -1,11 +1,14 @@
 mod components;
+mod users;
 
 use crate::components::login_screen::LoginScreen;
+use crate::users::init_greeter_users_state;
 use daiko::{App, AppContext};
 use momo_app::ShellViewModel;
 use std::sync::Once;
 use system_control::SystemControl;
 use tracing_subscriber::EnvFilter;
+pub use users::{GreeterUser, GreeterUserSource, mock_users};
 
 static INIT: Once = Once::new();
 
@@ -35,14 +38,20 @@ pub fn init_tracing() {
 
 pub struct MomoGreeter {
     view_model: ShellViewModel,
-    _system_control: SystemControl,
+    system_control: SystemControl,
+    user_source: GreeterUserSource,
 }
 
 impl MomoGreeter {
-    pub fn new(view_model: ShellViewModel, system_control: SystemControl) -> Self {
+    pub fn new(
+        view_model: ShellViewModel,
+        system_control: SystemControl,
+        user_source: GreeterUserSource,
+    ) -> Self {
         Self {
             view_model,
-            _system_control: system_control,
+            system_control,
+            user_source,
         }
     }
 
@@ -57,6 +66,7 @@ impl App for MomoGreeter {
     fn create(&mut self, app_context: &mut AppContext) -> Self::RootComponent {
         app_context.set_vsync_enabled(true);
         app_context.set_fullscreen(true);
+        init_greeter_users_state(app_context, self.system_control.users(), self.user_source);
         LoginScreen::new()
     }
 

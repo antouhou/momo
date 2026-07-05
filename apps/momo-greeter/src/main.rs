@@ -3,7 +3,7 @@ use {daiko::hot_reloading::HotReloadApp, std::path::PathBuf};
 #[cfg(not(debug_assertions))]
 use {
     momo_greeter::{ShellApp, ShellConfiguration, ShellMode},
-    momo_greeter_lib::MomoGreeter,
+    momo_greeter_lib::{GreeterUserSource, MomoGreeter},
     momo_wayfire::WayfireBackend,
 };
 
@@ -42,7 +42,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let app = ShellApp::new(configuration, backend);
         let system_control = system_control::SystemControl::new()
             .expect("failed to initialize system control services");
-        let ui = MomoGreeter::new(app.initial_view_model(), system_control);
+        let user_source = GreeterUserSource::from_args(std::env::args().skip(1));
+        let ui = MomoGreeter::new(app.initial_view_model(), system_control, user_source);
 
         daiko::run(ui);
     }

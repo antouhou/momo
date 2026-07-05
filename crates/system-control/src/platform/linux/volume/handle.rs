@@ -5,7 +5,7 @@ use std::sync::{Arc, Weak};
 use super::runtime::{VolumeRuntimeMessage, run_volume_runtime};
 use super::state::LinuxVolumeState;
 use crate::SystemControlError;
-use crate::bluetooth::FeatureState;
+use crate::feature_state::FeatureState;
 use crate::volume::{VolumeFeatureState, VolumeRequestError};
 
 #[derive(Clone)]

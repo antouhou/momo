@@ -52,3 +52,4 @@ with that thread over usual std channels.
 10. Try to make components as generic as possible. For example, button should not know about the context it's in - it's 
 not button's responsibility. Use channels to communicate to the parent that button state has changed - for example that 
 it has been activated, clicked or so on, and let the parent decide what to do with it.
+11. Avoid cloning vectors or doing other allocations in the UI/component code. Use references.

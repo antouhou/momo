@@ -1,5 +1,5 @@
 use crate::SystemControlError;
-use crate::bluetooth::FeatureState;
+use crate::feature_state::FeatureState;
 use crate::platform;
 use thiserror::Error;
 

@@ -11,8 +11,9 @@ use super::store::BackendState;
 use crate::SystemControlError;
 use crate::bluetooth::{
     BluetoothDeviceId, BluetoothFeatureState, BluetoothOperationId, BluetoothOperationReceipt,
-    BluetoothRequestError, FeatureState,
+    BluetoothRequestError,
 };
+use crate::feature_state::FeatureState;
 
 #[derive(Clone)]
 pub(crate) struct PlatformBluetoothHandle {

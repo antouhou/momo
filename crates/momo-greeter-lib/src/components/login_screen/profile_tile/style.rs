@@ -19,7 +19,6 @@ const FOCUS_SCALE: f32 = 1.07;
 const FOCUS_LIFT_Y: f32 = -8.0;
 const TRANSITION_MS: u64 = 140;
 const AVATAR_TEXT_SIZE: f32 = 48.0;
-const ADD_USER_TEXT_SIZE: f32 = 64.0;
 const LABEL_TEXT_SIZE: f32 = 19.0;
 
 pub(super) fn tile_style(ctx: &mut ComponentContext, is_highlighted: bool) -> Style {
@@ -71,7 +70,6 @@ pub(super) fn avatar_text_style(glyph_scale: GlyphScale) -> TextStyle {
     TextStyle::default()
         .with_font_size(match glyph_scale {
             GlyphScale::Standard => AVATAR_TEXT_SIZE,
-            GlyphScale::Large => ADD_USER_TEXT_SIZE,
         })
         .with_weight(Weight::LIGHT)
         .with_font_color(text_primary_color())
@@ -96,6 +94,5 @@ fn avatar_color(avatar_tone: AvatarTone) -> Color {
         AvatarTone::Blue => Color::from_rgb(34, 105, 152),
         AvatarTone::Violet => Color::from_rgb(118, 65, 135),
         AvatarTone::Green => Color::from_rgb(54, 91, 82),
-        AvatarTone::Neutral => Color::from_rgba_unmultiplied(255, 255, 255, 28),
     }
 }

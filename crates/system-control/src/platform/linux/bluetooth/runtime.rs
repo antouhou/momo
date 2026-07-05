@@ -13,8 +13,8 @@ use super::state::{load_current_state, refresh_device_from_identifier};
 use super::store::BackendState;
 use crate::bluetooth::{
     BluetoothDeviceId, BluetoothState, BluetoothUnavailableReason, BluetoothUnsupportedReason,
-    FeatureState,
 };
+use crate::feature_state::FeatureState;
 
 const BLUETOOTH_RECONNECT_DELAY: Duration = Duration::from_secs(2);
 

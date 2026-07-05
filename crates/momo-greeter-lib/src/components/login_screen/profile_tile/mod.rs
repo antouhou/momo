@@ -8,26 +8,24 @@ use daiko::channel::Channel;
 use daiko::component::{Component, ComponentContext};
 use daiko::widgets::text::Text;
 use momo_kit::interaction::ButtonBehavior;
+use std::sync::Arc;
 
 #[derive(Clone, Copy)]
 pub(super) enum AvatarTone {
     Blue,
     Violet,
     Green,
-    Neutral,
 }
 
 #[derive(Clone, Copy)]
 pub(super) enum GlyphScale {
     Standard,
-    Large,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub(super) struct ProfileTilePresentation {
-    pub(super) tag: &'static str,
-    pub(super) label: &'static str,
-    pub(super) glyph: &'static str,
+    pub(super) label: Arc<String>,
+    pub(super) glyph: Arc<String>,
     pub(super) avatar_tone: AvatarTone,
     pub(super) glyph_scale: GlyphScale,
     pub(super) is_preferred_focus: bool,
@@ -64,7 +62,6 @@ impl Component for ProfileTile {
         let is_highlighted = button.is_hovering || button.is_focus_visible;
 
         Element::new()
-            .with_tag(self.presentation.tag)
             .with_style(tile_style(ctx, is_highlighted))
             .with_content(
                 Element::new()
@@ -74,12 +71,13 @@ impl Component for ProfileTile {
                         is_highlighted,
                     ))
                     .with_content(
-                        Text::new(self.presentation.glyph)
+                        Text::new(Arc::clone(&self.presentation.glyph))
                             .with_style(avatar_text_style(self.presentation.glyph_scale)),
                     ),
             )
             .with_content(
-                Text::new(self.presentation.label).with_style(label_text_style(is_highlighted)),
+                Text::new(Arc::clone(&self.presentation.label))
+                    .with_style(label_text_style(is_highlighted)),
             )
     }
 }

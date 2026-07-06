@@ -3,6 +3,7 @@ mod bluetooth;
 mod loginctl;
 mod power;
 mod session;
+mod systemctl;
 mod users;
 mod volume;
 

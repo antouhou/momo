@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::sync::mpsc::{Sender, channel};
 
-use super::loginctl::run_loginctl_command;
+use super::systemctl::run_systemctl_command;
 use crate::SystemControlError;
 use crate::power::{PowerAction, PowerRequestError};
 
@@ -43,7 +43,7 @@ impl PlatformPowerHandle {
 
 fn run_power_action(action: PowerAction) {
     let command = command_for_power_action(action);
-    if let Err(error) = run_loginctl_command([command]) {
+    if let Err(error) = run_systemctl_command(["--no-block", command]) {
         tracing::warn!("failed to run power action {action:?}: {error}");
     }
 }

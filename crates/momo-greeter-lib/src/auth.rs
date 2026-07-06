@@ -1,6 +1,7 @@
 use daiko::component::ComponentContext;
 use daiko::state_management::StateHandle;
 use daiko::{AppContext, Id};
+use momo_greetd::{GreetdAuthRequest, GreetdAuthenticator};
 use std::sync::Arc;
 use std::sync::mpsc::{self, Sender};
 use thiserror::Error;
@@ -43,6 +44,52 @@ pub enum GreeterAuthResult {
 
 pub trait GreeterAuthenticator: Send + Sync {
     fn authenticate(&self, request: &GreeterAuthRequest) -> GreeterAuthResult;
+}
+
+#[derive(Clone)]
+enum SystemGreeterAuthenticator {
+    Greetd(GreetdAuthenticator),
+    Mock(MockGreeterAuthenticator),
+}
+
+impl GreeterAuthenticator for SystemGreeterAuthenticator {
+    fn authenticate(&self, request: &GreeterAuthRequest) -> GreeterAuthResult {
+        match self {
+            Self::Greetd(authenticator) => authenticate_with_greetd(authenticator, request),
+            Self::Mock(authenticator) => authenticator.authenticate(request),
+        }
+    }
+}
+
+pub(crate) fn auth_handle_for_source(source: GreeterAuthSource) -> GreeterAuthHandle {
+    let authenticator = match source {
+        GreeterAuthSource::System => {
+            SystemGreeterAuthenticator::Greetd(GreetdAuthenticator::from_environment())
+        }
+        GreeterAuthSource::Mock => SystemGreeterAuthenticator::Mock(MockGreeterAuthenticator),
+    };
+
+    GreeterAuthHandle::spawn(authenticator)
+}
+
+fn authenticate_with_greetd(
+    authenticator: &GreetdAuthenticator,
+    request: &GreeterAuthRequest,
+) -> GreeterAuthResult {
+    let request = GreetdAuthRequest {
+        username: request.username.clone(),
+        secret: request.secret.clone(),
+        session_command: request.session_command.clone(),
+        env: request.env.clone(),
+    };
+
+    match authenticator.authenticate(request) {
+        Ok(()) => GreeterAuthResult::Started,
+        Err(error) => {
+            tracing::warn!(%error, "greetd authentication failed");
+            GreeterAuthResult::Failed(error.user_message())
+        }
+    }
 }
 
 struct GreeterAuthWorkerRequest {

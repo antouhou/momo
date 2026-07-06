@@ -2171,10 +2171,7 @@ name = "momo-greeter"
 version = "0.1.0"
 dependencies = [
  "daiko",
- "log",
- "momo-greetd",
  "momo-greeter-lib",
- "system-control",
 ]
 
 [[package]]
@@ -2182,6 +2179,7 @@ name = "momo-greeter-lib"
 version = "0.1.0"
 dependencies = [
  "daiko",
+ "momo-greetd",
  "momo-kit",
  "system-control",
  "thiserror 2.0.18",

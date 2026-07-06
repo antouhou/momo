@@ -4,8 +4,5 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-momo-greetd = { path = "../../crates/momo-greetd" }
 momo-greeter-lib = { path = "../../crates/momo-greeter-lib" }
-system-control = { path = "../../crates/system-control" }
 daiko = { workspace = true }
-log = "0.4.29"

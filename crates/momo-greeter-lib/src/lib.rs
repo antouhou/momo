@@ -2,6 +2,7 @@ mod auth;
 mod components;
 mod users;
 
+use crate::auth::auth_handle_for_source;
 use crate::auth::init_greeter_auth_state;
 use crate::components::login_screen::LoginScreen;
 use crate::users::init_greeter_users_state;
@@ -47,6 +48,19 @@ pub struct MomoGreeter {
     user_source: GreeterUserSource,
     auth_handle: GreeterAuthHandle,
     session_command: Vec<String>,
+}
+
+pub fn create_greeter(args: impl IntoIterator<Item = String>) -> MomoGreeter {
+    let args = args.into_iter().collect::<Vec<_>>();
+
+    let system_control =
+        SystemControl::new().expect("failed to initialize system control services");
+    let user_source = GreeterUserSource::from_args(args.iter().cloned());
+    let auth_source = GreeterAuthSource::from_args(args.iter().cloned());
+    let auth_handle = auth_handle_for_source(auth_source);
+    let session_command = auth::session_command_from_args(&args);
+
+    MomoGreeter::new(system_control, user_source, auth_handle, session_command)
 }
 
 impl MomoGreeter {

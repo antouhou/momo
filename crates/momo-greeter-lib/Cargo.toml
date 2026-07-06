@@ -5,6 +5,7 @@ edition.workspace = true
 
 [dependencies]
 daiko.workspace = true
+momo-greetd = { path = "../momo-greetd" }
 momo-kit = { path = "../momo-kit" }
 system-control = { path = "../system-control" }
 thiserror = "2.0.17"

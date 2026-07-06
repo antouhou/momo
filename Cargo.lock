@@ -2157,16 +2157,24 @@ name = "momo-compositor"
 version = "0.1.0"
 
 [[package]]
+name = "momo-greetd"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+ "tracing",
+]
+
+[[package]]
 name = "momo-greeter"
 version = "0.1.0"
 dependencies = [
  "daiko",
  "log",
- "momo-app",
+ "momo-greetd",
  "momo-greeter-lib",
- "momo-wayfire",
  "system-control",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -2174,9 +2182,9 @@ name = "momo-greeter-lib"
 version = "0.1.0"
 dependencies = [
  "daiko",
- "momo-app",
  "momo-kit",
  "system-control",
+ "thiserror 2.0.18",
  "tracing",
  "tracing-android",
  "tracing-subscriber",

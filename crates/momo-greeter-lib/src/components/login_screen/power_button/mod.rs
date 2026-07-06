@@ -17,7 +17,7 @@ impl Component for PowerButton {
         let button = ButtonBehavior::new(ctx).apply();
 
         if button.just_activated {
-            println!("Pressed power button");
+            tracing::debug!("pressed power button");
         }
 
         let is_highlighted = button.is_hovering || button.is_focus_visible;

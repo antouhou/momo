@@ -1,5 +1,5 @@
 use crate::components::login_screen::style::{
-    CONTROL_GAP, SECTION_GAP, text_primary_color, text_secondary_color,
+    CONTROL_GAP, SECTION_GAP, accent_color, text_primary_color, text_secondary_color,
 };
 use daiko::layout::{AlignItems, FlexDirection, ItemSize, JustifyContent, SizeConstraint};
 use daiko::style::{Border, BorderRadius, Color, Indent, Stroke, Style};
@@ -16,6 +16,7 @@ const INPUT_HEIGHT: f32 = 54.0;
 const INPUT_RADIUS: f32 = 14.0;
 const INPUT_HORIZONTAL_PADDING: f32 = 18.0;
 const INPUT_LABEL_SIZE: f32 = 15.0;
+const AUTH_MESSAGE_SIZE: f32 = 15.0;
 
 pub(super) fn content_style() -> Style {
     Style::new()
@@ -62,6 +63,16 @@ pub(super) fn input_label_text_style() -> TextStyle {
         .with_font_size(INPUT_LABEL_SIZE)
         .with_font_color(text_secondary_color())
         .with_wrap(TextWrap::NoWrap)
+}
+
+pub(super) fn auth_message_text_style(is_error: bool) -> TextStyle {
+    TextStyle::default()
+        .with_font_size(AUTH_MESSAGE_SIZE)
+        .with_font_color(if is_error {
+            Color::from_rgb(255, 151, 151)
+        } else {
+            accent_color()
+        })
 }
 
 pub(super) fn input_style() -> Style {

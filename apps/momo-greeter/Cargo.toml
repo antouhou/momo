@@ -4,10 +4,8 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-momo-app = { path = "../../crates/momo-app" }
+momo-greetd = { path = "../../crates/momo-greetd" }
 momo-greeter-lib = { path = "../../crates/momo-greeter-lib" }
-momo-wayfire = { path = "../../crates/momo-wayfire" }
 system-control = { path = "../../crates/system-control" }
 daiko = { workspace = true }
-tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 log = "0.4.29"

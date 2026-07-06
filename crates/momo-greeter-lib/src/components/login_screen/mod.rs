@@ -6,6 +6,7 @@ mod profile_tile;
 mod state;
 mod style;
 
+use crate::auth::{GreeterAuthStatus, use_greeter_auth_state};
 use crate::components::login_screen::clock::Clock;
 use crate::components::login_screen::login_panel::LoginPanel;
 use crate::components::login_screen::power_button::PowerButton;
@@ -44,6 +45,10 @@ impl Component for LoginScreen {
 
         let users_state = use_greeter_users_state(ctx);
         let users_guard = users_state.read();
+        let auth_state = use_greeter_auth_state(ctx);
+        if matches!(&auth_state.read().status, GreeterAuthStatus::Started { .. }) {
+            ctx.app_context.close_app();
+        }
         let greeter_state = ctx.use_local_state(GreeterState::default);
         let view = greeter_state.read().view;
 
@@ -113,7 +118,7 @@ fn profile_picker(
     for (index, user) in users.iter().enumerate() {
         let profile_tile = ProfileTile::new(ctx, profile_tile_presentation(user, index));
         if profile_tile.activated() {
-            println!("Selected user {}", user.username);
+            tracing::debug!(username = %user.username, "selected user");
             greeter_state.write().view = GreeterView::Credentials { user_index: index };
         }
         profile_row.add_content(profile_tile);

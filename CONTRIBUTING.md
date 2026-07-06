@@ -28,6 +28,12 @@ to think "oh I want to work on controllers" when you're working on Bluetooth, yo
 and see all the code related to it.
 6. Try to generalize behaviors and styles, so it can be shared across components, crates, and apps. Generalized 
 behaviors, components and styles are located in the [`crates/momo-kit`](crates/momo-kit).
+7. There are generally three types of crates in this project: logic/system integration, UI, and apps.
+Apps are usually just a thing launchable runtime, with the actual UI for it being in the lib. Apps shouldn't
+contain any logic or system integration code. Likewise, UI crates shouldn't contain any logic or system integration
+code. And the logic/system integration crates shouldn't contain any UI code or depend on the UI crates. This makes
+code much more structured and easier to navigate. Please keep those concepts separate.
+8. Avoid dynamic dispatch, trait objects and such as much as possible.
 
 ## Rules for UI development:
 
@@ -52,4 +58,6 @@ with that thread over usual std channels.
 10. Try to make components as generic as possible. For example, button should not know about the context it's in - it's 
 not button's responsibility. Use channels to communicate to the parent that button state has changed - for example that 
 it has been activated, clicked or so on, and let the parent decide what to do with it.
-11. Avoid cloning vectors or doing other allocations in the UI/component code. Use references.
+11. Avoid cloning vectors or doing other allocations in the UI/component code. Use references. Do not create or clone
+`String`s or `Vec`s in the `Component::to_element` function, unless those are for some one-shot interaction that
+might happen once in a rare while. 

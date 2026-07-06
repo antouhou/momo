@@ -1,15 +1,12 @@
+#[cfg(not(debug_assertions))]
+use momo_greeter::create_greeter;
+use momo_greeter_lib::init_tracing;
 #[cfg(debug_assertions)]
 use {daiko::hot_reloading::HotReloadApp, std::path::PathBuf};
-#[cfg(not(debug_assertions))]
-use {
-    momo_greeter::{ShellApp, ShellConfiguration, ShellMode},
-    momo_greeter_lib::{GreeterUserSource, MomoGreeter},
-    momo_wayfire::WayfireBackend,
-};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Set up basic logging
-    momo_greeter_lib::init_tracing();
+    init_tracing();
 
     // Set a panic hook that exits the process with if any of the threads panic
     let original_hook = std::panic::take_hook();
@@ -33,18 +30,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     #[cfg(not(debug_assertions))]
     {
-        // App setup
-        let configuration = ShellConfiguration {
-            mode: ShellMode::Standalone,
-        };
-
-        let backend = WayfireBackend::disconnected();
-        let app = ShellApp::new(configuration, backend);
-        let system_control = system_control::SystemControl::new()
-            .expect("failed to initialize system control services");
-        let user_source = GreeterUserSource::from_args(std::env::args().skip(1));
-        let ui = MomoGreeter::new(app.initial_view_model(), system_control, user_source);
-
+        let ui = create_greeter(std::env::args().skip(1));
         daiko::run(ui);
     }
 

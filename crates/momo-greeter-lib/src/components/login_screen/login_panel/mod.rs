@@ -1,20 +1,21 @@
 mod style;
 
+use crate::auth::{GreeterAuthStatus, submit_greeter_auth_request, use_greeter_auth_state};
 use crate::components::login_screen::action_button::ActionButton;
 use crate::components::login_screen::login_panel::style::{
-    actions_style, avatar_style, avatar_text_style, content_style, input_label_text_style,
-    input_style, panel_style,
+    actions_style, auth_message_text_style, avatar_style, avatar_text_style, content_style,
+    input_label_text_style, input_style, panel_style,
 };
 use crate::components::login_screen::state::{GreeterState, GreeterView};
 use crate::components::login_screen::style::{
     subtitle_text_style, title_block_style, title_text_style,
 };
 use crate::users::{GreeterUser, GreeterUsersStatus, use_greeter_users_state};
-use daiko::Element;
 use daiko::component::{Component, ComponentContext};
 use daiko::state_management::StateHandle;
 use daiko::widgets::text::Text;
 use daiko::widgets::text_input::TextInput;
+use daiko::{Element, StringOrReference};
 use std::sync::Arc;
 
 #[derive(Clone)]
@@ -37,10 +38,21 @@ impl Component for LoginPanel {
         let password_input = TextInput::new(ctx).with_style(input_style());
         let password = password_input.current_text();
         let back_button = ActionButton::new(ctx, "login-back", "Back", false, false);
-        let login_button = ActionButton::new(ctx, "login-submit", "Log in", true, true);
+        let auth_state = use_greeter_auth_state(ctx);
+        let is_authenticating = {
+            let auth_guard = auth_state.read();
+            matches!(&auth_guard.status, GreeterAuthStatus::Authenticating { .. })
+        };
+        let login_button_label = if is_authenticating {
+            "Signing in"
+        } else {
+            "Log in"
+        };
+        let login_button = ActionButton::new(ctx, "login-submit", login_button_label, true, true);
 
         if back_button.activated() {
-            println!("Pressed back button");
+            tracing::debug!("pressed back button");
+            auth_state.write().status = GreeterAuthStatus::Idle;
             self.greeter_state.write().view = GreeterView::Profiles;
         }
 
@@ -57,17 +69,31 @@ impl Component for LoginPanel {
             return missing_user_content();
         };
 
-        if login_button.activated() {
-            println!("Pressed login button for {}", user.username);
-            let _ = password.read();
+        if login_button.activated() && !is_authenticating {
+            tracing::debug!(username = %user.username, "pressed login button");
+            let secret = password.read().clone();
+            *password.write() = String::new();
+            if let Err(error) =
+                submit_greeter_auth_request(&auth_state, Arc::clone(&user.username), secret)
+            {
+                auth_state.write().status = GreeterAuthStatus::Failed {
+                    username: Arc::clone(&user.username),
+                    message: Arc::new(error.to_string()),
+                };
+            }
         }
 
+        let auth_message = {
+            let auth_guard = auth_state.read();
+            auth_status_message(&auth_guard.status, user)
+        };
         credential_content(
             user,
             self.user_index,
             password_input,
             back_button,
             login_button,
+            auth_message,
         )
     }
 }
@@ -92,7 +118,33 @@ fn credential_content(
     password_input: TextInput,
     back_button: ActionButton,
     login_button: ActionButton,
+    auth_message: Option<AuthMessage>,
 ) -> Element {
+    let mut panel = Element::new()
+        .with_style(panel_style())
+        .with_content(
+            Element::new()
+                .with_style(avatar_style(user_index))
+                .with_content(
+                    Text::new(Arc::clone(&user.initials)).with_style(avatar_text_style()),
+                ),
+        )
+        .with_content(Text::new("Password").with_style(input_label_text_style()))
+        .with_content(password_input);
+
+    if let Some(message) = auth_message {
+        panel.add_content(
+            Text::new(message.text).with_style(auth_message_text_style(message.is_error)),
+        );
+    }
+
+    panel.add_content(
+        Element::new()
+            .with_style(actions_style())
+            .with_content(back_button)
+            .with_content(login_button),
+    );
+
     Element::new()
         .with_tag("credential-panel")
         .with_style(content_style())
@@ -106,23 +158,37 @@ fn credential_content(
                     Text::new("Enter your password to continue").with_style(subtitle_text_style()),
                 ),
         )
-        .with_content(
-            Element::new()
-                .with_style(panel_style())
-                .with_content(
-                    Element::new()
-                        .with_style(avatar_style(user_index))
-                        .with_content(
-                            Text::new(Arc::clone(&user.initials)).with_style(avatar_text_style()),
-                        ),
-                )
-                .with_content(Text::new("Password").with_style(input_label_text_style()))
-                .with_content(password_input)
-                .with_content(
-                    Element::new()
-                        .with_style(actions_style())
-                        .with_content(back_button)
-                        .with_content(login_button),
-                ),
-        )
+        .with_content(panel)
+}
+
+struct AuthMessage {
+    text: StringOrReference,
+    is_error: bool,
+}
+
+fn auth_status_message(status: &GreeterAuthStatus, user: &GreeterUser) -> Option<AuthMessage> {
+    match status {
+        GreeterAuthStatus::Idle => None,
+        GreeterAuthStatus::Authenticating { username } if username == &user.username => {
+            Some(AuthMessage {
+                text: "Authenticating".into(),
+                is_error: false,
+            })
+        }
+        GreeterAuthStatus::Started { username } if username == &user.username => {
+            Some(AuthMessage {
+                text: "Starting session".into(),
+                is_error: false,
+            })
+        }
+        GreeterAuthStatus::Failed { username, message } if username == &user.username => {
+            Some(AuthMessage {
+                text: Arc::clone(message).into(),
+                is_error: true,
+            })
+        }
+        GreeterAuthStatus::Authenticating { .. }
+        | GreeterAuthStatus::Started { .. }
+        | GreeterAuthStatus::Failed { .. } => None,
+    }
 }

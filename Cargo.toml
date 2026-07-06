@@ -8,6 +8,7 @@ members = [
     "crates/momo-ui",
     "crates/momo-kit",
     "crates/momo-greeter-lib",
+    "crates/momo-greetd",
     "crates/momo-wayfire",
     "apps/momo-greeter",
 ]

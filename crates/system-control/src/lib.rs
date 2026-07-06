@@ -2,6 +2,8 @@ mod battery;
 mod bluetooth;
 mod feature_state;
 mod platform;
+mod power;
+mod session;
 mod users;
 mod volume;
 
@@ -20,6 +22,8 @@ pub use bluetooth::{
     BluetoothUserVisibleError,
 };
 pub use feature_state::FeatureState;
+pub use power::{PowerAction, PowerHandle, PowerRequestError};
+pub use session::{SessionAction, SessionHandle, SessionRequestError};
 pub use users::{
     SystemUser, UserHandle, UserListFeatureState, UserUnavailableReason, UserUnsupportedReason,
 };
@@ -32,6 +36,8 @@ pub use volume::{
 pub struct SystemControl {
     battery: BatteryHandle,
     bluetooth: BluetoothHandle,
+    power: PowerHandle,
+    session: SessionHandle,
     users: UserHandle,
     volume: VolumeHandle,
 }
@@ -41,6 +47,8 @@ impl SystemControl {
         Ok(Self {
             battery: BatteryHandle::new()?,
             bluetooth: BluetoothHandle::new()?,
+            power: PowerHandle::new()?,
+            session: SessionHandle::new()?,
             users: UserHandle::new()?,
             volume: VolumeHandle::new()?,
         })
@@ -52,6 +60,14 @@ impl SystemControl {
 
     pub fn bluetooth(&self) -> BluetoothHandle {
         self.bluetooth.clone()
+    }
+
+    pub fn power(&self) -> PowerHandle {
+        self.power.clone()
+    }
+
+    pub fn session(&self) -> SessionHandle {
+        self.session.clone()
     }
 
     pub fn users(&self) -> UserHandle {

@@ -8,7 +8,9 @@ mod clock_chip;
 mod header;
 mod launch;
 pub(crate) mod model;
+pub(crate) mod power;
 // pub(crate) mod settings_button;
+pub(crate) mod session;
 pub(crate) mod system_status;
 #[cfg(test)]
 mod tests;

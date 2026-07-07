@@ -14,6 +14,7 @@ momo-app.workspace = true
 momo-tracing.workspace = true
 momo-ui.workspace = true
 momo-wayfire.workspace = true
+system-control.workspace = true
 # Winit is required for the android's equivalent of the main() function
 winit = { version = "0.30.7", features = ["android-native-activity"] }
 

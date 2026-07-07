@@ -1,4 +1,6 @@
-use momo_compositor::{CompositorBackend, CompositorSnapshot};
+use momo_compositor::{
+    CompositorBackend, CompositorError, CompositorSnapshot, ConnectionConfiguration,
+};
 
 use crate::{ShellConfiguration, ShellViewModel};
 
@@ -19,6 +21,10 @@ where
             configuration,
             backend,
         }
+    }
+
+    pub fn connect_backend(&mut self) -> Result<(), CompositorError> {
+        self.backend.connect(&ConnectionConfiguration::default())
     }
 
     pub fn initial_view_model(&self) -> ShellViewModel {

@@ -10,6 +10,10 @@ momo-tracing.workspace = true
 momo-ui.workspace = true
 momo-wayfire.workspace = true
 system-control.workspace = true
+thiserror.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+dailand = { path = "../../../daiko/crates/dailand" }
 
 [lints]
 workspace = true

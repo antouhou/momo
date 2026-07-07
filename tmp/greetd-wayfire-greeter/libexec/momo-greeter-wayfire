@@ -1,0 +1,128 @@
+#!/bin/sh
+set -eu
+
+LOG="${MOMO_GREETER_LOG:-/tmp/momo-greeter.log}"
+WAYFIRE_CONFIG="${MOMO_GREETER_WAYFIRE_CONFIG:-/usr/lib/momo-greeter/wayfire.ini}"
+GREETER="${MOMO_GREETER_BIN:-/usr/local/bin/momo-greeter}"
+SESSION_COMMAND="wayfire"
+MOMO_GREETER_AUTH_ARGS="${MOMO_GREETER_AUTH_ARGS:-}"
+PIDFILE="${XDG_RUNTIME_DIR:-/tmp}/momo-greeter-wayfire.pid"
+SOCKET_TIMEOUT_SECONDS="${MOMO_GREETER_SOCKET_TIMEOUT_SECONDS:-15}"
+COMPOSITOR_READY_DELAY_SECONDS="${MOMO_GREETER_COMPOSITOR_READY_DELAY_SECONDS:-3}"
+GREETER_START_ATTEMPTS="${MOMO_GREETER_START_ATTEMPTS:-5}"
+
+{
+  echo "===== momo-greeter-wayfire start $(date) ====="
+  echo "uid/gid: $(id)"
+  echo "wayfire config: ${WAYFIRE_CONFIG}"
+  echo "greeter binary: ${GREETER}"
+  echo "session command: ${SESSION_COMMAND}"
+  echo "auth args: ${MOMO_GREETER_AUTH_ARGS}"
+  echo "pidfile: ${PIDFILE}"
+  echo "socket timeout seconds: ${SOCKET_TIMEOUT_SECONDS}"
+  echo "compositor ready delay seconds: ${COMPOSITOR_READY_DELAY_SECONDS}"
+  echo "greeter start attempts: ${GREETER_START_ATTEMPTS}"
+  echo "environment:"
+  env
+} >>"${LOG}" 2>&1
+
+rm -f "${PIDFILE}"
+
+wayfire -c "${WAYFIRE_CONFIG}" >>"${LOG}" 2>&1 &
+WAYFIRE_PID="$!"
+echo "${WAYFIRE_PID}" >"${PIDFILE}"
+
+{
+  echo "started greeter wayfire pid ${WAYFIRE_PID}"
+} >>"${LOG}" 2>&1
+
+WAYLAND_DISPLAY_NAME=""
+SECONDS_WAITED=0
+while [ "${SECONDS_WAITED}" -lt "${SOCKET_TIMEOUT_SECONDS}" ]; do
+  for SOCKET in "${XDG_RUNTIME_DIR:-/tmp}"/wayland-*; do
+    if [ -S "${SOCKET}" ]; then
+      WAYLAND_DISPLAY_NAME="$(basename "${SOCKET}")"
+      break
+    fi
+  done
+
+  if [ -n "${WAYLAND_DISPLAY_NAME}" ]; then
+    break
+  fi
+
+  if ! kill -0 "${WAYFIRE_PID}" 2>/dev/null; then
+    {
+      echo "greeter wayfire exited before creating a Wayland socket"
+    } >>"${LOG}" 2>&1
+    break
+  fi
+
+  sleep 1
+  SECONDS_WAITED=$((SECONDS_WAITED + 1))
+done
+
+if [ -z "${WAYLAND_DISPLAY_NAME}" ]; then
+  {
+    echo "timed out waiting for Wayfire Wayland socket"
+    echo "stopping greeter wayfire pid ${WAYFIRE_PID}"
+  } >>"${LOG}" 2>&1
+  kill "${WAYFIRE_PID}" 2>/dev/null || true
+  wait "${WAYFIRE_PID}" 2>/dev/null || true
+  exit 1
+fi
+
+{
+  echo "using Wayland display ${WAYLAND_DISPLAY_NAME}"
+  echo "waiting ${COMPOSITOR_READY_DELAY_SECONDS}s for compositor readiness"
+} >>"${LOG}" 2>&1
+
+sleep "${COMPOSITOR_READY_DELAY_SECONDS}"
+
+ATTEMPT=1
+GREETER_STATUS=1
+while [ "${ATTEMPT}" -le "${GREETER_START_ATTEMPTS}" ]; do
+  {
+    echo "starting momo-greeter attempt ${ATTEMPT}/${GREETER_START_ATTEMPTS}"
+  } >>"${LOG}" 2>&1
+
+  set +e
+  WAYLAND_DISPLAY="${WAYLAND_DISPLAY_NAME}" "${GREETER}" \
+    ${MOMO_GREETER_AUTH_ARGS} \
+    --session-command "${SESSION_COMMAND}" \
+    >>"${LOG}" 2>&1
+  GREETER_STATUS="$?"
+  set -e
+
+  if [ "${GREETER_STATUS}" -ne 1 ]; then
+    break
+  fi
+
+  if ! kill -0 "${WAYFIRE_PID}" 2>/dev/null; then
+    {
+      echo "greeter wayfire exited before momo-greeter could connect"
+    } >>"${LOG}" 2>&1
+    break
+  fi
+
+  ATTEMPT=$((ATTEMPT + 1))
+  sleep 1
+done
+
+{
+  echo "momo-greeter exited with status ${GREETER_STATUS}"
+  echo "stopping greeter wayfire pid ${WAYFIRE_PID}"
+} >>"${LOG}" 2>&1
+
+kill "${WAYFIRE_PID}" 2>/dev/null || true
+
+set +e
+wait "${WAYFIRE_PID}"
+WAYFIRE_STATUS="$?"
+set -e
+
+{
+  echo "greeter wayfire exited with status ${WAYFIRE_STATUS}"
+  echo "===== momo-greeter-wayfire end $(date) ====="
+} >>"${LOG}" 2>&1
+
+exit "${GREETER_STATUS}"

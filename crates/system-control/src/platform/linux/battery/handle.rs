@@ -1,12 +1,13 @@
-use std::sync::atomic::Ordering;
-use std::sync::mpsc::{Sender, channel};
-use std::sync::{Arc, Weak};
-
-use super::runtime::{BatteryRuntimeMessage, run_battery_runtime};
-use super::state::LinuxBatteryState;
-use crate::SystemControlError;
-use crate::battery::BatteryFeatureState;
-use crate::feature_state::FeatureState;
+use std::sync::{
+    Arc, Weak,
+    atomic::Ordering,
+    mpsc::{Sender, channel},
+};
+use super::{
+    runtime::{BatteryRuntimeMessage, run_battery_runtime},
+    state::LinuxBatteryState,
+};
+use crate::{SystemControlError, battery::BatteryFeatureState, feature_state::FeatureState};
 
 #[derive(Clone)]
 pub(crate) struct PlatformBatteryHandle {

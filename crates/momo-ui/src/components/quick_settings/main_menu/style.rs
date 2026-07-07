@@ -1,9 +1,11 @@
+use daiko::{
+    layout::{AlignItems, FlexDirection, ItemSize, JustifyContent, SizeConstraint},
+    style::{Indent, Style},
+};
 use super::super::style::{
     SETTINGS_MENU_CONTENT_WIDTH, SETTINGS_MENU_GAP, SETTINGS_MENU_HORIZONTAL_PADDING,
     SETTINGS_MENU_VERTICAL_PADDING, SETTINGS_SCROLLABLE_FOCUS_PADDING, SETTINGS_TOP_ACTIONS_GAP,
 };
-use daiko::layout::{AlignItems, FlexDirection, ItemSize, JustifyContent, SizeConstraint};
-use daiko::style::{Indent, Style};
 
 pub(super) fn settings_top_row_style() -> Style {
     Style::new()

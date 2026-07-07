@@ -1,5 +1,7 @@
-use crate::SystemControlError;
-use crate::power::{PowerAction, PowerRequestError};
+use crate::{
+    SystemControlError,
+    power::{PowerAction, PowerRequestError},
+};
 
 #[derive(Clone)]
 pub(crate) struct PlatformPowerHandle;

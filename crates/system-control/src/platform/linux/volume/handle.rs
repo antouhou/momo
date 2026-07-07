@@ -1,12 +1,17 @@
-use std::sync::atomic::Ordering;
-use std::sync::mpsc::{Sender, channel};
-use std::sync::{Arc, Weak};
-
-use super::runtime::{VolumeRuntimeMessage, run_volume_runtime};
-use super::state::LinuxVolumeState;
-use crate::SystemControlError;
-use crate::feature_state::FeatureState;
-use crate::volume::{VolumeFeatureState, VolumeRequestError};
+use std::sync::{
+    Arc, Weak,
+    atomic::Ordering,
+    mpsc::{Sender, channel},
+};
+use super::{
+    runtime::{VolumeRuntimeMessage, run_volume_runtime},
+    state::LinuxVolumeState,
+};
+use crate::{
+    SystemControlError,
+    feature_state::FeatureState,
+    volume::{VolumeFeatureState, VolumeRequestError},
+};
 
 #[derive(Clone)]
 pub(crate) struct PlatformVolumeHandle {

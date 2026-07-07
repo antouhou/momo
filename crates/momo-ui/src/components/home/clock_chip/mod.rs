@@ -1,22 +1,25 @@
 pub mod state;
+mod style;
 
-use crate::components::home::bluetooth::bluetooth_handle;
-use crate::components::home::clock_chip::state::ClockButtonLocalState;
-use crate::components::home::header::{
-    HEADER_BUTTON_HEIGHT, HEADER_BUTTON_RADIUS, HEADER_CLOCK_WIDTH, HeaderButtonMetrics,
-    HeaderButtonState, header_button_style,
+use daiko::{
+    Element, Id,
+    component::{Component, ComponentContext},
+    navigation::FocusOrigin,
+    widgets::text::Text,
 };
-use crate::components::home::model::HOME_CLOCK_STATE_ID;
-use crate::components::home::time::read_system_time;
-use crate::components::quick_settings::SETTINGS_MENU_STATE_ID;
-use crate::components::quick_settings::state::{SettingsMenuState, SettingsMenuViewType};
-use daiko::component::{Component, ComponentContext};
-use daiko::navigation::FocusOrigin;
-use daiko::style::{Color, Style};
-use daiko::widgets::text::{Text, TextStyle, TextWrap};
-use daiko::{Element, Id};
 use momo_kit::interaction::ButtonBehavior;
 use tracing::warn;
+use self::style::{clock_button_style, clock_text_style};
+use crate::components::{
+    home::{
+        bluetooth::bluetooth_handle, clock_chip::state::ClockButtonLocalState,
+        header::HeaderButtonState, model::HOME_CLOCK_STATE_ID, time::read_system_time,
+    },
+    quick_settings::{
+        SETTINGS_MENU_STATE_ID,
+        state::{SettingsMenuState, SettingsMenuViewType},
+    },
+};
 
 #[derive(Clone, Copy)]
 pub(super) struct ClockChip;
@@ -70,36 +73,9 @@ impl Component for ClockChip {
             is_hovered: button.is_hovering,
             is_focused: button.is_focused,
         };
-        let text_color = if state.is_pressed || state.is_hovered || state.is_focused {
-            Color::from_rgb(10, 13, 18)
-        } else {
-            Color::from_rgb(232, 238, 250)
-        };
-
         Element::new()
             .with_tag("clock-chip")
             .with_style(clock_button_style(ctx, state))
-            .with_content(
-                Text::new(clock_text.read().clone()).with_style(
-                    TextStyle::default()
-                        .with_font_size(22.0)
-                        .with_line_height(1.0)
-                        .with_font_color(text_color)
-                        .with_wrap(TextWrap::NoWrap),
-                ),
-            )
+            .with_content(Text::new(clock_text.read().clone()).with_style(clock_text_style(state)))
     }
-}
-
-fn clock_button_style(ctx: &mut ComponentContext, state: HeaderButtonState) -> Style {
-    header_button_style(
-        ctx,
-        HeaderButtonMetrics {
-            width: HEADER_CLOCK_WIDTH,
-            height: HEADER_BUTTON_HEIGHT,
-            radius: HEADER_BUTTON_RADIUS,
-        },
-        state,
-        true,
-    )
 }

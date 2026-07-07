@@ -1,19 +1,19 @@
-use super::device::device_from_identifier;
-use super::events::spawn_device_watcher;
-use super::runtime::RuntimeTaskState;
-use super::state::{
-    apply_pending_operation, finish_operation_with_error, refresh_adapter_state, refresh_device,
+use std::{sync::Arc, time::Duration};
+use bluer::{Adapter, AdapterEvent};
+use futures_util::StreamExt;
+use tokio::{sync::mpsc::UnboundedSender, time::timeout};
+use super::{
+    device::device_from_identifier,
+    events::spawn_device_watcher,
+    runtime::RuntimeTaskState,
+    state::{
+        apply_pending_operation, finish_operation_with_error, refresh_adapter_state, refresh_device,
+    },
+    store::BackendState,
 };
-use super::store::BackendState;
 use crate::bluetooth::{
     BluetoothDeviceId, BluetoothOperationId, BluetoothOperationKind, BluetoothUserVisibleError,
 };
-use bluer::{Adapter, AdapterEvent};
-use futures_util::StreamExt;
-use std::sync::Arc;
-use std::time::Duration;
-use tokio::sync::mpsc::UnboundedSender;
-use tokio::time::timeout;
 
 const BLUETOOTH_CONNECT_TIMEOUT: Duration = Duration::from_secs(20);
 const BLUETOOTH_CONNECT_CANCEL_TIMEOUT: Duration = Duration::from_secs(5);

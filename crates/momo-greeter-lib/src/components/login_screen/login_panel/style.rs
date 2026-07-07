@@ -1,9 +1,11 @@
+use daiko::{
+    layout::{AlignItems, FlexDirection, ItemSize, JustifyContent, SizeConstraint},
+    style::{Border, BorderRadius, Color, Indent, Stroke, Style},
+    widgets::text::{TextStyle, TextWrap, Weight},
+};
 use crate::components::login_screen::style::{
     CONTROL_GAP, SECTION_GAP, accent_color, text_primary_color, text_secondary_color,
 };
-use daiko::layout::{AlignItems, FlexDirection, ItemSize, JustifyContent, SizeConstraint};
-use daiko::style::{Border, BorderRadius, Color, Indent, Stroke, Style};
-use daiko::widgets::text::{TextStyle, TextWrap, Weight};
 
 const PANEL_WIDTH: f32 = 470.0;
 const PANEL_RADIUS: f32 = 28.0;

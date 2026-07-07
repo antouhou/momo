@@ -1,20 +1,23 @@
-use super::super::common::QuickSettingsControlState;
-use super::super::style::{
-    CONTROL_TRANSITION_MS, SETTINGS_COMPACT_CONTENT_GAP, SETTINGS_ICON_FRAME_SIZE,
-    SETTINGS_MENU_GAP, SETTINGS_MENU_INNER_WIDTH, SETTINGS_STATUS_CHIP_PADDING,
-    SETTINGS_TILE_HEIGHT, SETTINGS_TILE_PADDING, SETTINGS_VOLUME_SLIDER_ROW_HEIGHT, TILE_RADIUS,
-    settings_button_focus_transform, settings_label_text_style, settings_surface_border_color,
-    settings_surface_border_focus_color, settings_surface_border_hover_color,
-    settings_surface_color, settings_surface_focus_color, settings_surface_hover_color,
-    settings_text_color,
-};
-use daiko::animation::easing::EasingFunction;
-use daiko::animation::{AnimationParameters, transition};
-use daiko::component::ComponentContext;
-use daiko::layout::{AlignItems, FlexDirection, ItemSize, JustifyContent};
-use daiko::style::{Border, BorderRadius, CursorIcon, Indent, Stroke, Style};
-use daiko::widgets::text::TextStyle;
 use std::time::Duration;
+use daiko::{
+    animation::{AnimationParameters, easing::EasingFunction, transition},
+    component::ComponentContext,
+    layout::{AlignItems, FlexDirection, ItemSize, JustifyContent},
+    style::{Border, BorderRadius, CursorIcon, Indent, Stroke, Style},
+    widgets::text::TextStyle,
+};
+use super::super::{
+    common::QuickSettingsControlState,
+    style::{
+        CONTROL_TRANSITION_MS, SETTINGS_COMPACT_CONTENT_GAP, SETTINGS_ICON_FRAME_SIZE,
+        SETTINGS_MENU_GAP, SETTINGS_MENU_INNER_WIDTH, SETTINGS_STATUS_CHIP_PADDING,
+        SETTINGS_TILE_HEIGHT, SETTINGS_TILE_PADDING, SETTINGS_VOLUME_SLIDER_ROW_HEIGHT,
+        TILE_RADIUS, settings_button_focus_transform, settings_label_text_style,
+        settings_surface_border_color, settings_surface_border_focus_color,
+        settings_surface_border_hover_color, settings_surface_color, settings_surface_focus_color,
+        settings_surface_hover_color, settings_text_color,
+    },
+};
 
 const VOLUME_CONTROL_PADDING: Indent = Indent::new(
     SETTINGS_TILE_PADDING.left,

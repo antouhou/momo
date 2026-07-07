@@ -1,11 +1,13 @@
-use crate::components::login_screen::style::accent_color;
-use daiko::animation::easing::EasingFunction;
-use daiko::animation::{AnimationParameters, transition};
-use daiko::component::ComponentContext;
-use daiko::style::{Border, BorderRadius, Color, CursorIcon, Indent, Stroke, Style};
-use daiko::widgets::text::TextStyle;
-use momo_kit::animation::focus_transform;
 use std::time::Duration;
+use daiko::{
+    animation::{AnimationParameters, easing::EasingFunction, transition},
+    component::ComponentContext,
+    style::{Border, BorderRadius, Color, CursorIcon, Indent, Stroke, Style},
+    widgets::text::TextStyle,
+};
+use momo_kit::animation::focus_transform;
+
+use crate::components::login_screen::style::accent_color;
 
 const BUTTON_WIDTH: f32 = 154.0;
 const BUTTON_HEIGHT: f32 = 52.0;

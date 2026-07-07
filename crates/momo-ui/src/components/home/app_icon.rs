@@ -1,6 +1,8 @@
-use daiko::style::Color;
-use daiko::widgets::image::{Image, ImageParams, ImageSource};
 use std::path::PathBuf;
+use daiko::{
+    style::Color,
+    widgets::image::{Image, ImageParams, ImageSource},
+};
 
 pub(crate) fn app_icon_background_color(accent: Color) -> Color {
     accent.gamma_multiply(0.2)

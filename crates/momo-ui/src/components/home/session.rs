@@ -1,8 +1,6 @@
-use crate::components::home::model::HOME_SESSION_HANDLE_ID;
-use daiko::AppContext;
-use daiko::Id;
-use daiko::component::ComponentContext;
+use daiko::{AppContext, Id, component::ComponentContext};
 use system_control::SessionHandle;
+use crate::components::home::model::HOME_SESSION_HANDLE_ID;
 
 pub(crate) fn initialize_session_state(
     app_context: &mut AppContext,

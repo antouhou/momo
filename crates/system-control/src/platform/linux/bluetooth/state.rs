@@ -1,15 +1,17 @@
 use std::sync::Arc;
-
 use bluer::Adapter;
-
-use super::device::{load_device, sort_devices};
-use super::store::BackendState;
-use crate::bluetooth::{
-    BluetoothAdapterState, BluetoothCapabilities, BluetoothConnectionState, BluetoothDevice,
-    BluetoothDeviceId, BluetoothDiscoveryState, BluetoothOperationId, BluetoothOperationKind,
-    BluetoothPendingOperation, BluetoothPowerState, BluetoothState, BluetoothUserVisibleError,
+use super::{
+    device::{load_device, sort_devices},
+    store::BackendState,
 };
-use crate::feature_state::FeatureState;
+use crate::{
+    bluetooth::{
+        BluetoothAdapterState, BluetoothCapabilities, BluetoothConnectionState, BluetoothDevice,
+        BluetoothDeviceId, BluetoothDiscoveryState, BluetoothOperationId, BluetoothOperationKind,
+        BluetoothPendingOperation, BluetoothPowerState, BluetoothState, BluetoothUserVisibleError,
+    },
+    feature_state::FeatureState,
+};
 
 pub(super) async fn load_current_state(adapter: &Adapter) -> bluer::Result<BluetoothState> {
     let adapter_identifier = adapter.name().to_string();

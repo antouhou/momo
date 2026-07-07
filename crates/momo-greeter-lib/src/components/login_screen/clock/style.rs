@@ -1,6 +1,8 @@
-use daiko::layout::ItemSize;
-use daiko::style::{Color, Style};
-use daiko::widgets::text::{TextStyle, TextWrap};
+use daiko::{
+    layout::ItemSize,
+    style::{Color, Style},
+    widgets::text::{TextStyle, TextWrap},
+};
 
 const CLOCK_WIDTH: f32 = 104.0;
 const CLOCK_HEIGHT: f32 = 38.0;

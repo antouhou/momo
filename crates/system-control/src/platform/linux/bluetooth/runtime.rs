@@ -1,20 +1,22 @@
-use std::collections::BTreeMap;
-use std::sync::Arc;
-use std::time::Duration;
-
+use std::{collections::BTreeMap, sync::Arc, time::Duration};
 use bluer::{Adapter, Session};
-use tokio::sync::Mutex as AsyncMutex;
-use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
-use tracing::{debug, warn};
-
-use super::command::{RuntimeMessage, handle_command};
-use super::events::{handle_adapter_event, spawn_adapter_watcher, spawn_device_watcher};
-use super::state::{load_current_state, refresh_device_from_identifier};
-use super::store::BackendState;
-use crate::bluetooth::{
-    BluetoothDeviceId, BluetoothState, BluetoothUnavailableReason, BluetoothUnsupportedReason,
+use tokio::sync::{
+    Mutex as AsyncMutex,
+    mpsc::{UnboundedReceiver, UnboundedSender},
 };
-use crate::feature_state::FeatureState;
+use tracing::{debug, warn};
+use super::{
+    command::{RuntimeMessage, handle_command},
+    events::{handle_adapter_event, spawn_adapter_watcher, spawn_device_watcher},
+    state::{load_current_state, refresh_device_from_identifier},
+    store::BackendState,
+};
+use crate::{
+    bluetooth::{
+        BluetoothDeviceId, BluetoothState, BluetoothUnavailableReason, BluetoothUnsupportedReason,
+    },
+    feature_state::FeatureState,
+};
 
 const BLUETOOTH_RECONNECT_DELAY: Duration = Duration::from_secs(2);
 

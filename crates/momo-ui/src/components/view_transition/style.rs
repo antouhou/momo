@@ -1,8 +1,12 @@
-use super::ViewTransitionPhase;
-use super::state::{ViewTransitionSlotMotion, view_transition_slot_motion_offset};
-use daiko::Vec2;
-use daiko::layout::{FlexDirection, SizeConstraint};
-use daiko::style::{Overflow, Style, Transform};
+use daiko::{
+    Vec2,
+    layout::{FlexDirection, SizeConstraint},
+    style::{Overflow, Style, Transform},
+};
+use super::{
+    ViewTransitionPhase,
+    state::{ViewTransitionSlotMotion, view_transition_slot_motion_offset},
+};
 
 pub(super) const VIEW_TRANSITION_DURATION_MS: u64 = 240;
 pub(super) const DEFAULT_VIEW_TRANSITION_SLIDE_DISTANCE: f32 = 40.0;

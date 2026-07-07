@@ -1,11 +1,16 @@
-use std::io::{BufRead, BufReader};
-use std::process::{Command, Stdio};
-use std::sync::Arc;
-use std::sync::mpsc::{Receiver, Sender};
-use std::time::Duration;
-
-use super::pipewire::{read_linux_volume_state, set_linux_output_volume};
-use super::state::LinuxVolumeState;
+use std::{
+    io::{BufRead, BufReader},
+    process::{Command, Stdio},
+    sync::{
+        Arc,
+        mpsc::{Receiver, Sender},
+    },
+    time::Duration,
+};
+use super::{
+    pipewire::{read_linux_volume_state, set_linux_output_volume},
+    state::LinuxVolumeState,
+};
 
 const VOLUME_SUBSCRIBE_RESTART_DELAY: Duration = Duration::from_secs(5);
 

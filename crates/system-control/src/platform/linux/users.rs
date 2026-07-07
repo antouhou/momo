@@ -1,6 +1,8 @@
-use crate::SystemControlError;
-use crate::feature_state::FeatureState;
-use crate::users::{SystemUser, UserListFeatureState};
+use crate::{
+    SystemControlError,
+    feature_state::FeatureState,
+    users::{SystemUser, UserListFeatureState},
+};
 
 const MIN_LOGIN_UID: u32 = 1000;
 const MAX_LOGIN_UID: u32 = 60000;

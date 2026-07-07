@@ -1,6 +1,5 @@
-use crate::SystemControlError;
-use crate::platform;
 use thiserror::Error;
+use crate::{SystemControlError, platform};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PowerAction {

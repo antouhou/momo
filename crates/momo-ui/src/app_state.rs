@@ -1,13 +1,15 @@
-use appkeeper::app_entry::AppEntry as LaunchCommandEntry;
-use appkeeper::app_launcher::{AppLauncher, LaunchError, LaunchOptions};
-use appkeeper::app_provider::AppProvider;
-use daiko::component::ComponentContext;
-use daiko::state_management::StateHandle;
-use daiko::style::Color;
-use daiko::{AppContext, Id};
-use std::path::PathBuf;
-use std::sync::Arc;
-use std::sync::mpsc::Sender;
+use std::{
+    path::PathBuf,
+    sync::{Arc, mpsc::Sender},
+};
+use appkeeper::{
+    app_entry::AppEntry as LaunchCommandEntry,
+    app_launcher::{AppLauncher, LaunchError, LaunchOptions},
+    app_provider::AppProvider,
+};
+use daiko::{
+    AppContext, Id, component::ComponentContext, state_management::StateHandle, style::Color,
+};
 use tracing::error;
 
 pub(crate) const APPS_STATE_ID: &str = "momo_apps_state";

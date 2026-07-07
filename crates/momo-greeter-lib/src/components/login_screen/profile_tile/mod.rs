@@ -1,14 +1,16 @@
 mod style;
 
+use std::sync::Arc;
+use daiko::{
+    Element,
+    channel::Channel,
+    component::{Component, ComponentContext},
+    widgets::text::Text,
+};
+use momo_kit::interaction::ButtonBehavior;
 use crate::components::login_screen::profile_tile::style::{
     avatar_style, avatar_text_style, label_text_style, tile_style,
 };
-use daiko::Element;
-use daiko::channel::Channel;
-use daiko::component::{Component, ComponentContext};
-use daiko::widgets::text::Text;
-use momo_kit::interaction::ButtonBehavior;
-use std::sync::Arc;
 
 #[derive(Clone, Copy)]
 pub(super) enum AvatarTone {

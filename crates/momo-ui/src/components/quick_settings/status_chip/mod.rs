@@ -1,19 +1,22 @@
 mod style;
 
-use self::style::{settings_status_chip_style, status_chip_content_style, status_value_style};
-use super::common::{
-    QuickSettingsControlState, QuickSettingsGlyph, glyph_element, is_menu_view_active,
+use daiko::{
+    Element,
+    component::{Component, ComponentContext},
+    widgets::text::Text,
 };
-use super::state::SettingsMenuViewType;
-use super::style::{
-    SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_danger_text_color, settings_text_color,
-};
-use crate::components::home::system_status::battery_state;
-use daiko::Element;
-use daiko::component::{Component, ComponentContext};
-use daiko::widgets::text::Text;
 use momo_kit::interaction::ButtonBehavior;
 use system_control::BatteryChargingState;
+use self::style::{settings_status_chip_style, status_chip_content_style, status_value_style};
+use super::{
+    common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_element, is_menu_view_active},
+    state::SettingsMenuViewType,
+    style::{
+        SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_danger_text_color,
+        settings_text_color,
+    },
+};
+use crate::components::home::system_status::battery_state;
 
 const BATTERY_0_ICON: &[u8] = include_bytes!("../../../../assets/battery-0.svg");
 const BATTERY_2_ICON: &[u8] = include_bytes!("../../../../assets/battery-2.svg");

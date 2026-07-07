@@ -1,8 +1,6 @@
-use crate::components::home::model::HOME_POWER_HANDLE_ID;
-use daiko::AppContext;
-use daiko::Id;
-use daiko::component::ComponentContext;
+use daiko::{AppContext, Id, component::ComponentContext};
 use system_control::PowerHandle;
+use crate::components::home::model::HOME_POWER_HANDLE_ID;
 
 pub(crate) fn initialize_power_state(app_context: &mut AppContext, power_handle: PowerHandle) {
     app_context.peek_global_state(Id::new(HOME_POWER_HANDLE_ID), move || power_handle);

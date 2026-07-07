@@ -1,10 +1,11 @@
-use daiko::animation::easing::EasingFunction;
-use daiko::animation::{AnimationParameters, transition};
-use daiko::component::ComponentContext;
-use daiko::layout::{FlexDirection, SizeConstraint};
-use daiko::style::{Color, Indent, Style, Transform};
-use daiko::widgets::text::{TextStyle, TextWrap, Weight};
 use std::time::Duration;
+use daiko::{
+    animation::{AnimationParameters, easing::EasingFunction, transition},
+    component::ComponentContext,
+    layout::{FlexDirection, SizeConstraint},
+    style::{Color, Indent, Style, Transform},
+    widgets::text::{TextStyle, TextWrap, Weight},
+};
 
 pub(crate) const SETTINGS_MENU_WIDTH: f32 = 392.0;
 pub(crate) const SETTINGS_MENU_EDGE_MARGIN: f32 = 40.0;

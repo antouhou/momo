@@ -2,3 +2,9 @@
 name = "momo-compositor"
 version.workspace = true
 edition.workspace = true
+
+[dependencies]
+thiserror = "2.0.17"
+
+[lints]
+workspace = true

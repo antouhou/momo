@@ -6,25 +6,29 @@ mod profile_tile;
 mod state;
 mod style;
 
-use crate::auth::{GreeterAuthStatus, use_greeter_auth_state};
-use crate::components::login_screen::clock::Clock;
-use crate::components::login_screen::login_panel::LoginPanel;
-use crate::components::login_screen::power_button::PowerButton;
-use crate::components::login_screen::profile_tile::{
-    AvatarTone, GlyphScale, ProfileTile, ProfileTilePresentation,
-};
-use crate::components::login_screen::state::{GreeterState, GreeterView};
-use crate::components::login_screen::style::{
-    footer_style, header_style, main_content_style, profile_row_style, root_style,
-    subtitle_text_style, title_block_style, title_text_style,
-};
-use crate::users::{GreeterUser, GreeterUsersStatus, use_greeter_users_state};
-use daiko::component::{Component, ComponentContext};
-use daiko::navigation::{FocusBoundary, FocusEntryPolicy, TraversalPolicy};
-use daiko::state_management::StateHandle;
-use daiko::widgets::text::Text;
-use daiko::{Element, StringOrReference};
 use std::sync::Arc;
+use daiko::{
+    Element, StringOrReference,
+    component::{Component, ComponentContext},
+    navigation::{FocusBoundary, FocusEntryPolicy, TraversalPolicy},
+    state_management::StateHandle,
+    widgets::text::Text,
+};
+use crate::{
+    auth::{GreeterAuthStatus, use_greeter_auth_state},
+    components::login_screen::{
+        clock::Clock,
+        login_panel::LoginPanel,
+        power_button::PowerButton,
+        profile_tile::{AvatarTone, GlyphScale, ProfileTile, ProfileTilePresentation},
+        state::{GreeterState, GreeterView},
+        style::{
+            footer_style, header_style, main_content_style, profile_row_style, root_style,
+            subtitle_text_style, title_block_style, title_text_style,
+        },
+    },
+    users::{GreeterUser, GreeterUsersStatus, use_greeter_users_state},
+};
 
 #[derive(Clone)]
 pub struct LoginScreen {}

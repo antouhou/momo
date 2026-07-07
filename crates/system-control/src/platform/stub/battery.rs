@@ -1,11 +1,16 @@
-use std::collections::BTreeMap;
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::mpsc::{Receiver, Sender, channel};
-use std::sync::{Arc, Mutex, Weak};
-
-use crate::SystemControlError;
-use crate::battery::{BatteryChargingState, BatteryFeatureState, BatteryState};
-use crate::feature_state::FeatureState;
+use std::{
+    collections::BTreeMap,
+    sync::{
+        Arc, Mutex, Weak,
+        atomic::{AtomicU64, Ordering},
+        mpsc::{Receiver, Sender, channel},
+    },
+};
+use crate::{
+    SystemControlError,
+    battery::{BatteryChargingState, BatteryFeatureState, BatteryState},
+    feature_state::FeatureState,
+};
 
 const STUB_BATTERY_PERCENTAGE: u8 = 96;
 

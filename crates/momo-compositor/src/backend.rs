@@ -1,6 +1,5 @@
-use std::fmt;
 use std::path::PathBuf;
-
+use thiserror::Error;
 use crate::{CapabilitySet, CompositorCommand, CompositorEvent, CompositorSnapshot};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -13,7 +12,8 @@ pub struct ConnectionConfiguration {
     pub socket_path: Option<PathBuf>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Error)]
+#[error("{message}")]
 pub struct CompositorError {
     message: String,
 }
@@ -25,14 +25,6 @@ impl CompositorError {
         }
     }
 }
-
-impl fmt::Display for CompositorError {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter.write_str(&self.message)
-    }
-}
-
-impl std::error::Error for CompositorError {}
 
 pub trait CompositorBackend {
     fn metadata(&self) -> BackendMetadata;

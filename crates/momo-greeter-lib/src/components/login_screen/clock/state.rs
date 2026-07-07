@@ -1,9 +1,5 @@
-use daiko::Id;
-use daiko::component::ComponentContext;
-use daiko::state_management::StateHandle;
-use std::process::Command;
-use std::thread;
-use std::time::Duration;
+use std::{process::Command, thread, time::Duration};
+use daiko::{Id, component::ComponentContext, state_management::StateHandle};
 
 const CLOCK_STATE_ID: &str = "momo_greeter_clock_text";
 const CLOCK_REFRESH_INTERVAL: Duration = Duration::from_secs(1);

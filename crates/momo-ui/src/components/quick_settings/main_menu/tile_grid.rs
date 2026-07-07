@@ -1,12 +1,18 @@
-use super::super::settings_tile_button::{SettingsTileButton, SettingsTileSpec};
-use super::super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuViewType};
-use super::style::{settings_tile_grid_style, settings_tile_row_style};
-use super::tile_specs::{BLUETOOTH_TILE_FOCUS_KEY_ID, TILE_ROWS};
-use crate::components::home::bluetooth::{bluetooth_handle, bluetooth_state};
-use daiko::component::{Component, ComponentContext};
-use daiko::navigation::{FocusEntryPolicy, FocusKey};
-use daiko::{Element, Id};
+use daiko::{
+    Element, Id,
+    component::{Component, ComponentContext},
+    navigation::{FocusEntryPolicy, FocusKey},
+};
 use tracing::warn;
+use super::{
+    super::{
+        settings_tile_button::{SettingsTileButton, SettingsTileSpec},
+        state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuViewType},
+    },
+    style::{settings_tile_grid_style, settings_tile_row_style},
+    tile_specs::{BLUETOOTH_TILE_FOCUS_KEY_ID, TILE_ROWS},
+};
+use crate::components::home::bluetooth::{bluetooth_handle, bluetooth_state};
 
 #[derive(Clone, Copy)]
 pub(super) struct SettingsTileGrid;

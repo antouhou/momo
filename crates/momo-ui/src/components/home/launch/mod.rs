@@ -1,9 +1,10 @@
 pub(super) mod controller;
 pub(super) mod overlay;
+mod style;
 
-use crate::components::home::model::LaunchRequest;
-use daiko::Vec2;
 use std::sync::Arc;
+use daiko::Vec2;
+use crate::components::home::model::LaunchRequest;
 
 pub(super) const HOME_LAUNCH_ANIMATION_ID: &str = "momo_home_launch_animation";
 pub(super) const HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID: &str =

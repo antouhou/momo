@@ -1,19 +1,27 @@
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, Mutex, Weak};
-use std::thread::JoinHandle;
-
-use tokio::runtime::Builder;
-use tokio::sync::mpsc::{UnboundedSender, unbounded_channel};
-
-use super::command::{BluetoothCommand, RuntimeMessage};
-use super::runtime::run_linux_bluetooth_runtime;
-use super::store::BackendState;
-use crate::SystemControlError;
-use crate::bluetooth::{
-    BluetoothDeviceId, BluetoothFeatureState, BluetoothOperationId, BluetoothOperationReceipt,
-    BluetoothRequestError,
+use std::{
+    sync::{
+        Arc, Mutex, Weak,
+        atomic::{AtomicU64, Ordering},
+    },
+    thread::JoinHandle,
 };
-use crate::feature_state::FeatureState;
+use tokio::{
+    runtime::Builder,
+    sync::mpsc::{UnboundedSender, unbounded_channel},
+};
+use super::{
+    command::{BluetoothCommand, RuntimeMessage},
+    runtime::run_linux_bluetooth_runtime,
+    store::BackendState,
+};
+use crate::{
+    SystemControlError,
+    bluetooth::{
+        BluetoothDeviceId, BluetoothFeatureState, BluetoothOperationId, BluetoothOperationReceipt,
+        BluetoothRequestError,
+    },
+    feature_state::FeatureState,
+};
 
 #[derive(Clone)]
 pub(crate) struct PlatformBluetoothHandle {

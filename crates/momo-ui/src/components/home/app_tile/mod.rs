@@ -1,25 +1,31 @@
 mod style;
 
-use crate::app_state::{AppCommand, AppEntry, use_apps_state};
-use crate::components::home::app_icon::app_icon;
-use crate::components::home::app_tile::style::{tile_style, tile_title_style};
-use crate::components::home::model::{
-    HOME_LAUNCH_CHANNEL_ID, LaunchRequest, LaunchRestoreFocus, TILE_HEIGHT, TILE_ICON_GLYPH_SIZE,
-    TILE_ICON_SIZE, TILE_WIDTH, tile_focus_transform, tile_icon_origin, transformed_local_rect,
+use std::{path::PathBuf, sync::Arc};
+use daiko::{
+    Element, Vec2,
+    component::{Component, ComponentContext},
+    layout::Layout,
+    navigation::FocusKey,
+    style::{Color, CursorIcon, Style},
+    widgets::{
+        container::{Container, Fit},
+        text::Text,
+    },
 };
-use daiko::Element;
-use daiko::Vec2;
-use daiko::component::{Component, ComponentContext};
-use daiko::layout::Layout;
-use daiko::navigation::FocusKey;
-use daiko::style::{Color, CursorIcon, Style};
-use daiko::widgets::container::{Container, Fit};
-use daiko::widgets::text::Text;
 use momo_kit::interaction::ButtonBehavior;
-use std::path::PathBuf;
-use std::sync::Arc;
-
 pub(crate) use style::{AppButtonSurfaceMetrics, app_button_surface_style};
+use crate::{
+    app_state::{AppCommand, AppEntry, use_apps_state},
+    components::home::{
+        app_icon::app_icon,
+        app_tile::style::{tile_style, tile_title_style},
+        model::{
+            HOME_LAUNCH_CHANNEL_ID, LaunchRequest, LaunchRestoreFocus, TILE_HEIGHT,
+            TILE_ICON_GLYPH_SIZE, TILE_ICON_SIZE, TILE_WIDTH, tile_focus_transform,
+            tile_icon_origin, transformed_local_rect,
+        },
+    },
+};
 
 #[derive(Clone)]
 pub(crate) struct AppInfo {

@@ -2,28 +2,27 @@ mod app_grid_viewport;
 mod metrics;
 mod page_dots;
 mod state;
+mod style;
 
-use crate::app_state::use_apps_state;
-use crate::components::home::model::{SCREEN_PADDING, TILE_HEIGHT, TILE_WIDTH};
+use std::{sync::Arc, time::Duration};
 use app_grid_viewport::AppGridViewport;
-use daiko::component::{Component, ComponentContext};
-use daiko::layout::{AlignItems, FlexDirection, ItemSize, JustifyContent};
-use daiko::navigation::FocusKey;
-use daiko::style::{Overflow, Style};
-use daiko::{Element, Vec2};
+use daiko::{
+    Element, Vec2,
+    component::{Component, ComponentContext},
+    navigation::FocusKey,
+};
 use metrics::AppGridMetrics;
 pub(crate) use page_dots::PageDots;
 use state::app_grid_state_handle;
-use std::sync::Arc;
-use std::time::Duration;
-
-const PAGE_DOTS_HEIGHT: f32 = 10.0;
-const PAGE_DOTS_GAP: f32 = 8.0;
-const PAGE_DOTS_TOP_GAP: f32 = 18.0;
-const PAGE_DOT_SIZE: f32 = 8.0;
-const PAGE_DOT_FOCUS_PADDING: f32 = 2.0;
-const PAGE_DOT_FOCUS_BORDER_WIDTH: f32 = 2.0;
-const ACTIVE_PAGE_DOT_WIDTH: f32 = 22.0;
+use style::{
+    ACTIVE_PAGE_DOT_WIDTH, PAGE_DOT_FOCUS_BORDER_WIDTH, PAGE_DOT_FOCUS_PADDING, PAGE_DOT_SIZE,
+    PAGE_DOTS_GAP, PAGE_DOTS_HEIGHT, PAGE_DOTS_TOP_GAP, app_grid_pager_style,
+    app_grid_wrapper_style,
+};
+use crate::{
+    app_state::use_apps_state,
+    components::home::model::{SCREEN_PADDING, TILE_HEIGHT, TILE_WIDTH},
+};
 const PAGE_SCROLL_THRESHOLD: f32 = 8.0;
 const PAGE_SCROLL_REARM_DURATION: Duration = Duration::from_millis(220);
 
@@ -37,17 +36,6 @@ pub(super) struct AppGrid {
     pub hidden_app_id: Option<Arc<String>>,
     pub preferred_focus_app_id: Option<Arc<String>>,
     pub prefer_first_tile: bool,
-}
-
-fn app_grid_wrapper_style() -> Style {
-    Style::new()
-        .with_direction(FlexDirection::Column)
-        .with_justify_content(JustifyContent::Center)
-        .with_align_items(AlignItems::Center)
-        .with_grow(1.0)
-        .with_fixed_width(ItemSize::Percent(1.0))
-        .with_min_height(ItemSize::Points(0.0))
-        .with_overflow(Overflow::Visible)
 }
 
 impl Component for AppGrid {
@@ -103,14 +91,7 @@ impl Component for AppGridPager {
 
         Element::new()
             .with_tag("apps-grid-pager")
-            .with_style(
-                Style::new()
-                    .with_direction(FlexDirection::Column)
-                    .with_justify_content(JustifyContent::Center)
-                    .with_align_items(AlignItems::Center)
-                    .with_spacing((PAGE_DOTS_TOP_GAP, PAGE_DOTS_TOP_GAP))
-                    .with_fixed_width(ItemSize::Points(metrics.page_width)),
-            )
+            .with_style(app_grid_pager_style(metrics.page_width))
             .with_content(AppGridViewport {
                 grid: self.grid.clone(),
                 metrics,

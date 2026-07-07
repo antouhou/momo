@@ -6,3 +6,6 @@ edition.workspace = true
 [dependencies]
 momo-greeter-lib = { path = "../../crates/momo-greeter-lib" }
 daiko = { workspace = true }
+
+[lints]
+workspace = true

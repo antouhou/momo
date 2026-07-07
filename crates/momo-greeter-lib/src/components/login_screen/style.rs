@@ -1,6 +1,8 @@
-use daiko::layout::{AlignItems, FlexDirection, ItemSize, JustifyContent, SizeConstraint};
-use daiko::style::{Color, Indent, Style};
-use daiko::widgets::text::{TextStyle, TextWrap};
+use daiko::{
+    layout::{AlignItems, FlexDirection, ItemSize, JustifyContent, SizeConstraint},
+    style::{Color, Indent, Style},
+    widgets::text::{TextStyle, TextWrap},
+};
 use momo_kit::style::shell_background_gradient;
 
 pub(super) const SCREEN_PADDING: f32 = 42.0;

@@ -1,16 +1,15 @@
-use std::collections::BTreeMap;
-use std::sync::Arc;
-
+use std::{collections::BTreeMap, sync::Arc};
 use bluer::{Adapter, AdapterEvent, DeviceEvent};
 use futures_util::StreamExt;
 use tokio::sync::mpsc::UnboundedSender;
 use tracing::warn;
-
-use super::command::RuntimeMessage;
-use super::device::device_from_identifier;
-use super::runtime::{BluetoothConnectionError, RuntimeTaskState};
-use super::state::{refresh_adapter_state, refresh_device};
-use super::store::BackendState;
+use super::{
+    command::RuntimeMessage,
+    device::device_from_identifier,
+    runtime::{BluetoothConnectionError, RuntimeTaskState},
+    state::{refresh_adapter_state, refresh_device},
+    store::BackendState,
+};
 use crate::bluetooth::BluetoothDeviceId;
 
 pub(super) async fn handle_adapter_event(

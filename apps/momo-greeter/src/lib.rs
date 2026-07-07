@@ -1,5 +1,4 @@
 use daiko::hot_reloading::DynApp;
-
 pub use momo_greeter_lib::create_greeter;
 
 /// For the hot-reloading system to work, the function must have this exact name and signature.
@@ -7,5 +6,7 @@ pub use momo_greeter_lib::create_greeter;
 /// main.rs and run it without hot-reloading.
 #[unsafe(no_mangle)]
 pub fn create_app() -> DynApp {
-    DynApp::new(create_greeter(std::env::args().skip(1)))
+    let greeter = create_greeter(std::env::args().skip(1))
+        .expect("failed to initialize system control services");
+    DynApp::new(greeter)
 }

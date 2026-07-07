@@ -1,8 +1,10 @@
-use crate::components::login_screen::style::{text_primary_color, text_secondary_color};
-use daiko::component::ComponentContext;
-use daiko::style::{Border, BorderRadius, Color, CursorIcon, Stroke, Style};
-use momo_kit::animation::focus_transform;
 use std::time::Duration;
+use daiko::{
+    component::ComponentContext,
+    style::{Border, BorderRadius, Color, CursorIcon, Stroke, Style},
+};
+use momo_kit::animation::focus_transform;
+use crate::components::login_screen::style::{text_primary_color, text_secondary_color};
 
 const BUTTON_SIZE: f32 = 48.0;
 const BUTTON_RADIUS: f32 = BUTTON_SIZE / 2.0;

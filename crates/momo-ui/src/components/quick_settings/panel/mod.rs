@@ -1,28 +1,34 @@
 mod style;
 
-use self::style::settings_menu_style;
-use super::bluetooth_submenu::BluetoothSubmenu;
-use super::main_menu::MainMenu;
-use super::power_submenu::PowerSubmenu;
-use super::state::{
-    SETTINGS_MENU_STATE_ID, SETTINGS_VIEW_TRANSITION_ID, SettingsMenuState, SettingsMenuViewType,
-};
-use super::style::{
-    SETTINGS_MENU_CONTENT_WIDTH, SETTINGS_MENU_EDGE_MARGIN, SETTINGS_MENU_MIN_HEIGHT,
-    SETTINGS_MENU_SLIDE_DISTANCE, SETTINGS_MENU_TOP_OFFSET,
-};
-use crate::components::home::bluetooth::bluetooth_handle;
-use crate::components::view_transition::{
-    ViewTransition, ViewTransitionController, ViewTransitionDirection, ViewTransitionEvent,
-};
-use daiko::animation::AnimationParameters;
-use daiko::animation::easing::EasingFunction;
-use daiko::component::{Child, Component, ComponentContext};
-use daiko::navigation::{FocusBoundary, FocusEntryPolicy, FocusOrigin, NavigationInputAction};
-use daiko::widgets::overlay::{Overlay, OverlayPositioning};
-use daiko::{Element, Id, Vec2};
 use std::time::Duration;
+use daiko::{
+    Element, Id, Vec2,
+    animation::{AnimationParameters, easing::EasingFunction},
+    component::{Child, Component, ComponentContext},
+    navigation::{FocusBoundary, FocusEntryPolicy, FocusOrigin, NavigationInputAction},
+    widgets::overlay::{Overlay, OverlayPositioning},
+};
 use tracing::warn;
+use self::style::settings_menu_style;
+use super::{
+    bluetooth_submenu::BluetoothSubmenu,
+    main_menu::MainMenu,
+    power_submenu::PowerSubmenu,
+    state::{
+        SETTINGS_MENU_STATE_ID, SETTINGS_VIEW_TRANSITION_ID, SettingsMenuState,
+        SettingsMenuViewType,
+    },
+    style::{
+        SETTINGS_MENU_CONTENT_WIDTH, SETTINGS_MENU_EDGE_MARGIN, SETTINGS_MENU_MIN_HEIGHT,
+        SETTINGS_MENU_SLIDE_DISTANCE, SETTINGS_MENU_TOP_OFFSET,
+    },
+};
+use crate::components::{
+    home::bluetooth::bluetooth_handle,
+    view_transition::{
+        ViewTransition, ViewTransitionController, ViewTransitionDirection, ViewTransitionEvent,
+    },
+};
 
 const SETTINGS_MENU_ANIMATION_ID: &str = "momo_home_settings_menu_animation";
 const SETTINGS_MENU_SLIDE_DURATION_MS: u64 = 280;

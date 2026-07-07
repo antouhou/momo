@@ -1,14 +1,21 @@
-use crate::app_state::{AppOpResult, use_apps_state};
-use crate::components::home::launch::{
-    HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID, LaunchOverlayEvent, LaunchPhase, LaunchTransitionState,
-};
-use crate::components::home::model::{HOME_LAUNCH_CHANNEL_ID, LaunchRestoreFocus};
-use daiko::component::ComponentContext;
-use daiko::navigation::{FocusKey, FocusOrigin, NavigationInputAction};
-use daiko::state_management::StateHandle;
-use daiko::window_events::WindowEventData;
 use std::sync::Arc;
+use daiko::{
+    component::ComponentContext,
+    navigation::{FocusKey, FocusOrigin, NavigationInputAction},
+    state_management::StateHandle,
+    window_events::WindowEventData,
+};
 use tracing::error;
+use crate::{
+    app_state::{AppOpResult, use_apps_state},
+    components::home::{
+        launch::{
+            HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID, LaunchOverlayEvent, LaunchPhase,
+            LaunchTransitionState,
+        },
+        model::{HOME_LAUNCH_CHANNEL_ID, LaunchRestoreFocus},
+    },
+};
 
 pub trait LaunchStateExtension {
     fn set_phase(&self, phase: LaunchPhase);

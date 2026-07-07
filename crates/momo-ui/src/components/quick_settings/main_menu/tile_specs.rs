@@ -1,5 +1,4 @@
-use super::super::common::QuickSettingsGlyph;
-use super::super::settings_tile_button::SettingsTileSpec;
+use super::super::{common::QuickSettingsGlyph, settings_tile_button::SettingsTileSpec};
 
 const CLOUD_ICON: &[u8] = include_bytes!("../../../../assets/cloud.svg");
 const BLUETOOTH_ICON: &[u8] = include_bytes!("../../../../assets/bluetooth-b.svg");

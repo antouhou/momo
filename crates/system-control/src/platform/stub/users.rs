@@ -1,6 +1,8 @@
-use crate::SystemControlError;
-use crate::feature_state::FeatureState;
-use crate::users::{UserListFeatureState, UserUnsupportedReason};
+use crate::{
+    SystemControlError,
+    feature_state::FeatureState,
+    users::{UserListFeatureState, UserUnsupportedReason},
+};
 
 #[derive(Clone)]
 pub(crate) struct PlatformUserHandle;

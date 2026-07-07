@@ -1,10 +1,14 @@
+use std::sync::Once;
 use daiko::hot_reloading::DynApp;
 use momo_app::{ShellApp, ShellConfiguration, ShellMode};
 use momo_ui::MomoUi;
 use momo_wayfire::WayfireBackend;
-use std::sync::Once;
 use system_control::SystemControl;
 use tracing_subscriber::EnvFilter;
+#[cfg(target_os = "android")]
+use tracing_subscriber::layer::SubscriberExt;
+#[cfg(target_os = "android")]
+use tracing_subscriber::util::SubscriberInitExt;
 
 static INIT: Once = Once::new();
 
@@ -13,8 +17,6 @@ pub fn init_tracing() {
         let filter = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
         #[cfg(target_os = "android")]
         {
-            use tracing_subscriber::layer::SubscriberExt;
-            use tracing_subscriber::util::SubscriberInitExt;
             let android_layer =
                 tracing_android::layer("deko").expect("failed to initialize Android log layer");
 

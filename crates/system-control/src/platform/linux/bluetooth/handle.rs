@@ -1,14 +1,3 @@
-use std::{
-    sync::{
-        Arc, Mutex, Weak,
-        atomic::{AtomicU64, Ordering},
-    },
-    thread::JoinHandle,
-};
-use tokio::{
-    runtime::Builder,
-    sync::mpsc::{UnboundedSender, unbounded_channel},
-};
 use super::{
     command::{BluetoothCommand, RuntimeMessage},
     runtime::run_linux_bluetooth_runtime,
@@ -21,6 +10,17 @@ use crate::{
         BluetoothRequestError,
     },
     feature_state::FeatureState,
+};
+use std::{
+    sync::{
+        Arc, Mutex, Weak,
+        atomic::{AtomicU64, Ordering},
+    },
+    thread::JoinHandle,
+};
+use tokio::{
+    runtime::Builder,
+    sync::mpsc::{UnboundedSender, unbounded_channel},
 };
 
 #[derive(Clone)]

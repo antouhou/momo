@@ -1,8 +1,8 @@
-use std::io::Cursor;
 use super::{
     AUTH_FAILED_USER_MESSAGE, AuthMessageType, ErrorType, GreetdError, GreetdRequest,
     GreetdResponse, read_message, write_message,
 };
+use std::io::Cursor;
 
 #[test]
 fn writes_length_prefixed_request_payload() {

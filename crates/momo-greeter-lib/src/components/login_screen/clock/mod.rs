@@ -1,14 +1,14 @@
 mod state;
 mod style;
 
+use crate::components::login_screen::clock::{
+    state::{ClockLocalState, clock_text, spawn_clock_thread},
+    style::{clock_style, clock_text_style},
+};
 use daiko::{
     Element,
     component::{Component, ComponentContext},
     widgets::text::Text,
-};
-use crate::components::login_screen::clock::{
-    state::{ClockLocalState, clock_text, spawn_clock_thread},
-    style::{clock_style, clock_text_style},
 };
 
 #[derive(Clone, Copy)]

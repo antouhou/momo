@@ -1,9 +1,9 @@
-use std::time::Duration;
 use daiko::{
     animation::{AnimationParameters, transition},
     component::ComponentContext,
     style::Transform,
 };
+use std::time::Duration;
 
 /// Builds the short scale-and-lift transition used by selectable shell surfaces.
 pub fn focus_transform(

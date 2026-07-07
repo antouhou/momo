@@ -1,8 +1,3 @@
-use std::{collections::BTreeMap, sync::Arc};
-use bluer::{Adapter, AdapterEvent, DeviceEvent};
-use futures_util::StreamExt;
-use tokio::sync::mpsc::UnboundedSender;
-use tracing::warn;
 use super::{
     command::RuntimeMessage,
     device::device_from_identifier,
@@ -11,6 +6,11 @@ use super::{
     store::BackendState,
 };
 use crate::bluetooth::BluetoothDeviceId;
+use bluer::{Adapter, AdapterEvent, DeviceEvent};
+use futures_util::StreamExt;
+use std::{collections::BTreeMap, sync::Arc};
+use tokio::sync::mpsc::UnboundedSender;
+use tracing::warn;
 
 pub(super) async fn handle_adapter_event(
     inner: &Arc<BackendState>,

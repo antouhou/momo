@@ -1,11 +1,5 @@
 mod style;
 
-use daiko::{
-    Element, Id,
-    component::{Component, ComponentContext},
-    navigation::{FocusEntryPolicy, FocusOrigin, NavigationInputAction},
-};
-use momo_kit::interaction::ButtonBehavior;
 pub(super) use self::style::{
     submenu_body_style, submenu_section_label_style, submenu_section_style,
     submenu_section_title_style,
@@ -18,6 +12,12 @@ use super::{
         SubmenuButton, SubmenuButtonState, SubmenuButtonSurface, submenu_button_glyph,
     },
 };
+use daiko::{
+    Element, Id,
+    component::{Component, ComponentContext},
+    navigation::{FocusEntryPolicy, FocusOrigin, NavigationInputAction},
+};
+use momo_kit::interaction::ButtonBehavior;
 
 const BACK_ICON: &[u8] = include_bytes!("../../../../assets/chevron-left.svg");
 

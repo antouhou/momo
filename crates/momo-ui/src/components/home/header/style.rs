@@ -1,11 +1,11 @@
-use std::time::Duration;
+use crate::components::home::model::SCREEN_PADDING;
 use daiko::{
     animation::{AnimationParameters, easing::EasingFunction, transition},
     component::ComponentContext,
     layout::{AlignItems, FlexDirection, ItemSize, JustifyContent, SizeConstraint},
     style::{Border, BorderRadius, Color, CursorIcon, Indent, Overflow, Stroke, Style},
 };
-use crate::components::home::model::SCREEN_PADDING;
+use std::time::Duration;
 
 const HEADER_MENU_HEIGHT: f32 = 44.0;
 pub(in crate::components::home) const HEADER_BUTTON_HEIGHT: f32 = 38.0;

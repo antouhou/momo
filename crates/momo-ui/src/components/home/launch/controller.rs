@@ -1,11 +1,3 @@
-use std::sync::Arc;
-use daiko::{
-    component::ComponentContext,
-    navigation::{FocusKey, FocusOrigin, NavigationInputAction},
-    state_management::StateHandle,
-    window_events::WindowEventData,
-};
-use tracing::error;
 use crate::{
     app_state::{AppOpResult, use_apps_state},
     components::home::{
@@ -16,6 +8,14 @@ use crate::{
         model::{HOME_LAUNCH_CHANNEL_ID, LaunchRestoreFocus},
     },
 };
+use daiko::{
+    component::ComponentContext,
+    navigation::{FocusKey, FocusOrigin, NavigationInputAction},
+    state_management::StateHandle,
+    window_events::WindowEventData,
+};
+use std::sync::Arc;
+use tracing::error;
 
 pub trait LaunchStateExtension {
     fn set_phase(&self, phase: LaunchPhase);

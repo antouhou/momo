@@ -1,19 +1,5 @@
 mod style;
 
-use std::{path::PathBuf, sync::Arc};
-use daiko::{
-    Element, Vec2,
-    component::{Component, ComponentContext},
-    layout::Layout,
-    navigation::FocusKey,
-    style::{Color, CursorIcon, Style},
-    widgets::{
-        container::{Container, Fit},
-        text::Text,
-    },
-};
-use momo_kit::interaction::ButtonBehavior;
-pub(crate) use style::{AppButtonSurfaceMetrics, app_button_surface_style};
 use crate::{
     app_state::{AppCommand, AppEntry, use_apps_state},
     components::home::{
@@ -26,6 +12,20 @@ use crate::{
         },
     },
 };
+use daiko::{
+    Element, Vec2,
+    component::{Component, ComponentContext},
+    layout::Layout,
+    navigation::FocusKey,
+    style::{Color, CursorIcon, Style},
+    widgets::{
+        container::{Container, Fit},
+        text::Text,
+    },
+};
+use momo_kit::interaction::ButtonBehavior;
+use std::{path::PathBuf, sync::Arc};
+pub(crate) use style::{AppButtonSurfaceMetrics, app_button_surface_style};
 
 #[derive(Clone)]
 pub(crate) struct AppInfo {

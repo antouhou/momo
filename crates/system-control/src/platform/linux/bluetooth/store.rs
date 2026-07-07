@@ -1,3 +1,4 @@
+use crate::{bluetooth::BluetoothFeatureState, feature_state::FeatureState};
 use std::{
     collections::BTreeMap,
     sync::{
@@ -5,7 +6,6 @@ use std::{
         atomic::{AtomicU64, Ordering},
     },
 };
-use crate::{bluetooth::BluetoothFeatureState, feature_state::FeatureState};
 
 type ObserverCallback = Box<dyn Fn(BluetoothFeatureState) + Send + 'static>;
 

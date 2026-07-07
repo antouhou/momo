@@ -1,4 +1,3 @@
-use std::time::Duration;
 use daiko::{
     animation::{AnimationParameters, easing::EasingFunction, transition},
     component::ComponentContext,
@@ -6,6 +5,7 @@ use daiko::{
     style::{Color, Indent, Style, Transform},
     widgets::text::{TextStyle, TextWrap, Weight},
 };
+use std::time::Duration;
 
 pub(crate) const SETTINGS_MENU_WIDTH: f32 = 392.0;
 pub(crate) const SETTINGS_MENU_EDGE_MARGIN: f32 = 40.0;

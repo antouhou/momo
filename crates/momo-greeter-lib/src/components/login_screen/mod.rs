@@ -6,14 +6,6 @@ mod profile_tile;
 mod state;
 mod style;
 
-use std::sync::Arc;
-use daiko::{
-    Element, StringOrReference,
-    component::{Component, ComponentContext},
-    navigation::{FocusBoundary, FocusEntryPolicy, TraversalPolicy},
-    state_management::StateHandle,
-    widgets::text::Text,
-};
 use crate::{
     auth::{GreeterAuthStatus, use_greeter_auth_state},
     components::login_screen::{
@@ -29,6 +21,14 @@ use crate::{
     },
     users::{GreeterUser, GreeterUsersStatus, use_greeter_users_state},
 };
+use daiko::{
+    Element, StringOrReference,
+    component::{Component, ComponentContext},
+    navigation::{FocusBoundary, FocusEntryPolicy, TraversalPolicy},
+    state_management::StateHandle,
+    widgets::text::Text,
+};
+use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct LoginScreen {}

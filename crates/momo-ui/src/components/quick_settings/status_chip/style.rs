@@ -1,11 +1,3 @@
-use std::time::Duration;
-use daiko::{
-    animation::{AnimationParameters, easing::EasingFunction, transition},
-    component::ComponentContext,
-    layout::{AlignItems, FlexDirection, JustifyContent},
-    style::{Border, BorderRadius, CursorIcon, Stroke, Style},
-    widgets::text::TextStyle,
-};
 use super::super::{
     common::QuickSettingsControlState,
     style::{
@@ -17,6 +9,14 @@ use super::super::{
         settings_label_text_style,
     },
 };
+use daiko::{
+    animation::{AnimationParameters, easing::EasingFunction, transition},
+    component::ComponentContext,
+    layout::{AlignItems, FlexDirection, JustifyContent},
+    style::{Border, BorderRadius, CursorIcon, Stroke, Style},
+    widgets::text::TextStyle,
+};
+use std::time::Duration;
 
 pub(crate) fn status_chip_content_style() -> Style {
     Style::new()

@@ -1,5 +1,8 @@
 mod style;
 
+use crate::components::login_screen::action_button::style::{
+    action_button_style, action_text_style,
+};
 use daiko::{
     Element,
     channel::Channel,
@@ -7,9 +10,6 @@ use daiko::{
     widgets::text::Text,
 };
 use momo_kit::interaction::ButtonBehavior;
-use crate::components::login_screen::action_button::style::{
-    action_button_style, action_text_style,
-};
 
 pub(super) struct ActionButton {
     tag: &'static str,

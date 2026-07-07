@@ -1,5 +1,3 @@
-use std::sync::Arc;
-use bluer::Adapter;
 use super::{
     device::{load_device, sort_devices},
     store::BackendState,
@@ -12,6 +10,8 @@ use crate::{
     },
     feature_state::FeatureState,
 };
+use bluer::Adapter;
+use std::sync::Arc;
 
 pub(super) async fn load_current_state(adapter: &Adapter) -> bluer::Result<BluetoothState> {
     let adapter_identifier = adapter.name().to_string();

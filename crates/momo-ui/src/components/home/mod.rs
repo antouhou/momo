@@ -16,13 +16,6 @@ pub(crate) mod system_status;
 mod tests;
 mod time;
 
-use daiko::{
-    Element, Id,
-    component::{Component, ComponentContext},
-    layout::{FlexDirection, ItemSize},
-    style::Style,
-};
-use momo_kit::style::shell_background_gradient;
 use crate::components::{
     dock::Dock,
     home::{
@@ -34,6 +27,13 @@ use crate::components::{
     },
     quick_settings::{settings_overlay, should_render_settings_menu},
 };
+use daiko::{
+    Element, Id,
+    component::{Component, ComponentContext},
+    layout::{FlexDirection, ItemSize},
+    style::Style,
+};
+use momo_kit::style::shell_background_gradient;
 
 #[derive(Clone, Copy)]
 pub struct Home {

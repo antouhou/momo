@@ -1,10 +1,10 @@
+use super::{
+    BluetoothDeviceSection, build_bluetooth_state, has_presentable_device_name, is_device_connected,
+};
 use system_control::{
     BluetoothAdapterState, BluetoothCapabilities, BluetoothConnectionState, BluetoothDevice,
     BluetoothDeviceCategory, BluetoothDeviceId, BluetoothDiscoveryState, BluetoothFeatureState,
     BluetoothOperationId, BluetoothPowerState, FeatureState,
-};
-use super::{
-    BluetoothDeviceSection, build_bluetooth_state, has_presentable_device_name, is_device_connected,
 };
 
 fn bluetooth_device_with_connection_state(

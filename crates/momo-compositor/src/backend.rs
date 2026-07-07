@@ -1,6 +1,6 @@
+use crate::{CapabilitySet, CompositorCommand, CompositorEvent, CompositorSnapshot};
 use std::path::PathBuf;
 use thiserror::Error;
-use crate::{CapabilitySet, CompositorCommand, CompositorEvent, CompositorSnapshot};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct BackendMetadata {

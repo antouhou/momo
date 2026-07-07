@@ -1,11 +1,11 @@
+use super::{
+    ViewTransitionPhase,
+    state::{ViewTransitionSlotMotion, view_transition_slot_motion_offset},
+};
 use daiko::{
     Vec2,
     layout::{FlexDirection, SizeConstraint},
     style::{Overflow, Style, Transform},
-};
-use super::{
-    ViewTransitionPhase,
-    state::{ViewTransitionSlotMotion, view_transition_slot_motion_offset},
 };
 
 pub(super) const VIEW_TRANSITION_DURATION_MS: u64 = 240;

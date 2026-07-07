@@ -1,7 +1,3 @@
-use std::{
-    path::PathBuf,
-    sync::{Arc, mpsc::Sender},
-};
 use appkeeper::{
     app_entry::AppEntry as LaunchCommandEntry,
     app_launcher::{AppLauncher, LaunchError, LaunchOptions},
@@ -9,6 +5,10 @@ use appkeeper::{
 };
 use daiko::{
     AppContext, Id, component::ComponentContext, state_management::StateHandle, style::Color,
+};
+use std::{
+    path::PathBuf,
+    sync::{Arc, mpsc::Sender},
 };
 use tracing::error;
 

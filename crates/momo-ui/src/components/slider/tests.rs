@@ -1,7 +1,7 @@
+use super::{Component, ComponentContext, DEFAULT_MAX_VALUE, Slider};
 use daiko::{
     App, AppContext, Element, Id, Pos2, Vec2, layout::ItemSize, style::Style, testing::TestRunner,
 };
-use super::{Component, ComponentContext, DEFAULT_MAX_VALUE, Slider};
 
 const TEST_SLIDER_STATE_ID: &str = "test-slider-state";
 const TEST_SLIDER_DEFAULT_VALUE: u8 = 40;

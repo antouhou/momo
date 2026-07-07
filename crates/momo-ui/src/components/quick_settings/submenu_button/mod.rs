@@ -1,11 +1,5 @@
 mod style;
 
-use daiko::{
-    Element,
-    component::{Component, ComponentContext},
-    style::Color,
-    widgets::text::Text,
-};
 use self::style::{
     submenu_button_foreground_color, submenu_button_label_style, submenu_button_style,
     submenu_label_group_style, submenu_leading_slot_style, submenu_toggle_knob_style,
@@ -14,6 +8,12 @@ use self::style::{
 use super::{
     common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_element},
     style::{SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE},
+};
+use daiko::{
+    Element,
+    component::{Component, ComponentContext},
+    style::Color,
+    widgets::text::Text,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

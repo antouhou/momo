@@ -3,11 +3,6 @@ mod tile_grid;
 mod tile_specs;
 mod top_row;
 
-use daiko::{
-    Element,
-    component::{Component, ComponentContext},
-    widgets::scrollable::Scrollable,
-};
 use self::{tile_grid::SettingsTileGrid, top_row::SettingsTopRow};
 use super::{
     common::{settings_middle_row, settings_row},
@@ -15,6 +10,11 @@ use super::{
 };
 use crate::components::quick_settings::style::{
     SETTINGS_MENU_GAP, SETTINGS_TILE_HEIGHT, settings_content_container_style,
+};
+use daiko::{
+    Element,
+    component::{Component, ComponentContext},
+    widgets::scrollable::Scrollable,
 };
 
 #[derive(Clone, Copy)]

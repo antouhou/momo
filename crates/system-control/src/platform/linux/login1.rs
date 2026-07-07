@@ -1,7 +1,7 @@
-use std::{fs, io, num::ParseIntError};
-use thiserror::Error;
 use super::dbus::{SystemBusError, system_bus_connection, system_bus_proxy};
 use crate::{power::PowerAction, session::SessionAction};
+use std::{fs, io, num::ParseIntError};
+use thiserror::Error;
 
 const LOGIN1_DESTINATION: &str = "org.freedesktop.login1";
 const LOGIN1_PATH: &str = "/org/freedesktop/login1";

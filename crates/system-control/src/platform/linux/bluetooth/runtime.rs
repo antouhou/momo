@@ -1,10 +1,3 @@
-use std::{collections::BTreeMap, sync::Arc, time::Duration};
-use bluer::{Adapter, Session};
-use tokio::sync::{
-    Mutex as AsyncMutex,
-    mpsc::{UnboundedReceiver, UnboundedSender},
-};
-use tracing::{debug, warn};
 use super::{
     command::{RuntimeMessage, handle_command},
     events::{handle_adapter_event, spawn_adapter_watcher, spawn_device_watcher},
@@ -17,6 +10,13 @@ use crate::{
     },
     feature_state::FeatureState,
 };
+use bluer::{Adapter, Session};
+use std::{collections::BTreeMap, sync::Arc, time::Duration};
+use tokio::sync::{
+    Mutex as AsyncMutex,
+    mpsc::{UnboundedReceiver, UnboundedSender},
+};
+use tracing::{debug, warn};
 
 const BLUETOOTH_RECONNECT_DELAY: Duration = Duration::from_secs(2);
 

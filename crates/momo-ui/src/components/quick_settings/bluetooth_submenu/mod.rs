@@ -1,14 +1,5 @@
 mod style;
 
-use daiko::{
-    Element, Id,
-    component::{Component, ComponentContext},
-    navigation::FocusOrigin,
-    widgets::{scrollable::Scrollable, text::Text},
-};
-use momo_kit::interaction::ButtonBehavior;
-use system_control::{BluetoothConnectionState, BluetoothDeviceCategory};
-use tracing::warn;
 use self::style::{
     DeviceRowAvailability, submenu_device_icon_color, submenu_device_icon_ring_style,
     submenu_device_label_color,
@@ -35,6 +26,15 @@ use super::{
 use crate::components::home::bluetooth::{
     BluetoothDeviceSection, BluetoothDeviceState, bluetooth_handle, bluetooth_state,
 };
+use daiko::{
+    Element, Id,
+    component::{Component, ComponentContext},
+    navigation::FocusOrigin,
+    widgets::{scrollable::Scrollable, text::Text},
+};
+use momo_kit::interaction::ButtonBehavior;
+use system_control::{BluetoothConnectionState, BluetoothDeviceCategory};
+use tracing::warn;
 
 const BLUETOOTH_ICON: &[u8] = include_bytes!("../../../../assets/bluetooth-b.svg");
 const KEYBOARD_ICON: &[u8] = include_bytes!("../../../../assets/keyboard.svg");

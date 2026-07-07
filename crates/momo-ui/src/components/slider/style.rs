@@ -1,4 +1,4 @@
-use std::time::Duration;
+use super::Slider;
 use daiko::{
     Vec2,
     animation::{AnimationParameters, easing::EasingFunction, transition},
@@ -6,7 +6,7 @@ use daiko::{
     layout::{AlignItems, FlexDirection, ItemSize},
     style::{Border, BorderRadius, Stroke, Style},
 };
-use super::Slider;
+use std::time::Duration;
 
 const SLIDER_BORDER_TRANSITION_MS: u64 = 120;
 

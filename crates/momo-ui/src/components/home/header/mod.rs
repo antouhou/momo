@@ -1,16 +1,16 @@
 mod style;
 
-use daiko::{
-    Element,
-    component::{Child, Component, ComponentContext, IntoChild},
-    navigation::{FocusEntryPolicy, TraversalPolicy},
-};
 pub(super) use self::style::{
     HEADER_BUTTON_HEIGHT, HEADER_BUTTON_RADIUS, HEADER_CLOCK_WIDTH, HeaderButtonMetrics,
     HeaderButtonState, header_button_style,
 };
 use self::style::{central_container_style, header_row_style, header_side_style, header_style};
 use crate::components::home::clock_chip::ClockChip;
+use daiko::{
+    Element,
+    component::{Child, Component, ComponentContext, IntoChild},
+    navigation::{FocusEntryPolicy, TraversalPolicy},
+};
 
 pub(super) struct HomeHeader {
     center: Child,

@@ -1,11 +1,11 @@
-use std::cmp::Reverse;
+use crate::components::home::model::{
+    HOME_BLUETOOTH_HANDLE_ID, HOME_BLUETOOTH_OBSERVATION_ID, HOME_BLUETOOTH_STATE_ID,
+};
 use daiko::{AppContext, Id, component::ComponentContext, state_management::StateHandle};
+use std::cmp::Reverse;
 use system_control::{
     BluetoothConnectionState, BluetoothDevice, BluetoothDeviceCategory, BluetoothFeatureState,
     BluetoothHandle, BluetoothObservation, BluetoothPowerState, FeatureState,
-};
-use crate::components::home::model::{
-    HOME_BLUETOOTH_HANDLE_ID, HOME_BLUETOOTH_OBSERVATION_ID, HOME_BLUETOOTH_STATE_ID,
 };
 
 #[derive(Clone)]

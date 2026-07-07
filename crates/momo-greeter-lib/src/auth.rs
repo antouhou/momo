@@ -1,9 +1,9 @@
+use daiko::{AppContext, Id, component::ComponentContext, state_management::StateHandle};
+use momo_greetd::{GreetdAuthRequest, GreetdAuthenticator};
 use std::sync::{
     Arc,
     mpsc::{self, Sender},
 };
-use daiko::{AppContext, Id, component::ComponentContext, state_management::StateHandle};
-use momo_greetd::{GreetdAuthRequest, GreetdAuthenticator};
 use thiserror::Error;
 
 const GREETER_AUTH_STATE_ID: &str = "momo_greeter_auth_state";

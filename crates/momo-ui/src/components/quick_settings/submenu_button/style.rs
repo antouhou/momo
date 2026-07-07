@@ -1,12 +1,3 @@
-use std::time::Duration;
-use daiko::{
-    Vec2,
-    animation::{AnimationParameters, easing::EasingFunction, transition},
-    component::ComponentContext,
-    layout::{AlignItems, FlexDirection, ItemSize, JustifyContent, SizeConstraint},
-    style::{Border, BorderRadius, Color, CursorIcon, Overflow, Stroke, Style},
-    widgets::text::TextStyle,
-};
 use super::{
     super::{
         common::QuickSettingsControlState,
@@ -28,6 +19,15 @@ use super::{
     },
     SubmenuButtonState, SubmenuButtonSurface,
 };
+use daiko::{
+    Vec2,
+    animation::{AnimationParameters, easing::EasingFunction, transition},
+    component::ComponentContext,
+    layout::{AlignItems, FlexDirection, ItemSize, JustifyContent, SizeConstraint},
+    style::{Border, BorderRadius, Color, CursorIcon, Overflow, Stroke, Style},
+    widgets::text::TextStyle,
+};
+use std::time::Duration;
 
 pub(super) fn submenu_button_style(
     state: QuickSettingsControlState,

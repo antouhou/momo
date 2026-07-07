@@ -1,12 +1,5 @@
 mod style;
 
-use daiko::{
-    Element, Id,
-    channel::Channel,
-    component::{Component, ComponentContext},
-    navigation::FocusOrigin,
-};
-use momo_kit::{assets::POWER_ICON, interaction::ButtonBehavior};
 use self::style::settings_round_button_style;
 use super::{
     common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_element, is_menu_view_active},
@@ -16,6 +9,13 @@ use super::{
         settings_inverse_text_color, settings_text_color,
     },
 };
+use daiko::{
+    Element, Id,
+    channel::Channel,
+    component::{Component, ComponentContext},
+    navigation::FocusOrigin,
+};
+use momo_kit::{assets::POWER_ICON, interaction::ButtonBehavior};
 
 const MOON_ICON: &[u8] = include_bytes!("../../../../assets/moon.svg");
 const GEAR_ICON: &[u8] = include_bytes!("../../../../assets/gear-solid-full.svg");

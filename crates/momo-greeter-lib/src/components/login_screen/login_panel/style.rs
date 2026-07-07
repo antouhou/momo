@@ -1,10 +1,10 @@
+use crate::components::login_screen::style::{
+    CONTROL_GAP, SECTION_GAP, accent_color, text_primary_color, text_secondary_color,
+};
 use daiko::{
     layout::{AlignItems, FlexDirection, ItemSize, JustifyContent, SizeConstraint},
     style::{Border, BorderRadius, Color, Indent, Stroke, Style},
     widgets::text::{TextStyle, TextWrap, Weight},
-};
-use crate::components::login_screen::style::{
-    CONTROL_GAP, SECTION_GAP, accent_color, text_primary_color, text_secondary_color,
 };
 
 const PANEL_WIDTH: f32 = 470.0;

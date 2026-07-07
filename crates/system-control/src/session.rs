@@ -1,5 +1,5 @@
-use thiserror::Error;
 use crate::{SystemControlError, platform};
+use thiserror::Error;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SessionAction {

@@ -1,10 +1,10 @@
-use daiko::{
-    component::ComponentContext,
-    style::{Color, CursorIcon, Style, Transform},
-};
 use crate::components::home::{
     app_tile::{AppButtonSurfaceMetrics, app_button_surface_style},
     model::TILE_BORDER_WIDTH,
+};
+use daiko::{
+    component::ComponentContext,
+    style::{Color, CursorIcon, Style, Transform},
 };
 
 pub(super) const DOCK_BUTTON_SIZE: f32 = 72.0;

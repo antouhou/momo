@@ -1,4 +1,3 @@
-use std::time::Duration;
 use daiko::{
     animation::{AnimationParameters, easing::EasingFunction, transition},
     component::ComponentContext,
@@ -6,6 +5,7 @@ use daiko::{
     style::{Border, BorderRadius, Color, Stroke, Style, Transform},
     widgets::text::{TextStyle, TextWrap},
 };
+use std::time::Duration;
 
 use crate::components::home::model::{
     TILE_BORDER_RADIUS, TILE_BORDER_WIDTH, TILE_CONTENT_GAP, TILE_FOCUS_ANIMATION_DURATION_MS,

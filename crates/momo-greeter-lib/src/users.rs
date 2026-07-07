@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use daiko::{AppContext, Id, component::ComponentContext, state_management::StateHandle};
+use std::sync::Arc;
 use system_control::{FeatureState, UserHandle};
 
 pub(crate) const GREETER_USERS_STATE_ID: &str = "momo_greeter_users_state";

@@ -1,10 +1,10 @@
-use std::time::Duration;
 use daiko::{
     animation::{AnimationParameters, easing::EasingFunction, transition},
     component::ComponentContext,
     layout::{AlignItems, FlexDirection, JustifyContent},
     style::{Border, BorderRadius, Stroke, Style},
 };
+use std::time::Duration;
 
 use super::super::style::{
     CONTROL_TRANSITION_MS, SETTINGS_SUBMENU_DEVICE_ICON_RING_SIZE, settings_accent_border_color,

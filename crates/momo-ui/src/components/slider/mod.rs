@@ -1,12 +1,12 @@
 mod style;
 
-use std::{hash::Hash, time::Duration};
 use daiko::{
     Element, Id, Pos2, Rect,
     animation::SmoothFollowConfig,
     component::{Component, ComponentContext},
     style::Color,
 };
+use std::{hash::Hash, time::Duration};
 
 use self::style::{slider_fill_style, slider_root_style, slider_thumb_style, slider_track_style};
 

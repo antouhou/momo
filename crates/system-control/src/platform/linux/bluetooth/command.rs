@@ -1,7 +1,3 @@
-use std::{sync::Arc, time::Duration};
-use bluer::{Adapter, AdapterEvent};
-use futures_util::StreamExt;
-use tokio::{sync::mpsc::UnboundedSender, time::timeout};
 use super::{
     device::device_from_identifier,
     events::spawn_device_watcher,
@@ -14,6 +10,10 @@ use super::{
 use crate::bluetooth::{
     BluetoothDeviceId, BluetoothOperationId, BluetoothOperationKind, BluetoothUserVisibleError,
 };
+use bluer::{Adapter, AdapterEvent};
+use futures_util::StreamExt;
+use std::{sync::Arc, time::Duration};
+use tokio::{sync::mpsc::UnboundedSender, time::timeout};
 
 const BLUETOOTH_CONNECT_TIMEOUT: Duration = Duration::from_secs(20);
 const BLUETOOTH_CONNECT_CANCEL_TIMEOUT: Duration = Duration::from_secs(5);

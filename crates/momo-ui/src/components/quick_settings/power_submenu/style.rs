@@ -1,5 +1,5 @@
-use daiko::{layout::FlexDirection, style::Style};
 use super::super::style::SETTINGS_COMPACT_CONTENT_GAP;
+use daiko::{layout::FlexDirection, style::Style};
 
 pub(super) fn power_actions_style() -> Style {
     Style::new()

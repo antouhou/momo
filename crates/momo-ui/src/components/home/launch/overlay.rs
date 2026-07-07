@@ -1,17 +1,3 @@
-use std::{sync::Arc, time::Duration};
-use daiko::{
-    Element, Id, Vec2,
-    animation::{
-        AnimationParameters, Interpolable as _,
-        easing::{Easing as _, EasingFunction},
-    },
-    component::{Component, ComponentContext},
-    widgets::{
-        container::{Container, Fit},
-        overlay::Overlay,
-        text::Text,
-    },
-};
 use super::style::{
     BACKDROP_MAX_OPACITY, DESTINATION_ICON_RADIUS, DESTINATION_LABELS_GAP,
     DESTINATION_LABELS_TOP_GAP, LAUNCH_SURFACE_BACKGROUND, LAUNCH_TILE_META_GAP,
@@ -30,6 +16,20 @@ use crate::components::home::{
     },
     model::{LaunchRequest, TILE_BORDER_RADIUS, TILE_ICON_GLYPH_SIZE, TILE_ICON_SIZE},
 };
+use daiko::{
+    Element, Id, Vec2,
+    animation::{
+        AnimationParameters, Interpolable as _,
+        easing::{Easing as _, EasingFunction},
+    },
+    component::{Component, ComponentContext},
+    widgets::{
+        container::{Container, Fit},
+        overlay::Overlay,
+        text::Text,
+    },
+};
+use std::{sync::Arc, time::Duration};
 
 #[derive(Clone)]
 pub(in crate::components::home) struct LaunchOverlay {

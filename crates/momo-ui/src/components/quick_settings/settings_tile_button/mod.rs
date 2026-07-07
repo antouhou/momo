@@ -1,13 +1,5 @@
 mod style;
 
-use daiko::{
-    Element,
-    channel::Channel,
-    component::{Component, ComponentContext},
-    navigation::{FocusKey, FocusOrigin},
-    widgets::text::Text,
-};
-use momo_kit::interaction::ButtonBehavior;
 use self::style::{
     settings_tile_button_style, settings_tile_content_style, settings_tile_icon_style,
     settings_tile_text_column_style, tile_title_style,
@@ -16,6 +8,14 @@ use super::{
     common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_element},
     style::{SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_tile_icon_color},
 };
+use daiko::{
+    Element,
+    channel::Channel,
+    component::{Component, ComponentContext},
+    navigation::{FocusKey, FocusOrigin},
+    widgets::text::Text,
+};
+use momo_kit::interaction::ButtonBehavior;
 
 #[derive(Clone, Copy)]
 pub(super) struct SettingsTileSpec {

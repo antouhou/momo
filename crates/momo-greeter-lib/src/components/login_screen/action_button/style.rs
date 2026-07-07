@@ -1,4 +1,3 @@
-use std::time::Duration;
 use daiko::{
     animation::{AnimationParameters, easing::EasingFunction, transition},
     component::ComponentContext,
@@ -6,6 +5,7 @@ use daiko::{
     widgets::text::TextStyle,
 };
 use momo_kit::animation::focus_transform;
+use std::time::Duration;
 
 use crate::components::login_screen::style::accent_color;
 

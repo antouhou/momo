@@ -1,11 +1,5 @@
 mod style;
 
-use daiko::{
-    Element, Vec2,
-    component::{Component, ComponentContext},
-    navigation::FocusKey,
-};
-use momo_kit::interaction::ButtonBehavior;
 use self::style::{
     DOCK_BUTTON_SIZE, DOCK_ICON_GLYPH_SIZE, DOCK_ICON_SIZE, dock_button_style,
     hidden_dock_button_style,
@@ -15,6 +9,12 @@ use crate::components::home::{
     app_tile::{AppInfo, send_app_launch_request},
     model::{LaunchRestoreFocus, tile_focus_transform},
 };
+use daiko::{
+    Element, Vec2,
+    component::{Component, ComponentContext},
+    navigation::FocusKey,
+};
+use momo_kit::interaction::ButtonBehavior;
 
 pub struct DockIcon {
     pub(crate) app: AppInfo,

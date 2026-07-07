@@ -1,7 +1,7 @@
-use std::time::Duration;
+use crate::components::home::app_tile::AppInfo;
 use daiko::{Vec2, component::ComponentContext, navigation::FocusKey, style::Transform};
 use momo_kit::animation::focus_transform;
-use crate::components::home::app_tile::AppInfo;
+use std::time::Duration;
 
 pub(super) const HOME_APP_GRID_FOCUSED_KEY_ID: &str = "momo_home_app_grid_focused_key";
 pub(super) const HOME_APP_GRID_SCROLL_ACCUMULATOR_ID: &str =

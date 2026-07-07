@@ -1,13 +1,3 @@
-use std::time::{Duration, Instant};
-use daiko::{
-    Element, Id, Vec2,
-    animation::SmoothFollowConfig,
-    component::{Component, ComponentContext},
-    layout::{AlignItems, FlexDirection, JustifyContent},
-    navigation::{FocusEntryPolicy, FocusKey, TraversalPolicy},
-    style::{Overflow, Style},
-    widgets::container::{Container, Fit},
-};
 use crate::{
     app_state::{AppEntry, use_apps_state},
     components::home::{
@@ -22,6 +12,16 @@ use crate::{
         },
     },
 };
+use daiko::{
+    Element, Id, Vec2,
+    animation::SmoothFollowConfig,
+    component::{Component, ComponentContext},
+    layout::{AlignItems, FlexDirection, JustifyContent},
+    navigation::{FocusEntryPolicy, FocusKey, TraversalPolicy},
+    style::{Overflow, Style},
+    widgets::container::{Container, Fit},
+};
+use std::time::{Duration, Instant};
 
 #[derive(Clone)]
 pub(in crate::components::home::app_grid) struct AppGridViewport {

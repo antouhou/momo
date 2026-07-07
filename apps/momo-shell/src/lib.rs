@@ -1,8 +1,8 @@
-use std::sync::Once;
 use daiko::hot_reloading::DynApp;
 use momo_app::{ShellApp, ShellConfiguration, ShellMode};
 use momo_ui::MomoUi;
 use momo_wayfire::WayfireBackend;
+use std::sync::Once;
 use system_control::SystemControl;
 use tracing_subscriber::EnvFilter;
 #[cfg(target_os = "android")]

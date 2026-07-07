@@ -1,8 +1,8 @@
-use std::process::Command;
 use crate::{
     feature_state::FeatureState,
     volume::{VolumeFeatureState, VolumeRequestError, VolumeState, VolumeUnavailableReason},
 };
+use std::process::Command;
 
 const DEFAULT_AUDIO_SINK: &str = "@DEFAULT_AUDIO_SINK@";
 

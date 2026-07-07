@@ -1,14 +1,6 @@
 mod state;
 mod style;
 
-use std::{hash::Hash, time::Duration};
-use daiko::{
-    Element, Id, Vec2,
-    animation::{AnimationParameters, easing::EasingFunction},
-    channel::Channel,
-    component::{Child, Component, ComponentContext, IntoChild},
-    state_management::StateHandle,
-};
 use self::{
     state::{
         ViewTransitionMeasurements, ViewTransitionSlotMotion, ViewTransitionState,
@@ -21,6 +13,14 @@ use self::{
         view_transition_slot_style, view_transition_style,
     },
 };
+use daiko::{
+    Element, Id, Vec2,
+    animation::{AnimationParameters, easing::EasingFunction},
+    channel::Channel,
+    component::{Child, Component, ComponentContext, IntoChild},
+    state_management::StateHandle,
+};
+use std::{hash::Hash, time::Duration};
 
 pub struct ViewTransition {
     id: Id,

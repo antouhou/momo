@@ -1,5 +1,5 @@
-use thiserror::Error;
 use crate::{SystemControlError, feature_state::FeatureState, platform};
+use thiserror::Error;
 
 pub type BatteryFeatureState =
     FeatureState<BatteryState, BatteryUnsupportedReason, BatteryUnavailableReason>;

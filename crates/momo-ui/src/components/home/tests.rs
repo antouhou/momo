@@ -1,8 +1,8 @@
-use std::{
-    path::PathBuf,
-    sync::Arc,
-    time::{Duration, Instant},
+use super::{
+    Home, bluetooth::initialize_bluetooth_state, model::TILE_HEIGHT,
+    system_status::initialize_system_status_state,
 };
+use crate::app_state::{APPS_STATE_ID, AppEntry, AppsState};
 use daiko::{
     App, AppContext, Id, Pos2, Vec2,
     integration::input::{InputEvent, InputEventModifiers},
@@ -11,12 +11,12 @@ use daiko::{
     testing::TestRunner,
     window_events::WindowEvent,
 };
-use system_control::SystemControl;
-use super::{
-    Home, bluetooth::initialize_bluetooth_state, model::TILE_HEIGHT,
-    system_status::initialize_system_status_state,
+use std::{
+    path::PathBuf,
+    sync::Arc,
+    time::{Duration, Instant},
 };
-use crate::app_state::{APPS_STATE_ID, AppEntry, AppsState};
+use system_control::SystemControl;
 
 const ASYNC_TEST_TIMEOUT: Duration = Duration::from_secs(2);
 const ASYNC_TEST_POLL_INTERVAL: Duration = Duration::from_millis(1);

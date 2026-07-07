@@ -1,10 +1,3 @@
-use std::time::Duration;
-use daiko::{
-    animation::{AnimationParameters, easing::EasingFunction, transition},
-    component::ComponentContext,
-    layout::{AlignItems, FlexDirection, JustifyContent},
-    style::{Border, BorderRadius, CursorIcon, Stroke, Style},
-};
 use super::super::{
     common::QuickSettingsControlState,
     style::{
@@ -18,6 +11,13 @@ use super::super::{
     },
 };
 use crate::components::quick_settings::style::settings_accent_color;
+use daiko::{
+    animation::{AnimationParameters, easing::EasingFunction, transition},
+    component::ComponentContext,
+    layout::{AlignItems, FlexDirection, JustifyContent},
+    style::{Border, BorderRadius, CursorIcon, Stroke, Style},
+};
+use std::time::Duration;
 
 pub(crate) fn settings_round_button_style(
     state: QuickSettingsControlState,

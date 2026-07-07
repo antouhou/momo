@@ -1,14 +1,6 @@
 pub mod state;
 mod style;
 
-use daiko::{
-    Element, Id,
-    component::{Component, ComponentContext},
-    navigation::FocusOrigin,
-    widgets::text::Text,
-};
-use momo_kit::interaction::ButtonBehavior;
-use tracing::warn;
 use self::style::{clock_button_style, clock_text_style};
 use crate::components::{
     home::{
@@ -20,6 +12,14 @@ use crate::components::{
         state::{SettingsMenuState, SettingsMenuViewType},
     },
 };
+use daiko::{
+    Element, Id,
+    component::{Component, ComponentContext},
+    navigation::FocusOrigin,
+    widgets::text::Text,
+};
+use momo_kit::interaction::ButtonBehavior;
+use tracing::warn;
 
 #[derive(Clone, Copy)]
 pub(super) struct ClockChip;

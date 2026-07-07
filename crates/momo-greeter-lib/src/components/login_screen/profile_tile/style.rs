@@ -1,4 +1,7 @@
-use std::time::Duration;
+use crate::components::login_screen::{
+    profile_tile::{AvatarTone, GlyphScale},
+    style::{text_primary_color, text_secondary_color},
+};
 use daiko::{
     animation::{AnimationParameters, easing::EasingFunction, transition},
     component::ComponentContext,
@@ -7,10 +10,7 @@ use daiko::{
     widgets::text::{TextStyle, TextWrap, Weight},
 };
 use momo_kit::animation::focus_transform;
-use crate::components::login_screen::{
-    profile_tile::{AvatarTone, GlyphScale},
-    style::{text_primary_color, text_secondary_color},
-};
+use std::time::Duration;
 
 const TILE_WIDTH: f32 = 190.0;
 const TILE_HEIGHT: f32 = 226.0;

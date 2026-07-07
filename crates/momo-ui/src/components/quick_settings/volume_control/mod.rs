@@ -1,12 +1,5 @@
 mod style;
 
-use daiko::{
-    Element, Id,
-    component::{Component, ComponentContext},
-    navigation::{FocusOrigin, NavigationDirection, NavigationInputAction},
-    widgets::text::Text,
-};
-use tracing::warn;
 use self::style::{
     volume_control_style, volume_label_container_style, volume_label_style,
     volume_slider_row_style, volume_slider_track_style,
@@ -25,6 +18,13 @@ use crate::components::{
     home::system_status::{volume_handle, volume_state},
     slider::{Slider, clamp_slider_value},
 };
+use daiko::{
+    Element, Id,
+    component::{Component, ComponentContext},
+    navigation::{FocusOrigin, NavigationDirection, NavigationInputAction},
+    widgets::text::Text,
+};
+use tracing::warn;
 
 const AUDIO_ICON: &[u8] = include_bytes!("../../../../assets/volume.svg");
 const VOLUME_STEP: i16 = 10;

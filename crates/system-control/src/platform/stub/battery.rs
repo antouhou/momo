@@ -1,3 +1,8 @@
+use crate::{
+    SystemControlError,
+    battery::{BatteryChargingState, BatteryFeatureState, BatteryState},
+    feature_state::FeatureState,
+};
 use std::{
     collections::BTreeMap,
     sync::{
@@ -5,11 +10,6 @@ use std::{
         atomic::{AtomicU64, Ordering},
         mpsc::{Receiver, Sender, channel},
     },
-};
-use crate::{
-    SystemControlError,
-    battery::{BatteryChargingState, BatteryFeatureState, BatteryState},
-    feature_state::FeatureState,
 };
 
 const STUB_BATTERY_PERCENTAGE: u8 = 96;

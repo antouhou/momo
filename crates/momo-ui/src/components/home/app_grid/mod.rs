@@ -4,7 +4,10 @@ mod page_dots;
 mod state;
 mod style;
 
-use std::{sync::Arc, time::Duration};
+use crate::{
+    app_state::use_apps_state,
+    components::home::model::{SCREEN_PADDING, TILE_HEIGHT, TILE_WIDTH},
+};
 use app_grid_viewport::AppGridViewport;
 use daiko::{
     Element, Vec2,
@@ -14,14 +17,11 @@ use daiko::{
 use metrics::AppGridMetrics;
 pub(crate) use page_dots::PageDots;
 use state::app_grid_state_handle;
+use std::{sync::Arc, time::Duration};
 use style::{
     ACTIVE_PAGE_DOT_WIDTH, PAGE_DOT_FOCUS_BORDER_WIDTH, PAGE_DOT_FOCUS_PADDING, PAGE_DOT_SIZE,
     PAGE_DOTS_GAP, PAGE_DOTS_HEIGHT, PAGE_DOTS_TOP_GAP, app_grid_pager_style,
     app_grid_wrapper_style,
-};
-use crate::{
-    app_state::use_apps_state,
-    components::home::model::{SCREEN_PADDING, TILE_HEIGHT, TILE_WIDTH},
 };
 const PAGE_SCROLL_THRESHOLD: f32 = 8.0;
 const PAGE_SCROLL_REARM_DURATION: Duration = Duration::from_millis(220);

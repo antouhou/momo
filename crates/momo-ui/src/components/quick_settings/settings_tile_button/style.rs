@@ -1,11 +1,3 @@
-use std::time::Duration;
-use daiko::{
-    animation::{AnimationParameters, easing::EasingFunction, transition},
-    component::ComponentContext,
-    layout::{AlignItems, FlexDirection, ItemSize, JustifyContent},
-    style::{Border, BorderRadius, CursorIcon, Stroke, Style},
-    widgets::text::TextStyle,
-};
 use super::super::{
     common::QuickSettingsControlState,
     style::{
@@ -17,6 +9,14 @@ use super::super::{
         settings_text_color, settings_tile_icon_background_color, settings_tile_icon_border_color,
     },
 };
+use daiko::{
+    animation::{AnimationParameters, easing::EasingFunction, transition},
+    component::ComponentContext,
+    layout::{AlignItems, FlexDirection, ItemSize, JustifyContent},
+    style::{Border, BorderRadius, CursorIcon, Stroke, Style},
+    widgets::text::TextStyle,
+};
+use std::time::Duration;
 
 pub(crate) fn settings_tile_content_style() -> Style {
     Style::new()

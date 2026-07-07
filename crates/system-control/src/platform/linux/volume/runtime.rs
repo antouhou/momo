@@ -1,3 +1,7 @@
+use super::{
+    pipewire::{read_linux_volume_state, set_linux_output_volume},
+    state::LinuxVolumeState,
+};
 use std::{
     io::{BufRead, BufReader},
     process::{Command, Stdio},
@@ -6,10 +10,6 @@ use std::{
         mpsc::{Receiver, Sender},
     },
     time::Duration,
-};
-use super::{
-    pipewire::{read_linux_volume_state, set_linux_output_volume},
-    state::LinuxVolumeState,
 };
 
 const VOLUME_SUBSCRIBE_RESTART_DELAY: Duration = Duration::from_secs(5);

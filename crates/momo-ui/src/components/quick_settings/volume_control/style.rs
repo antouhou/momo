@@ -1,11 +1,3 @@
-use std::time::Duration;
-use daiko::{
-    animation::{AnimationParameters, easing::EasingFunction, transition},
-    component::ComponentContext,
-    layout::{AlignItems, FlexDirection, ItemSize, JustifyContent},
-    style::{Border, BorderRadius, CursorIcon, Indent, Stroke, Style},
-    widgets::text::TextStyle,
-};
 use super::super::{
     common::QuickSettingsControlState,
     style::{
@@ -18,6 +10,14 @@ use super::super::{
         settings_surface_hover_color, settings_text_color,
     },
 };
+use daiko::{
+    animation::{AnimationParameters, easing::EasingFunction, transition},
+    component::ComponentContext,
+    layout::{AlignItems, FlexDirection, ItemSize, JustifyContent},
+    style::{Border, BorderRadius, CursorIcon, Indent, Stroke, Style},
+    widgets::text::TextStyle,
+};
+use std::time::Duration;
 
 const VOLUME_CONTROL_PADDING: Indent = Indent::new(
     SETTINGS_TILE_PADDING.left,

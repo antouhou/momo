@@ -1,13 +1,13 @@
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
 use crate::{
     battery::{
         BatteryChargingState, BatteryFeatureState, BatteryState, BatteryUnavailableReason,
         BatteryUnsupportedReason,
     },
     feature_state::FeatureState,
+};
+use std::{
+    fs,
+    path::{Path, PathBuf},
 };
 
 const POWER_SUPPLY_PATH: &str = "/sys/class/power_supply";

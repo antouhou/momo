@@ -2,13 +2,18 @@ mod auth;
 mod components;
 mod users;
 
-use std::sync::Once;
+use crate::{
+    auth::{auth_handle_for_source, init_greeter_auth_state},
+    components::login_screen::LoginScreen,
+    users::init_greeter_users_state,
+};
 pub use auth::{
     GreeterAuthHandle, GreeterAuthRequest, GreeterAuthResult, GreeterAuthSource,
     GreeterAuthenticator, MockGreeterAuthenticator, default_session_command,
     session_command_from_args,
 };
 use daiko::{App, AppContext};
+use std::sync::Once;
 use system_control::{SystemControl, SystemControlError};
 use tracing_subscriber::EnvFilter;
 #[cfg(target_os = "android")]
@@ -16,11 +21,6 @@ use tracing_subscriber::layer::SubscriberExt;
 #[cfg(target_os = "android")]
 use tracing_subscriber::util::SubscriberInitExt;
 pub use users::{GreeterUser, GreeterUserSource, mock_users};
-use crate::{
-    auth::{auth_handle_for_source, init_greeter_auth_state},
-    components::login_screen::LoginScreen,
-    users::init_greeter_users_state,
-};
 
 static INIT: Once = Once::new();
 

@@ -1,3 +1,8 @@
+use crate::{
+    SystemControlError,
+    feature_state::FeatureState,
+    volume::{VolumeFeatureState, VolumeRequestError, VolumeState},
+};
 use std::{
     collections::BTreeMap,
     sync::{
@@ -5,11 +10,6 @@ use std::{
         atomic::{AtomicU64, Ordering},
         mpsc::{Receiver, Sender, channel},
     },
-};
-use crate::{
-    SystemControlError,
-    feature_state::FeatureState,
-    volume::{VolumeFeatureState, VolumeRequestError, VolumeState},
 };
 
 const STUB_VOLUME_PERCENTAGE: u8 = 40;

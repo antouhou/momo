@@ -1,8 +1,3 @@
-use daiko::{
-    Element, Id,
-    component::{Component, ComponentContext},
-    navigation::FocusEntryPolicy,
-};
 use super::{
     super::{
         quick_action_button::{
@@ -13,6 +8,11 @@ use super::{
         status_chip::StatusChip,
     },
     style::{settings_top_actions_style, settings_top_row_style},
+};
+use daiko::{
+    Element, Id,
+    component::{Component, ComponentContext},
+    navigation::FocusEntryPolicy,
 };
 
 #[derive(Clone, Copy)]

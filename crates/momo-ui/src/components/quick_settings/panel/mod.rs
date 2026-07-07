@@ -1,14 +1,5 @@
 mod style;
 
-use std::time::Duration;
-use daiko::{
-    Element, Id, Vec2,
-    animation::{AnimationParameters, easing::EasingFunction},
-    component::{Child, Component, ComponentContext},
-    navigation::{FocusBoundary, FocusEntryPolicy, FocusOrigin, NavigationInputAction},
-    widgets::overlay::{Overlay, OverlayPositioning},
-};
-use tracing::warn;
 use self::style::settings_menu_style;
 use super::{
     bluetooth_submenu::BluetoothSubmenu,
@@ -29,6 +20,15 @@ use crate::components::{
         ViewTransition, ViewTransitionController, ViewTransitionDirection, ViewTransitionEvent,
     },
 };
+use daiko::{
+    Element, Id, Vec2,
+    animation::{AnimationParameters, easing::EasingFunction},
+    component::{Child, Component, ComponentContext},
+    navigation::{FocusBoundary, FocusEntryPolicy, FocusOrigin, NavigationInputAction},
+    widgets::overlay::{Overlay, OverlayPositioning},
+};
+use std::time::Duration;
+use tracing::warn;
 
 const SETTINGS_MENU_ANIMATION_ID: &str = "momo_home_settings_menu_animation";
 const SETTINGS_MENU_SLIDE_DURATION_MS: u64 = 280;

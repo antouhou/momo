@@ -1,12 +1,5 @@
 mod style;
 
-use daiko::{
-    Element,
-    component::{Component, ComponentContext},
-    widgets::text::Text,
-};
-use momo_kit::interaction::ButtonBehavior;
-use system_control::BatteryChargingState;
 use self::style::{settings_status_chip_style, status_chip_content_style, status_value_style};
 use super::{
     common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_element, is_menu_view_active},
@@ -17,6 +10,13 @@ use super::{
     },
 };
 use crate::components::home::system_status::battery_state;
+use daiko::{
+    Element,
+    component::{Component, ComponentContext},
+    widgets::text::Text,
+};
+use momo_kit::interaction::ButtonBehavior;
+use system_control::BatteryChargingState;
 
 const BATTERY_0_ICON: &[u8] = include_bytes!("../../../../assets/battery-0.svg");
 const BATTERY_2_ICON: &[u8] = include_bytes!("../../../../assets/battery-2.svg");

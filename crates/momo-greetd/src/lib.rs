@@ -1,10 +1,10 @@
+use serde::{Deserialize, Serialize};
 use std::{
     io::{Read, Write},
     os::unix::net::UnixStream,
     path::PathBuf,
     sync::Arc,
 };
-use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 const GREETD_SOCK_ENV: &str = "GREETD_SOCK";

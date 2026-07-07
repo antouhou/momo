@@ -1,5 +1,5 @@
-use std::{process::Command, thread, time::Duration};
 use daiko::state_management::StateHandle;
+use std::{process::Command, thread, time::Duration};
 
 pub(super) fn read_system_time() -> String {
     Command::new("date")

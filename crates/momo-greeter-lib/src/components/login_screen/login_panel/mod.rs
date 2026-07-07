@@ -1,12 +1,5 @@
 mod style;
 
-use std::sync::Arc;
-use daiko::{
-    Element, StringOrReference,
-    component::{Component, ComponentContext},
-    state_management::StateHandle,
-    widgets::{text::Text, text_input::TextInput},
-};
 use crate::{
     auth::{GreeterAuthStatus, submit_greeter_auth_request, use_greeter_auth_state},
     components::login_screen::{
@@ -20,6 +13,13 @@ use crate::{
     },
     users::{GreeterUser, GreeterUsersStatus, use_greeter_users_state},
 };
+use daiko::{
+    Element, StringOrReference,
+    component::{Component, ComponentContext},
+    state_management::StateHandle,
+    widgets::{text::Text, text_input::TextInput},
+};
+use std::sync::Arc;
 
 #[derive(Clone)]
 pub(super) struct LoginPanel {

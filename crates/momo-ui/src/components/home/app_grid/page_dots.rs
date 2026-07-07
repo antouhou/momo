@@ -1,6 +1,10 @@
 mod liquid;
 
-use std::time::Duration;
+use self::liquid::{LiquidMorphSpec, build_liquid_morph_path};
+use crate::components::home::app_grid::{
+    ACTIVE_PAGE_DOT_WIDTH, PAGE_DOT_FOCUS_BORDER_WIDTH, PAGE_DOT_FOCUS_PADDING, PAGE_DOT_SIZE,
+    PAGE_DOTS_GAP, page_dot_focus_key, state::app_grid_state_handle,
+};
 use daiko::{
     Element, Id, Vec2,
     animation::{AnimationParameters, easing::EasingFunction, transition},
@@ -10,11 +14,7 @@ use daiko::{
     style::{BorderRadius, Color, Overflow, Style},
     widgets::container::{Container, Fit},
 };
-use self::liquid::{LiquidMorphSpec, build_liquid_morph_path};
-use crate::components::home::app_grid::{
-    ACTIVE_PAGE_DOT_WIDTH, PAGE_DOT_FOCUS_BORDER_WIDTH, PAGE_DOT_FOCUS_PADDING, PAGE_DOT_SIZE,
-    PAGE_DOTS_GAP, page_dot_focus_key, state::app_grid_state_handle,
-};
+use std::time::Duration;
 
 const PAGE_DOT_ACTIVE_VISUAL_TARGET_ID: &str = "momo_home_app_grid_page_dot_active_visual_target";
 const PAGE_DOT_ACTIVE_VISUAL_MORPH_ID: &str = "momo_home_app_grid_page_dot_active_visual_morph";

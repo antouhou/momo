@@ -1,14 +1,14 @@
-use std::{path::PathBuf, sync::Arc};
+use crate::{
+    app_state::{APPS_STATE_ID, AppEntry, AppsState},
+    components::home::app_grid::AppGrid,
+};
 use daiko::{
     App, AppContext, Element, Id, Vec2,
     component::{Component, ComponentContext},
     layout::{AlignItems, FlexDirection, ItemSize},
     style::{Color, Style},
 };
-use crate::{
-    app_state::{APPS_STATE_ID, AppEntry, AppsState},
-    components::home::app_grid::AppGrid,
-};
+use std::{path::PathBuf, sync::Arc};
 
 const DEFAULT_APP_COUNT: usize = 72;
 const DEFAULT_GRID_WIDTH: f32 = 960.0;

@@ -1,15 +1,6 @@
 mod app_state;
 mod components;
 
-use std::sync::Once;
-use daiko::{App, AppContext};
-use momo_app::ShellViewModel;
-use system_control::SystemControl;
-use tracing_subscriber::EnvFilter;
-#[cfg(target_os = "android")]
-use tracing_subscriber::layer::SubscriberExt;
-#[cfg(target_os = "android")]
-use tracing_subscriber::util::SubscriberInitExt;
 #[cfg(feature = "bench-support")]
 pub use crate::components::home::benchmark_support;
 use crate::{
@@ -19,6 +10,15 @@ use crate::{
         session::initialize_session_state, system_status::initialize_system_status_state,
     },
 };
+use daiko::{App, AppContext};
+use momo_app::ShellViewModel;
+use std::sync::Once;
+use system_control::SystemControl;
+use tracing_subscriber::EnvFilter;
+#[cfg(target_os = "android")]
+use tracing_subscriber::layer::SubscriberExt;
+#[cfg(target_os = "android")]
+use tracing_subscriber::util::SubscriberInitExt;
 
 static INIT: Once = Once::new();
 

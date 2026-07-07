@@ -1,11 +1,11 @@
-use std::sync::{
-    Arc,
-    mpsc::{Receiver, Sender, channel},
-};
 use super::login1::Login1Client;
 use crate::{
     SystemControlError,
     power::{PowerAction, PowerRequestError},
+};
+use std::sync::{
+    Arc,
+    mpsc::{Receiver, Sender, channel},
 };
 
 #[derive(Clone)]

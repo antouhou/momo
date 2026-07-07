@@ -1,8 +1,7 @@
-use std::ffi::OsString;
 use std::sync::Arc;
-use std::sync::mpsc::{Sender, channel};
+use std::sync::mpsc::{Receiver, Sender, channel};
 
-use super::loginctl::run_loginctl_command;
+use super::login1::Login1Client;
 use crate::SystemControlError;
 use crate::session::{SessionAction, SessionRequestError};
 
@@ -20,11 +19,7 @@ impl PlatformSessionHandle {
         let (command_sender, command_receiver) = channel();
         std::thread::Builder::new()
             .name("system-control-linux-session".to_string())
-            .spawn(move || {
-                while let Ok(action) = command_receiver.recv() {
-                    run_session_action(action);
-                }
-            })
+            .spawn(move || run_session_runtime(command_receiver))
             .map_err(|error| SystemControlError::RuntimeThreadSpawnFailed {
                 message: error.to_string(),
             })?;
@@ -42,28 +37,22 @@ impl PlatformSessionHandle {
     }
 }
 
-fn run_session_action(action: SessionAction) {
-    match action {
-        SessionAction::LogOut => {
-            if let Err(error) = log_out() {
-                tracing::warn!("failed to log out: {error}");
-            }
+fn run_session_runtime(command_receiver: Receiver<SessionAction>) {
+    let login1 = match Login1Client::new() {
+        Ok(login1) => login1,
+        Err(error) => {
+            tracing::warn!("failed to initialize login1 session runtime: {error}");
+            return;
         }
+    };
+
+    while let Ok(action) = command_receiver.recv() {
+        run_session_action(&login1, action);
     }
 }
 
-fn log_out() -> Result<(), String> {
-    if let Some(session_id) = non_empty_env("XDG_SESSION_ID") {
-        return run_loginctl_command([OsString::from("terminate-session"), session_id]);
+fn run_session_action(login1: &Login1Client, action: SessionAction) {
+    if let Err(error) = login1.request_session_action(action) {
+        tracing::warn!("failed to run session action {action:?}: {error}");
     }
-
-    let user = non_empty_env("USER")
-        .or_else(|| non_empty_env("LOGNAME"))
-        .ok_or_else(|| "missing XDG_SESSION_ID, USER, and LOGNAME".to_string())?;
-    run_loginctl_command([OsString::from("terminate-user"), user])
-}
-
-fn non_empty_env(key: &str) -> Option<OsString> {
-    let value = std::env::var_os(key)?;
-    (!value.is_empty()).then_some(value)
 }

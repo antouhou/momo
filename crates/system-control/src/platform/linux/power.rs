@@ -1,7 +1,7 @@
 use std::sync::Arc;
-use std::sync::mpsc::{Sender, channel};
+use std::sync::mpsc::{Receiver, Sender, channel};
 
-use super::systemctl::run_systemctl_command;
+use super::login1::Login1Client;
 use crate::SystemControlError;
 use crate::power::{PowerAction, PowerRequestError};
 
@@ -19,11 +19,7 @@ impl PlatformPowerHandle {
         let (command_sender, command_receiver) = channel();
         std::thread::Builder::new()
             .name("system-control-linux-power".to_string())
-            .spawn(move || {
-                while let Ok(action) = command_receiver.recv() {
-                    run_power_action(action);
-                }
-            })
+            .spawn(move || run_power_runtime(command_receiver))
             .map_err(|error| SystemControlError::RuntimeThreadSpawnFailed {
                 message: error.to_string(),
             })?;
@@ -41,17 +37,22 @@ impl PlatformPowerHandle {
     }
 }
 
-fn run_power_action(action: PowerAction) {
-    let command = command_for_power_action(action);
-    if let Err(error) = run_systemctl_command(["--no-block", command]) {
-        tracing::warn!("failed to run power action {action:?}: {error}");
+fn run_power_runtime(command_receiver: Receiver<PowerAction>) {
+    let login1 = match Login1Client::new() {
+        Ok(login1) => login1,
+        Err(error) => {
+            tracing::warn!("failed to initialize login1 power runtime: {error}");
+            return;
+        }
+    };
+
+    while let Ok(action) = command_receiver.recv() {
+        run_power_action(&login1, action);
     }
 }
 
-fn command_for_power_action(action: PowerAction) -> &'static str {
-    match action {
-        PowerAction::Shutdown => "poweroff",
-        PowerAction::Suspend => "suspend",
-        PowerAction::Reboot => "reboot",
+fn run_power_action(login1: &Login1Client, action: PowerAction) {
+    if let Err(error) = login1.request_power_action(action) {
+        tracing::warn!("failed to run power action {action:?}: {error}");
     }
 }

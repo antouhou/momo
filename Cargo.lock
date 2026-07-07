@@ -3824,6 +3824,7 @@ name = "system-control"
 version = "0.1.0"
 dependencies = [
  "bluer",
+ "dbus",
  "futures-util",
  "sysinfo",
  "thiserror 2.0.18",

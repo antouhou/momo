@@ -1,12 +1,11 @@
 #[cfg(not(debug_assertions))]
 use momo_greeter::create_greeter;
-use momo_greeter_lib::init_tracing;
 #[cfg(debug_assertions)]
 use {daiko::hot_reloading::HotReloadApp, std::path::PathBuf};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Set up basic logging
-    init_tracing();
+    momo_tracing::initialize_tracing("momo-greeter")?;
 
     // Set a panic hook that exits the process with if any of the threads panic
     let original_hook = std::panic::take_hook();

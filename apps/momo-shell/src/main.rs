@@ -9,7 +9,7 @@ use {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Set up basic logging
-    momo_ui::init_tracing();
+    momo_tracing::initialize_tracing("momo")?;
 
     // Set a panic hook that exits the process with if any of the threads panic
     let original_hook = std::panic::take_hook();

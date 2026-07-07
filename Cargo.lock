@@ -2175,6 +2175,7 @@ version = "0.1.0"
 dependencies = [
  "daiko",
  "momo-greeter-lib",
+ "momo-tracing",
 ]
 
 [[package]]
@@ -2187,8 +2188,6 @@ dependencies = [
  "system-control",
  "thiserror 2.0.18",
  "tracing",
- "tracing-android",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -2203,11 +2202,19 @@ name = "momo-shell"
 version = "0.1.0"
 dependencies = [
  "daiko",
- "log",
  "momo-app",
+ "momo-tracing",
  "momo-ui",
  "momo-wayfire",
  "system-control",
+]
+
+[[package]]
+name = "momo-tracing"
+version = "0.1.0"
+dependencies = [
+ "thiserror 2.0.18",
+ "tracing-android",
  "tracing-subscriber",
 ]
 
@@ -2222,8 +2229,6 @@ dependencies = [
  "momo-kit",
  "system-control",
  "tracing",
- "tracing-android",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -2239,6 +2244,7 @@ version = "0.1.0"
 dependencies = [
  "daiko",
  "momo-app",
+ "momo-tracing",
  "momo-ui",
  "momo-wayfire",
  "winit",

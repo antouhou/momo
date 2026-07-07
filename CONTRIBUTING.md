@@ -2,13 +2,13 @@ This is a set of guidelines and rules for contributing to the project. They are 
 by standardizing code conventions and such.
 
 Repo structure:
-- `apps` directory: contains launchable apps. Right now there are two of them: a shell that launches apps and a greeter 
-to be used as a wayland/wayfire greeter. The apps are just runtimes, the actual UI and integrations are libraries
-located in the `crates` directory.
+- `apps` directory: contains launchable apps. The shell is a desktop app, and the greeter
+is a greetd greeter. Apps are just runtimes; Actual UI and integrations live in the `crates` directory.
 - `crates` directory that contains libraries:
   - [`crates/momo-app`] - Wrapper over the shell UI that initializes integration based on how the app is launch
   - [`crates/momo-compositor`] - Compositor integration. Right now only one compositor integration is available - Wayfire
   - [`crates/momo-greeter-lib`] - Greeter UI. 
+  - [`crates/momo-greetd`] - greetd authentication integration.
   - [`crates/momo-kit`] - Shared UI code. Includes styles, behaviors, components and assets.
   - [`crates/momo-ui`] - Shell/Launcher app UI.
   - [`crates/momo-wayfire`] - Wayfire compositor integration
@@ -19,7 +19,8 @@ located in the `crates` directory.
 1. Use `thiserror` for error handling.
 2. Don't make files too large. If a file exceeds around 500 lines, consider splitting it into smaller modules.
 3. Create tests in a separate `tests` file. Writing tests in the same file makes it a bit harder to review.
-4. Run `cargo clippy` and `cargo fmt --fix` before commiting.
+4. Run `cargo clippy --all-features --tests -- -D warnings` and `cargo fmt --all` before committing. Every workspace
+crate must inherit the workspace lint configuration through a `[lints]` table containing `workspace = true`.
 5. When designing module structure or a new feature, try to use domain-driven approach. For example, if you need a 
 controller for whatever functionality you are implementing, don't put it into the controllers module, but create a 
 submodule for that functionality. For example, Bluetooth controller should be in `bluetooth/controller.rs`, not in 
@@ -29,10 +30,9 @@ and see all the code related to it.
 6. Try to generalize behaviors and styles, so it can be shared across components, crates, and apps. Generalized 
 behaviors, components and styles are located in the [`crates/momo-kit`](crates/momo-kit).
 7. There are generally three types of crates in this project: logic/system integration, UI, and apps.
-Apps are usually just a thing launchable runtime, with the actual UI for it being in the lib. Apps shouldn't
-contain any logic or system integration code. Likewise, UI crates shouldn't contain any logic or system integration
-code. And the logic/system integration crates shouldn't contain any UI code or depend on the UI crates. This makes
-code much more structured and easier to navigate. Please keep those concepts separate.
+Apps are launchable runtimes, and should not contain any logic. With their UI implemented in libraries. 
+Platform-specific logic and integrations belongs in logic/system integration crates, and those crates must not depend on
+UI crates. This keeps the code structured and makes navigation and reasoning about bounds and responsibilities much easier.
 8. Avoid dynamic dispatch, trait objects and such as much as possible.
 
 ## Rules for UI development:
@@ -60,4 +60,4 @@ not button's responsibility. Use channels to communicate to the parent that butt
 it has been activated, clicked or so on, and let the parent decide what to do with it.
 11. Avoid cloning vectors or doing other allocations in the UI/component code. Use references. Do not create or clone
 `String`s or `Vec`s in the `Component::to_element` function, unless those are for some one-shot interaction that
-might happen once in a rare while. 
+might happen once in a rare while.

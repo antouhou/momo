@@ -4,21 +4,26 @@ use self::style::{
     volume_control_style, volume_label_container_style, volume_label_style,
     volume_slider_row_style, volume_slider_track_style,
 };
-use super::common::is_menu_view_active;
-use super::common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_element};
-use super::state::SettingsMenuViewType;
-use super::style::{
-    SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, SETTINGS_VOLUME_THUMB_SIZE,
-    SETTINGS_VOLUME_TRACK_HEIGHT, settings_accent_color, settings_bright_surface_border_color,
-    settings_bright_surface_color, settings_surface_muted_color, settings_text_color,
-    settings_volume_thumb_border_color,
+use super::{
+    common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_element, is_menu_view_active},
+    state::SettingsMenuViewType,
+    style::{
+        SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, SETTINGS_VOLUME_THUMB_SIZE,
+        SETTINGS_VOLUME_TRACK_HEIGHT, settings_accent_color, settings_bright_surface_border_color,
+        settings_bright_surface_color, settings_surface_muted_color, settings_text_color,
+        settings_volume_thumb_border_color,
+    },
 };
-use crate::components::home::system_status::{volume_handle, volume_state};
-use crate::components::slider::{Slider, clamp_slider_value};
-use daiko::component::{Component, ComponentContext};
-use daiko::navigation::{FocusOrigin, NavigationDirection, NavigationInputAction};
-use daiko::widgets::text::Text;
-use daiko::{Element, Id};
+use crate::components::{
+    home::system_status::{volume_handle, volume_state},
+    slider::{Slider, clamp_slider_value},
+};
+use daiko::{
+    Element, Id,
+    component::{Component, ComponentContext},
+    navigation::{FocusOrigin, NavigationDirection, NavigationInputAction},
+    widgets::text::Text,
+};
 use tracing::warn;
 
 const AUDIO_ICON: &[u8] = include_bytes!("../../../../assets/volume.svg");

@@ -1,9 +1,12 @@
-use std::sync::Arc;
-use std::sync::mpsc::{Receiver, Sender, channel};
-
 use super::login1::Login1Client;
-use crate::SystemControlError;
-use crate::session::{SessionAction, SessionRequestError};
+use crate::{
+    SystemControlError,
+    session::{SessionAction, SessionRequestError},
+};
+use std::sync::{
+    Arc,
+    mpsc::{Receiver, Sender, channel},
+};
 
 #[derive(Clone)]
 pub(crate) struct PlatformSessionHandle {

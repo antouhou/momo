@@ -1,20 +1,21 @@
 mod style;
 
 use self::style::settings_round_button_style;
-use super::common::{
-    QuickSettingsControlState, QuickSettingsGlyph, glyph_element, is_menu_view_active,
+use super::{
+    common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_element, is_menu_view_active},
+    state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuViewType},
+    style::{
+        SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_danger_text_color,
+        settings_inverse_text_color, settings_text_color,
+    },
 };
-use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuViewType};
-use super::style::{
-    SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_danger_text_color,
-    settings_inverse_text_color, settings_text_color,
+use daiko::{
+    Element, Id,
+    channel::Channel,
+    component::{Component, ComponentContext},
+    navigation::FocusOrigin,
 };
-use daiko::channel::Channel;
-use daiko::component::{Component, ComponentContext};
-use daiko::navigation::FocusOrigin;
-use daiko::{Element, Id};
-use momo_kit::assets::POWER_ICON;
-use momo_kit::interaction::ButtonBehavior;
+use momo_kit::{assets::POWER_ICON, interaction::ButtonBehavior};
 
 const MOON_ICON: &[u8] = include_bytes!("../../../../assets/moon.svg");
 const GEAR_ICON: &[u8] = include_bytes!("../../../../assets/gear-solid-full.svg");

@@ -1,19 +1,25 @@
-use super::Home;
-use super::bluetooth::initialize_bluetooth_state;
-use super::model::TILE_HEIGHT;
-use super::system_status::initialize_system_status_state;
+use super::{
+    Home, bluetooth::initialize_bluetooth_state, model::TILE_HEIGHT,
+    system_status::initialize_system_status_state,
+};
 use crate::app_state::{APPS_STATE_ID, AppEntry, AppsState};
-use daiko::integration::input::{InputEvent, InputEventModifiers};
-use daiko::navigation::{FocusKey, FocusOrigin};
-use daiko::style::{Color, Transform};
-use daiko::testing::TestRunner;
-use daiko::window_events::WindowEvent;
-use daiko::{App, AppContext, Id, Pos2, Vec2};
-use std::path::PathBuf;
-use std::sync::Arc;
-use std::thread;
-use std::time::{Duration, Instant};
+use daiko::{
+    App, AppContext, Id, Pos2, Vec2,
+    integration::input::{InputEvent, InputEventModifiers},
+    navigation::{FocusKey, FocusOrigin},
+    style::{Color, Transform},
+    testing::TestRunner,
+    window_events::WindowEvent,
+};
+use std::{
+    path::PathBuf,
+    sync::Arc,
+    time::{Duration, Instant},
+};
 use system_control::SystemControl;
+
+const ASYNC_TEST_TIMEOUT: Duration = Duration::from_secs(2);
+const ASYNC_TEST_POLL_INTERVAL: Duration = Duration::from_millis(1);
 
 fn initialize_test_app_state(ctx: &mut AppContext) {
     let apps_state = ctx.peek_global_state(Id::new(APPS_STATE_ID), AppsState::default);
@@ -231,8 +237,9 @@ fn vertical_wheel_scroll_pages_the_grid() {
             ));
         runner.run_frame();
     }
-    thread::sleep(Duration::from_millis(260));
-    runner.run_frame();
+    run_until(&mut runner, "first page scroll animation", |runner| {
+        runner.get_element_bounds("apps-grid-page-1").0.x < initial_position.x - 100.0
+    });
 
     let (position, _size) = runner.get_element_bounds("apps-grid-page-1");
     let (second_next_position, _second_next_size) = runner.get_element_bounds("apps-grid-page-2");
@@ -249,7 +256,7 @@ fn vertical_wheel_scroll_pages_the_grid() {
 
     let (first_page_scrolled_position, _first_page_scrolled_size) =
         runner.get_element_bounds("apps-grid-page-0");
-    for _ in 0..4 {
+    run_until(&mut runner, "return page scroll animation", |runner| {
         runner
             .app_runner_mut()
             .context
@@ -258,10 +265,8 @@ fn vertical_wheel_scroll_pages_the_grid() {
                 InputEventModifiers::default(),
                 Instant::now(),
             ));
-        runner.run_frame();
-    }
-    thread::sleep(Duration::from_millis(260));
-    runner.run_frame();
+        runner.get_element_bounds("apps-grid-page-0").0.x > first_page_scrolled_position.x + 100.0
+    });
 
     let (first_page_returned_position, _first_page_returned_size) =
         runner.get_element_bounds("apps-grid-page-0");
@@ -300,8 +305,17 @@ fn launch_surface_starts_at_the_focused_tile_visual_bounds() {
     runner.run_frame();
 
     runner.focus_element_by_key(FocusKey::new("movies"), FocusOrigin::Navigation);
-    thread::sleep(Duration::from_millis(140));
-    runner.run_frame();
+    run_until(&mut runner, "focused tile transform", |runner| {
+        let entry = runner
+            .find_element_entry_by_tag("movies")
+            .expect("movies tile should exist while waiting for focus transform");
+        let (_, rendered_size) = rendered_element_bounds(
+            entry.layout.position_absolute,
+            entry.layout.size,
+            entry.effective_transform.as_ref(),
+        );
+        rendered_size.x >= entry.layout.size.x * 1.049
+    });
     let focused_tile_entry = runner
         .find_element_entry_by_tag("movies")
         .expect("movies tile should exist before launch");
@@ -337,12 +351,12 @@ fn cancel_reverses_launch_overlay_and_restores_tile_focus() {
 
     runner.click_element("movies");
     runner.run_frame();
-    thread::sleep(Duration::from_millis(420));
-    runner.run_frame();
+    wait_for_launch_expansion(&mut runner);
 
     runner.press_cancel();
-    thread::sleep(Duration::from_millis(420));
-    runner.run_frame();
+    run_until(&mut runner, "launch overlay contraction", |runner| {
+        runner.find_element_by_tag("launch-overlay").is_none()
+    });
 
     assert!(runner.find_element_by_tag("launch-overlay").is_none());
     runner.assert_focused("movies");
@@ -356,18 +370,43 @@ fn window_focus_loss_reverses_launch_overlay() {
 
     runner.click_element("movies");
     runner.run_frame();
-    thread::sleep(Duration::from_millis(420));
-    runner.run_frame();
+    wait_for_launch_expansion(&mut runner);
 
     runner
         .app_runner_mut()
         .context
         .add_window_event(WindowEvent::focus_lost(Instant::now()));
     runner.run_frame();
-    thread::sleep(Duration::from_millis(420));
-    runner.run_frame();
+    run_until(&mut runner, "focus-loss launch contraction", |runner| {
+        runner.find_element_by_tag("launch-overlay").is_none()
+    });
 
     assert!(runner.find_element_by_tag("launch-overlay").is_none());
+}
+
+fn wait_for_launch_expansion(runner: &mut TestRunner<HomeTestApp>) {
+    run_until(runner, "launch overlay expansion", |runner| {
+        runner
+            .find_element_entry_by_tag("launch-overlay-surface")
+            .is_some_and(|entry| entry.layout.size.x >= 1279.0 && entry.layout.size.y >= 719.0)
+    });
+}
+
+fn run_until(
+    runner: &mut TestRunner<HomeTestApp>,
+    description: &str,
+    mut condition: impl FnMut(&mut TestRunner<HomeTestApp>) -> bool,
+) {
+    let deadline = Instant::now() + ASYNC_TEST_TIMEOUT;
+    while Instant::now() < deadline {
+        runner.run_frame();
+        if condition(runner) {
+            return;
+        }
+        std::thread::sleep(ASYNC_TEST_POLL_INTERVAL);
+    }
+
+    panic!("timed out waiting for {description}");
 }
 
 fn rendered_element_bounds(

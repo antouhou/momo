@@ -7,8 +7,6 @@ mod session;
 mod users;
 mod volume;
 
-use thiserror::Error;
-
 pub use battery::{
     BatteryChargingState, BatteryFeatureState, BatteryHandle, BatteryObservation, BatteryState,
     BatteryUnavailableReason, BatteryUnsupportedReason,
@@ -24,6 +22,7 @@ pub use bluetooth::{
 pub use feature_state::FeatureState;
 pub use power::{PowerAction, PowerHandle, PowerRequestError};
 pub use session::{SessionAction, SessionHandle, SessionRequestError};
+use thiserror::Error;
 pub use users::{
     SystemUser, UserHandle, UserListFeatureState, UserUnavailableReason, UserUnsupportedReason,
 };

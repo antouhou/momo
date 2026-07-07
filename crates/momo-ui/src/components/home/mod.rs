@@ -16,18 +16,23 @@ pub(crate) mod system_status;
 mod tests;
 mod time;
 
-use crate::components::dock::Dock;
-use crate::components::home::app_grid::{AppGrid, PageDots};
-use crate::components::home::header::HomeHeader;
-use crate::components::home::launch::controller::use_launch_controller;
-use crate::components::home::launch::overlay::LaunchOverlay;
-use crate::components::home::model::{HOME_CLOCK_STATE_ID, HOME_CLOCK_THREAD_ID, SECTION_GAP};
-use crate::components::home::time::{read_system_time, spawn_clock_thread};
-use crate::components::quick_settings::{settings_overlay, should_render_settings_menu};
-use daiko::component::{Component, ComponentContext};
-use daiko::layout::{FlexDirection, ItemSize};
-use daiko::style::Style;
-use daiko::{Element, Id};
+use crate::components::{
+    dock::Dock,
+    home::{
+        app_grid::{AppGrid, PageDots},
+        header::HomeHeader,
+        launch::{controller::use_launch_controller, overlay::LaunchOverlay},
+        model::{HOME_CLOCK_STATE_ID, HOME_CLOCK_THREAD_ID, SECTION_GAP},
+        time::{read_system_time, spawn_clock_thread},
+    },
+    quick_settings::{settings_overlay, should_render_settings_menu},
+};
+use daiko::{
+    Element, Id,
+    component::{Component, ComponentContext},
+    layout::{FlexDirection, ItemSize},
+    style::Style,
+};
 use momo_kit::style::shell_background_gradient;
 
 #[derive(Clone, Copy)]

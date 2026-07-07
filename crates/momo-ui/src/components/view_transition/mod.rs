@@ -1,24 +1,26 @@
 mod state;
 mod style;
 
-use self::state::{
-    ViewTransitionMeasurements, ViewTransitionSlotMotion, ViewTransitionState,
-    incoming_view_transition_slot_motion, outgoing_view_transition_slot_motion,
-    outgoing_view_transition_slot_target_offset, stable_view_transition_slot_motion,
-    view_transition_slot_motion_offset,
+use self::{
+    state::{
+        ViewTransitionMeasurements, ViewTransitionSlotMotion, ViewTransitionState,
+        incoming_view_transition_slot_motion, outgoing_view_transition_slot_motion,
+        outgoing_view_transition_slot_target_offset, stable_view_transition_slot_motion,
+        view_transition_slot_motion_offset,
+    },
+    style::{
+        DEFAULT_VIEW_TRANSITION_SLIDE_DISTANCE, VIEW_TRANSITION_DURATION_MS,
+        view_transition_slot_style, view_transition_style,
+    },
 };
-use self::style::{
-    DEFAULT_VIEW_TRANSITION_SLIDE_DISTANCE, VIEW_TRANSITION_DURATION_MS,
-    view_transition_slot_style, view_transition_style,
+use daiko::{
+    Element, Id, Vec2,
+    animation::{AnimationParameters, easing::EasingFunction},
+    channel::Channel,
+    component::{Child, Component, ComponentContext, IntoChild},
+    state_management::StateHandle,
 };
-use daiko::animation::AnimationParameters;
-use daiko::animation::easing::EasingFunction;
-use daiko::channel::Channel;
-use daiko::component::{Child, Component, ComponentContext, IntoChild};
-use daiko::state_management::StateHandle;
-use daiko::{Element, Id, Vec2};
-use std::hash::Hash;
-use std::time::Duration;
+use std::{hash::Hash, time::Duration};
 
 pub struct ViewTransition {
     id: Id,

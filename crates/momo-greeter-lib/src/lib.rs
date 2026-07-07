@@ -2,10 +2,11 @@ mod auth;
 mod components;
 mod users;
 
-use crate::auth::auth_handle_for_source;
-use crate::auth::init_greeter_auth_state;
-use crate::components::login_screen::LoginScreen;
-use crate::users::init_greeter_users_state;
+use crate::{
+    auth::{auth_handle_for_source, init_greeter_auth_state},
+    components::login_screen::LoginScreen,
+    users::init_greeter_users_state,
+};
 pub use auth::{
     GreeterAuthHandle, GreeterAuthRequest, GreeterAuthResult, GreeterAuthSource,
     GreeterAuthenticator, MockGreeterAuthenticator, default_session_command,
@@ -13,8 +14,12 @@ pub use auth::{
 };
 use daiko::{App, AppContext};
 use std::sync::Once;
-use system_control::SystemControl;
+use system_control::{SystemControl, SystemControlError};
 use tracing_subscriber::EnvFilter;
+#[cfg(target_os = "android")]
+use tracing_subscriber::layer::SubscriberExt;
+#[cfg(target_os = "android")]
+use tracing_subscriber::util::SubscriberInitExt;
 pub use users::{GreeterUser, GreeterUserSource, mock_users};
 
 static INIT: Once = Once::new();
@@ -24,8 +29,6 @@ pub fn init_tracing() {
         let filter = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
         #[cfg(target_os = "android")]
         {
-            use tracing_subscriber::layer::SubscriberExt;
-            use tracing_subscriber::util::SubscriberInitExt;
             let android_layer =
                 tracing_android::layer("momo").expect("failed to initialize Android log layer");
 
@@ -50,17 +53,23 @@ pub struct MomoGreeter {
     session_command: Vec<String>,
 }
 
-pub fn create_greeter(args: impl IntoIterator<Item = String>) -> MomoGreeter {
+pub fn create_greeter(
+    args: impl IntoIterator<Item = String>,
+) -> Result<MomoGreeter, SystemControlError> {
     let args = args.into_iter().collect::<Vec<_>>();
 
-    let system_control =
-        SystemControl::new().expect("failed to initialize system control services");
+    let system_control = SystemControl::new()?;
     let user_source = GreeterUserSource::from_args(args.iter().cloned());
     let auth_source = GreeterAuthSource::from_args(args.iter().cloned());
     let auth_handle = auth_handle_for_source(auth_source);
     let session_command = auth::session_command_from_args(&args);
 
-    MomoGreeter::new(system_control, user_source, auth_handle, session_command)
+    Ok(MomoGreeter::new(
+        system_control,
+        user_source,
+        auth_handle,
+        session_command,
+    ))
 }
 
 impl MomoGreeter {

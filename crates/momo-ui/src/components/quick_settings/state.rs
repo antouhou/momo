@@ -1,5 +1,4 @@
-use daiko::Id;
-use daiko::component::ComponentContext;
+use daiko::{Id, component::ComponentContext};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum SettingsMenuViewType {

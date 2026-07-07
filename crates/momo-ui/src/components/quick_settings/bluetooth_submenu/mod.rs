@@ -4,30 +4,34 @@ use self::style::{
     DeviceRowAvailability, submenu_device_icon_color, submenu_device_icon_ring_style,
     submenu_device_label_color,
 };
-use super::common::{
-    QuickSettingsControlState, QuickSettingsGlyph, glyph_element, settings_bottom_row, settings_row,
-};
-use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuViewType};
-use super::style::{
-    SETTINGS_COMPACT_CONTENT_GAP, SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE,
-    SETTINGS_ROUND_BUTTON_SIZE, settings_content_container_style, settings_text_color,
-};
-use super::submenu::{
-    handle_submenu_back_navigation, submenu_body_style, submenu_section_label_style,
-    submenu_section_style, submenu_section_title_style,
-};
-use super::submenu_button::{
-    SubmenuButton, SubmenuButtonState, SubmenuButtonSurface, submenu_button_glyph,
-    submenu_button_leading_slot, submenu_button_surface_glyph, submenu_toggle_switch,
+use super::{
+    common::{
+        QuickSettingsControlState, QuickSettingsGlyph, glyph_element, settings_bottom_row,
+        settings_row,
+    },
+    state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuViewType},
+    style::{
+        SETTINGS_COMPACT_CONTENT_GAP, SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE,
+        SETTINGS_ROUND_BUTTON_SIZE, settings_content_container_style, settings_text_color,
+    },
+    submenu::{
+        handle_submenu_back_navigation, submenu_body_style, submenu_section_label_style,
+        submenu_section_style, submenu_section_title_style,
+    },
+    submenu_button::{
+        SubmenuButton, SubmenuButtonState, SubmenuButtonSurface, submenu_button_glyph,
+        submenu_button_leading_slot, submenu_button_surface_glyph, submenu_toggle_switch,
+    },
 };
 use crate::components::home::bluetooth::{
     BluetoothDeviceSection, BluetoothDeviceState, bluetooth_handle, bluetooth_state,
 };
-use daiko::component::{Component, ComponentContext};
-use daiko::navigation::FocusOrigin;
-use daiko::widgets::scrollable::Scrollable;
-use daiko::widgets::text::Text;
-use daiko::{Element, Id};
+use daiko::{
+    Element, Id,
+    component::{Component, ComponentContext},
+    navigation::FocusOrigin,
+    widgets::{scrollable::Scrollable, text::Text},
+};
 use momo_kit::interaction::ButtonBehavior;
 use system_control::{BluetoothConnectionState, BluetoothDeviceCategory};
 use tracing::warn;

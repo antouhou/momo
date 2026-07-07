@@ -1,13 +1,19 @@
-use super::super::quick_action_button::{
-    FOCUS_ACTION, NIGHT_ACTION, POWER_ACTION, POWER_ACTION_TAG, QuickActionButton, QuickActionSpec,
-    TOOLS_ACTION,
+use super::{
+    super::{
+        quick_action_button::{
+            FOCUS_ACTION, NIGHT_ACTION, POWER_ACTION, POWER_ACTION_TAG, QuickActionButton,
+            QuickActionSpec, TOOLS_ACTION,
+        },
+        state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuViewType},
+        status_chip::StatusChip,
+    },
+    style::{settings_top_actions_style, settings_top_row_style},
 };
-use super::super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuViewType};
-use super::super::status_chip::StatusChip;
-use super::style::{settings_top_actions_style, settings_top_row_style};
-use daiko::component::{Component, ComponentContext};
-use daiko::navigation::FocusEntryPolicy;
-use daiko::{Element, Id};
+use daiko::{
+    Element, Id,
+    component::{Component, ComponentContext},
+    navigation::FocusEntryPolicy,
+};
 
 #[derive(Clone, Copy)]
 pub(super) struct SettingsTopRow;

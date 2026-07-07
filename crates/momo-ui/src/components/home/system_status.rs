@@ -2,10 +2,7 @@ use crate::components::home::model::{
     HOME_BATTERY_HANDLE_ID, HOME_BATTERY_OBSERVATION_ID, HOME_BATTERY_STATE_ID,
     HOME_VOLUME_HANDLE_ID, HOME_VOLUME_OBSERVATION_ID, HOME_VOLUME_STATE_ID,
 };
-use daiko::AppContext;
-use daiko::Id;
-use daiko::component::ComponentContext;
-use daiko::state_management::StateHandle;
+use daiko::{AppContext, Id, component::ComponentContext, state_management::StateHandle};
 use system_control::{
     BatteryChargingState, BatteryFeatureState, BatteryHandle, BatteryObservation, FeatureState,
     VolumeFeatureState, VolumeHandle, VolumeObservation,

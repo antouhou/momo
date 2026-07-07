@@ -1,10 +1,14 @@
 use criterion::{Criterion, criterion_group, criterion_main};
-use daiko::integration::input::{InputEvent, InputEventModifiers};
-use daiko::testing::TestRunner;
-use daiko::{Pos2, Vec2};
+use daiko::{
+    Pos2, Vec2,
+    integration::input::{InputEvent, InputEventModifiers},
+    testing::TestRunner,
+};
 use momo_ui::benchmark_support::AppGridBenchmarkApp;
-use std::hint::black_box;
-use std::time::{Duration, Instant};
+use std::{
+    hint::black_box,
+    time::{Duration, Instant},
+};
 
 const VIEWPORT_WIDTH: f32 = 1280.0;
 const VIEWPORT_HEIGHT: f32 = 720.0;

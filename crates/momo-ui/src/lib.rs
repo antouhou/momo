@@ -3,18 +3,22 @@ mod components;
 
 #[cfg(feature = "bench-support")]
 pub use crate::components::home::benchmark_support;
-
-use crate::app_state::init_app_state;
-use crate::components::home::Home;
-use crate::components::home::bluetooth::initialize_bluetooth_state;
-use crate::components::home::power::initialize_power_state;
-use crate::components::home::session::initialize_session_state;
-use crate::components::home::system_status::initialize_system_status_state;
+use crate::{
+    app_state::init_app_state,
+    components::home::{
+        Home, bluetooth::initialize_bluetooth_state, power::initialize_power_state,
+        session::initialize_session_state, system_status::initialize_system_status_state,
+    },
+};
 use daiko::{App, AppContext};
 use momo_app::ShellViewModel;
 use std::sync::Once;
 use system_control::SystemControl;
 use tracing_subscriber::EnvFilter;
+#[cfg(target_os = "android")]
+use tracing_subscriber::layer::SubscriberExt;
+#[cfg(target_os = "android")]
+use tracing_subscriber::util::SubscriberInitExt;
 
 static INIT: Once = Once::new();
 
@@ -23,8 +27,6 @@ pub fn init_tracing() {
         let filter = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
         #[cfg(target_os = "android")]
         {
-            use tracing_subscriber::layer::SubscriberExt;
-            use tracing_subscriber::util::SubscriberInitExt;
             let android_layer =
                 tracing_android::layer("momo").expect("failed to initialize Android log layer");
 

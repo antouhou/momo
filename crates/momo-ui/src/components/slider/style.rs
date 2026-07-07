@@ -1,10 +1,11 @@
 use super::Slider;
-use daiko::Vec2;
-use daiko::animation::easing::EasingFunction;
-use daiko::animation::{AnimationParameters, transition};
-use daiko::component::ComponentContext;
-use daiko::layout::{AlignItems, FlexDirection, ItemSize};
-use daiko::style::{Border, BorderRadius, Stroke, Style};
+use daiko::{
+    Vec2,
+    animation::{AnimationParameters, easing::EasingFunction, transition},
+    component::ComponentContext,
+    layout::{AlignItems, FlexDirection, ItemSize},
+    style::{Border, BorderRadius, Stroke, Style},
+};
 use std::time::Duration;
 
 const SLIDER_BORDER_TRANSITION_MS: u64 = 120;

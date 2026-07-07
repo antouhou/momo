@@ -1,11 +1,14 @@
-use crate::components::login_screen::profile_tile::{AvatarTone, GlyphScale};
-use crate::components::login_screen::style::{text_primary_color, text_secondary_color};
-use daiko::animation::easing::EasingFunction;
-use daiko::animation::{AnimationParameters, transition};
-use daiko::component::ComponentContext;
-use daiko::layout::{AlignItems, FlexDirection, JustifyContent, SizeConstraint};
-use daiko::style::{Border, BorderRadius, Color, CursorIcon, Stroke, Style};
-use daiko::widgets::text::{TextStyle, TextWrap, Weight};
+use crate::components::login_screen::{
+    profile_tile::{AvatarTone, GlyphScale},
+    style::{text_primary_color, text_secondary_color},
+};
+use daiko::{
+    animation::{AnimationParameters, easing::EasingFunction, transition},
+    component::ComponentContext,
+    layout::{AlignItems, FlexDirection, JustifyContent, SizeConstraint},
+    style::{Border, BorderRadius, Color, CursorIcon, Stroke, Style},
+    widgets::text::{TextStyle, TextWrap, Weight},
+};
 use momo_kit::animation::focus_transform;
 use std::time::Duration;
 

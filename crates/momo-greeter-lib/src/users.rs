@@ -1,6 +1,4 @@
-use daiko::component::ComponentContext;
-use daiko::state_management::StateHandle;
-use daiko::{AppContext, Id};
+use daiko::{AppContext, Id, component::ComponentContext, state_management::StateHandle};
 use std::sync::Arc;
 use system_control::{FeatureState, UserHandle};
 

@@ -2,8 +2,10 @@ use super::super::style::{
     PANEL_RADIUS, SETTINGS_MENU_GAP, SETTINGS_MENU_WIDTH, SETTINGS_PANEL_BORDER_WIDTH,
     settings_panel_border_color, settings_panel_color,
 };
-use daiko::layout::{AlignItems, FlexDirection, ItemSize, SizeConstraint};
-use daiko::style::{Border, BorderRadius, Overflow, Stroke, Style};
+use daiko::{
+    layout::{AlignItems, FlexDirection, ItemSize, SizeConstraint},
+    style::{Border, BorderRadius, Overflow, Stroke, Style},
+};
 
 pub(crate) fn settings_menu_style(max_height: f32) -> Style {
     Style::new()

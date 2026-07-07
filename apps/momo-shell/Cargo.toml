@@ -11,3 +11,6 @@ system-control = { path = "../../crates/system-control" }
 daiko = { workspace = true }
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 log = "0.4.29"
+
+[lints]
+workspace = true

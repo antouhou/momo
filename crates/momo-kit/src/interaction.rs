@@ -1,6 +1,8 @@
-use daiko::component::ComponentContext;
-use daiko::layout::Layout;
-use daiko::navigation::{FocusKey, FocusOrigin};
+use daiko::{
+    component::ComponentContext,
+    layout::Layout,
+    navigation::{FocusKey, FocusOrigin},
+};
 
 pub struct ButtonBehavior<'context, 'app> {
     ctx: &'context mut ComponentContext<'app>,

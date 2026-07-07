@@ -1,6 +1,4 @@
-use crate::SystemControlError;
-use crate::feature_state::FeatureState;
-use crate::platform;
+use crate::{SystemControlError, feature_state::FeatureState, platform};
 use thiserror::Error;
 
 pub type UserListFeatureState =

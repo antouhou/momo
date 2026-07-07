@@ -1,6 +1,8 @@
-use daiko::Vec2;
-use daiko::layout::{AlignItems, FlexDirection, JustifyContent};
-use daiko::style::{BorderRadius, Color, Indent, Style};
+use daiko::{
+    Vec2,
+    layout::{AlignItems, FlexDirection, JustifyContent},
+    style::{BorderRadius, Color, Indent, Style},
+};
 
 pub(super) fn dock_outer_container() -> Style {
     Style::new()

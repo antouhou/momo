@@ -1,18 +1,21 @@
-use super::super::common::QuickSettingsControlState;
-use super::super::style::{
-    CONTROL_RADIUS, CONTROL_TRANSITION_MS, SETTINGS_COMPACT_CONTENT_GAP,
-    SETTINGS_STATUS_CHIP_HEIGHT, SETTINGS_STATUS_CHIP_PADDING, SETTINGS_STATUS_CHIP_WIDTH,
-    settings_button_focus_transform, settings_emphasized_surface_border_color,
-    settings_emphasized_surface_border_focus_color, settings_emphasized_surface_color,
-    settings_emphasized_surface_focus_color, settings_emphasized_surface_hover_color,
-    settings_label_text_style,
+use super::super::{
+    common::QuickSettingsControlState,
+    style::{
+        CONTROL_RADIUS, CONTROL_TRANSITION_MS, SETTINGS_COMPACT_CONTENT_GAP,
+        SETTINGS_STATUS_CHIP_HEIGHT, SETTINGS_STATUS_CHIP_PADDING, SETTINGS_STATUS_CHIP_WIDTH,
+        settings_button_focus_transform, settings_emphasized_surface_border_color,
+        settings_emphasized_surface_border_focus_color, settings_emphasized_surface_color,
+        settings_emphasized_surface_focus_color, settings_emphasized_surface_hover_color,
+        settings_label_text_style,
+    },
 };
-use daiko::animation::easing::EasingFunction;
-use daiko::animation::{AnimationParameters, transition};
-use daiko::component::ComponentContext;
-use daiko::layout::{AlignItems, FlexDirection, JustifyContent};
-use daiko::style::{Border, BorderRadius, CursorIcon, Stroke, Style};
-use daiko::widgets::text::TextStyle;
+use daiko::{
+    animation::{AnimationParameters, easing::EasingFunction, transition},
+    component::ComponentContext,
+    layout::{AlignItems, FlexDirection, JustifyContent},
+    style::{Border, BorderRadius, CursorIcon, Stroke, Style},
+    widgets::text::TextStyle,
+};
 use std::time::Duration;
 
 pub(crate) fn status_chip_content_style() -> Style {

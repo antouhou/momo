@@ -1,9 +1,8 @@
-use std::sync::Arc;
-use std::sync::mpsc::Receiver;
-use std::time::Duration;
-
-use super::state::LinuxBatteryState;
-use super::sysfs::read_linux_battery_state;
+use super::{state::LinuxBatteryState, sysfs::read_linux_battery_state};
+use std::{
+    sync::{Arc, mpsc::Receiver},
+    time::Duration,
+};
 
 const BATTERY_POLL_INTERVAL: Duration = Duration::from_secs(5);
 

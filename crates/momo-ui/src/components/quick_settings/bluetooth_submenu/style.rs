@@ -1,3 +1,11 @@
+use daiko::{
+    animation::{AnimationParameters, easing::EasingFunction, transition},
+    component::ComponentContext,
+    layout::{AlignItems, FlexDirection, JustifyContent},
+    style::{Border, BorderRadius, Stroke, Style},
+};
+use std::time::Duration;
+
 use super::super::style::{
     CONTROL_TRANSITION_MS, SETTINGS_SUBMENU_DEVICE_ICON_RING_SIZE, settings_accent_border_color,
     settings_accent_color, settings_accent_text_color,
@@ -8,12 +16,6 @@ use super::super::style::{
     settings_text_color, settings_warning_border_color, settings_warning_surface_color,
     settings_warning_text_color,
 };
-use daiko::animation::easing::EasingFunction;
-use daiko::animation::{AnimationParameters, transition};
-use daiko::component::ComponentContext;
-use daiko::layout::{AlignItems, FlexDirection, JustifyContent};
-use daiko::style::{Border, BorderRadius, Stroke, Style};
-use std::time::Duration;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum DeviceRowAvailability {

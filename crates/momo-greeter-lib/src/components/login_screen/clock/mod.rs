@@ -1,13 +1,15 @@
 mod state;
 mod style;
 
-use crate::components::login_screen::clock::state::{
-    ClockLocalState, clock_text, spawn_clock_thread,
+use crate::components::login_screen::clock::{
+    state::{ClockLocalState, clock_text, spawn_clock_thread},
+    style::{clock_style, clock_text_style},
 };
-use crate::components::login_screen::clock::style::{clock_style, clock_text_style};
-use daiko::Element;
-use daiko::component::{Component, ComponentContext};
-use daiko::widgets::text::Text;
+use daiko::{
+    Element,
+    component::{Component, ComponentContext},
+    widgets::text::Text,
+};
 
 #[derive(Clone, Copy)]
 pub(super) struct Clock {

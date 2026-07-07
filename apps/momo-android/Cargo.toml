@@ -39,3 +39,6 @@ theme = "@android:style/Theme.DeviceDefault.NoActionBar.Fullscreen"
 config_changes = "orientation|keyboardHidden|screenSize|uiMode"
 launch_mode = "singleTop"
 exported = true
+
+[lints]
+workspace = true

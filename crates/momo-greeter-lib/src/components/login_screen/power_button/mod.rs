@@ -3,11 +3,12 @@ mod style;
 use crate::components::login_screen::power_button::style::{
     ICON_SIZE, power_button_style, power_icon_color,
 };
-use daiko::Element;
-use daiko::component::{Component, ComponentContext};
-use daiko::widgets::image::{Image, ImageParams, ImageSource, ImageType};
-use momo_kit::assets::POWER_ICON;
-use momo_kit::interaction::ButtonBehavior;
+use daiko::{
+    Element,
+    component::{Component, ComponentContext},
+    widgets::image::{Image, ImageParams, ImageSource, ImageType},
+};
+use momo_kit::{assets::POWER_ICON, interaction::ButtonBehavior};
 
 #[derive(Clone, Copy)]
 pub(super) struct PowerButton;

@@ -1,5 +1,4 @@
-use crate::SystemControlError;
-use crate::platform;
+use crate::{SystemControlError, platform};
 use thiserror::Error;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

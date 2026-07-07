@@ -1,10 +1,13 @@
-use super::state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuViewType};
-use super::style::{SETTINGS_MENU_VERTICAL_PADDING, settings_inset_section_style};
-use daiko::Element;
-use daiko::Id;
-use daiko::component::{Component, ComponentContext};
-use daiko::style::{Color, Style};
-use daiko::widgets::image::{Image, ImageParams, ImageSource, ImageType};
+use super::{
+    state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuViewType},
+    style::{SETTINGS_MENU_VERTICAL_PADDING, settings_inset_section_style},
+};
+use daiko::{
+    Element, Id,
+    component::{Component, ComponentContext},
+    style::{Color, Style},
+    widgets::image::{Image, ImageParams, ImageSource, ImageType},
+};
 
 #[derive(Clone, Copy)]
 pub(super) struct QuickSettingsControlState {

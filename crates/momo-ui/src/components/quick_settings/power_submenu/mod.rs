@@ -1,25 +1,24 @@
 mod style;
 
-use self::style::power_actions_style;
-use super::common::{
-    QuickSettingsControlState, QuickSettingsGlyph, settings_bottom_row, settings_row,
+use daiko::{
+    Element,
+    component::{Component, ComponentContext},
 };
-use super::state::SettingsMenuViewType;
-use super::style::{
-    settings_content_container_style, settings_danger_text_color, settings_text_color,
-};
-use super::submenu::{SubmenuBackButton, handle_submenu_back_navigation};
-use super::submenu_button::{
-    SubmenuButton, SubmenuButtonState, SubmenuButtonSurface, submenu_button_glyph,
-};
-use crate::components::home::power::power_handle;
-use crate::components::home::session::session_handle;
-use daiko::Element;
-use daiko::component::{Component, ComponentContext};
-use momo_kit::assets::POWER_ICON;
-use momo_kit::interaction::ButtonBehavior;
+use momo_kit::{assets::POWER_ICON, interaction::ButtonBehavior};
 use system_control::{PowerAction, SessionAction};
 use tracing::warn;
+
+use self::style::power_actions_style;
+use super::{
+    common::{QuickSettingsControlState, QuickSettingsGlyph, settings_bottom_row, settings_row},
+    state::SettingsMenuViewType,
+    style::{settings_content_container_style, settings_danger_text_color, settings_text_color},
+    submenu::{SubmenuBackButton, handle_submenu_back_navigation},
+    submenu_button::{
+        SubmenuButton, SubmenuButtonState, SubmenuButtonSurface, submenu_button_glyph,
+    },
+};
+use crate::components::home::{power::power_handle, session::session_handle};
 
 const MOON_ICON: &[u8] = include_bytes!("../../../../assets/moon.svg");
 const REBOOT_ICON: &[u8] = include_bytes!("../../../../assets/plug-circle-bolt.svg");

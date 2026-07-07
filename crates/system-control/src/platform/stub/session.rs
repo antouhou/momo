@@ -1,5 +1,7 @@
-use crate::SystemControlError;
-use crate::session::{SessionAction, SessionRequestError};
+use crate::{
+    SystemControlError,
+    session::{SessionAction, SessionRequestError},
+};
 
 #[derive(Clone)]
 pub(crate) struct PlatformSessionHandle;

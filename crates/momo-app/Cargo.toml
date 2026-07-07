@@ -5,3 +5,6 @@ edition.workspace = true
 
 [dependencies]
 momo-compositor = { path = "../momo-compositor" }
+
+[lints]
+workspace = true

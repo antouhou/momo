@@ -1,5 +1,6 @@
-use super::ViewTransitionDirection;
 use daiko::{Id, Vec2};
+
+use super::ViewTransitionDirection;
 
 #[derive(Clone, Default)]
 pub(super) struct ViewTransitionState {

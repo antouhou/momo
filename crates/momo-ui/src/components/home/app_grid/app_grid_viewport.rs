@@ -1,21 +1,26 @@
-use crate::app_state::{AppEntry, use_apps_state};
-use crate::components::home::app_grid::metrics::AppGridMetrics;
-use crate::components::home::app_grid::state::app_grid_state_handle;
-use crate::components::home::app_grid::{
-    AppGrid, PAGE_SCROLL_REARM_DURATION, PAGE_SCROLL_THRESHOLD,
+use crate::{
+    app_state::{AppEntry, use_apps_state},
+    components::home::{
+        app_grid::{
+            AppGrid, PAGE_SCROLL_REARM_DURATION, PAGE_SCROLL_THRESHOLD, metrics::AppGridMetrics,
+            state::app_grid_state_handle,
+        },
+        app_tile::{AppInfo, AppTile},
+        model::{
+            GRID_GAP, HOME_APP_GRID_FOCUSED_KEY_ID, HOME_APP_GRID_SCROLL_ACCUMULATOR_ID,
+            HOME_APP_GRID_SMOOTH_OFFSET_ID,
+        },
+    },
 };
-use crate::components::home::app_tile::{AppInfo, AppTile};
-use crate::components::home::model::{
-    GRID_GAP, HOME_APP_GRID_FOCUSED_KEY_ID, HOME_APP_GRID_SCROLL_ACCUMULATOR_ID,
-    HOME_APP_GRID_SMOOTH_OFFSET_ID,
+use daiko::{
+    Element, Id, Vec2,
+    animation::SmoothFollowConfig,
+    component::{Component, ComponentContext},
+    layout::{AlignItems, FlexDirection, JustifyContent},
+    navigation::{FocusEntryPolicy, FocusKey, TraversalPolicy},
+    style::{Overflow, Style},
+    widgets::container::{Container, Fit},
 };
-use daiko::animation::SmoothFollowConfig;
-use daiko::component::{Component, ComponentContext};
-use daiko::layout::{AlignItems, FlexDirection, JustifyContent};
-use daiko::navigation::{FocusEntryPolicy, FocusKey, TraversalPolicy};
-use daiko::style::{Overflow, Style};
-use daiko::widgets::container::{Container, Fit};
-use daiko::{Element, Id, Vec2};
 use std::time::{Duration, Instant};
 
 #[derive(Clone)]

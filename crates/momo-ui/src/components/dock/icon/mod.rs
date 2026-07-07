@@ -1,19 +1,20 @@
-use crate::components::home::app_icon::app_icon;
-use crate::components::home::app_tile::{
-    AppButtonSurfaceMetrics, AppInfo, app_button_surface_style, send_app_launch_request,
-};
-use crate::components::home::model::{LaunchRestoreFocus, TILE_BORDER_WIDTH, tile_focus_transform};
-use daiko::Element;
-use daiko::Vec2;
-use daiko::component::{Component, ComponentContext};
-use daiko::navigation::FocusKey;
-use daiko::style::{Color, CursorIcon, Style};
-use momo_kit::interaction::ButtonBehavior;
+mod style;
 
-const DOCK_BUTTON_SIZE: f32 = 72.0;
-const DOCK_BUTTON_RADIUS: f32 = 16.0;
-const DOCK_ICON_SIZE: f32 = 52.0;
-const DOCK_ICON_GLYPH_SIZE: usize = 52;
+use self::style::{
+    DOCK_BUTTON_SIZE, DOCK_ICON_GLYPH_SIZE, DOCK_ICON_SIZE, dock_button_style,
+    hidden_dock_button_style,
+};
+use crate::components::home::{
+    app_icon::app_icon,
+    app_tile::{AppInfo, send_app_launch_request},
+    model::{LaunchRestoreFocus, tile_focus_transform},
+};
+use daiko::{
+    Element, Vec2,
+    component::{Component, ComponentContext},
+    navigation::FocusKey,
+};
+use momo_kit::interaction::ButtonBehavior;
 
 pub struct DockIcon {
     pub(crate) app: AppInfo,
@@ -34,11 +35,7 @@ impl Component for DockIcon {
         if self.is_hidden_for_launch {
             return Element::new()
                 .with_tag(format!("dock-app-{}", self.app.id()))
-                .with_style(
-                    Style::new()
-                        .with_fixed_size(DOCK_BUTTON_SIZE, DOCK_BUTTON_SIZE)
-                        .with_background_color(Color::TRANSPARENT),
-                );
+                .with_style(hidden_dock_button_style());
         }
 
         let icon_origin = Vec2::new(
@@ -65,24 +62,13 @@ impl Component for DockIcon {
             );
         }
 
-        let mut style = app_button_surface_style(
+        let style = dock_button_style(
             ctx,
-            AppButtonSurfaceMetrics {
-                width: DOCK_BUTTON_SIZE,
-                height: DOCK_BUTTON_SIZE,
-                border_radius: DOCK_BUTTON_RADIUS,
-                border_width: TILE_BORDER_WIDTH,
-            },
             self.app.accent,
             &button_transform,
             button.is_hovering,
             button.is_focus_visible,
-        )
-        .with_centered_content();
-
-        if button.is_hovering {
-            style.set_cursor(CursorIcon::PointingHand);
-        }
+        );
 
         Element::new()
             .with_tag(format!("dock-app-{}", self.app.id()))

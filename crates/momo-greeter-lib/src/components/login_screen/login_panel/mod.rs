@@ -1,21 +1,24 @@
 mod style;
 
-use crate::auth::{GreeterAuthStatus, submit_greeter_auth_request, use_greeter_auth_state};
-use crate::components::login_screen::action_button::ActionButton;
-use crate::components::login_screen::login_panel::style::{
-    actions_style, auth_message_text_style, avatar_style, avatar_text_style, content_style,
-    input_label_text_style, input_style, panel_style,
+use crate::{
+    auth::{GreeterAuthStatus, submit_greeter_auth_request, use_greeter_auth_state},
+    components::login_screen::{
+        action_button::ActionButton,
+        login_panel::style::{
+            actions_style, auth_message_text_style, avatar_style, avatar_text_style, content_style,
+            input_label_text_style, input_style, panel_style,
+        },
+        state::{GreeterState, GreeterView},
+        style::{subtitle_text_style, title_block_style, title_text_style},
+    },
+    users::{GreeterUser, GreeterUsersStatus, use_greeter_users_state},
 };
-use crate::components::login_screen::state::{GreeterState, GreeterView};
-use crate::components::login_screen::style::{
-    subtitle_text_style, title_block_style, title_text_style,
+use daiko::{
+    Element, StringOrReference,
+    component::{Component, ComponentContext},
+    state_management::StateHandle,
+    widgets::{text::Text, text_input::TextInput},
 };
-use crate::users::{GreeterUser, GreeterUsersStatus, use_greeter_users_state};
-use daiko::component::{Component, ComponentContext};
-use daiko::state_management::StateHandle;
-use daiko::widgets::text::Text;
-use daiko::widgets::text_input::TextInput;
-use daiko::{Element, StringOrReference};
 use std::sync::Arc;
 
 #[derive(Clone)]

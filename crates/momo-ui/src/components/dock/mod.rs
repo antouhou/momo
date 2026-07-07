@@ -1,11 +1,12 @@
 mod icon;
 mod style;
 
-use crate::app_state::use_apps_state;
-use crate::components::home::app_tile::AppInfo;
-use daiko::Element;
-use daiko::component::{Component, ComponentContext};
-use daiko::navigation::FocusKey;
+use crate::{app_state::use_apps_state, components::home::app_tile::AppInfo};
+use daiko::{
+    Element,
+    component::{Component, ComponentContext},
+    navigation::FocusKey,
+};
 use std::sync::Arc;
 
 pub struct Dock {

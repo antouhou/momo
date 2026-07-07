@@ -1,11 +1,16 @@
-use std::collections::BTreeMap;
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::mpsc::{Receiver, Sender, channel};
-use std::sync::{Arc, Mutex, Weak};
-
-use crate::SystemControlError;
-use crate::feature_state::FeatureState;
-use crate::volume::{VolumeFeatureState, VolumeRequestError, VolumeState};
+use crate::{
+    SystemControlError,
+    feature_state::FeatureState,
+    volume::{VolumeFeatureState, VolumeRequestError, VolumeState},
+};
+use std::{
+    collections::BTreeMap,
+    sync::{
+        Arc, Mutex, Weak,
+        atomic::{AtomicU64, Ordering},
+        mpsc::{Receiver, Sender, channel},
+    },
+};
 
 const STUB_VOLUME_PERCENTAGE: u8 = 40;
 

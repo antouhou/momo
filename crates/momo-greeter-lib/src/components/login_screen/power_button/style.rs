@@ -1,6 +1,8 @@
 use crate::components::login_screen::style::{text_primary_color, text_secondary_color};
-use daiko::component::ComponentContext;
-use daiko::style::{Border, BorderRadius, Color, CursorIcon, Stroke, Style};
+use daiko::{
+    component::ComponentContext,
+    style::{Border, BorderRadius, Color, CursorIcon, Stroke, Style},
+};
 use momo_kit::animation::focus_transform;
 use std::time::Duration;
 

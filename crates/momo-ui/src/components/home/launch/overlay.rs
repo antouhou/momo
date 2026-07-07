@@ -1,24 +1,35 @@
-use crate::components::home::app_icon::{app_icon, app_icon_background_color};
-use crate::components::home::launch::{
-    AnimatedRect, HOME_HERO_ICON_GLYPH_SIZE, HOME_HERO_ICON_SIZE, HOME_LAUNCH_ANIMATION_ID,
-    HOME_LAUNCH_BACKDROP_TAG, HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID, HOME_LAUNCH_SURFACE_RADIUS,
-    HOME_LAUNCH_SURFACE_TAG, HOME_SHARED_CONTENT_HEIGHT, HOME_SHARED_CONTENT_WIDTH,
-    LaunchOverlayEvent, LaunchPhase, LaunchTransitionState,
+use super::style::{
+    BACKDROP_MAX_OPACITY, DESTINATION_ICON_RADIUS, DESTINATION_LABELS_GAP,
+    DESTINATION_LABELS_TOP_GAP, LAUNCH_SURFACE_BACKGROUND, LAUNCH_TILE_META_GAP,
+    SURFACE_BORDER_WIDTH, backdrop_style, destination_icon_glyph_style, destination_icon_style,
+    destination_subtitle_style, destination_title_style, labels_offset_style, launch_surface_style,
+    launch_tile_content_style, launch_tile_icon_placeholder_style, launch_tile_icon_style,
+    shared_content_style, with_opacity,
 };
-use crate::components::home::model::{
-    LaunchRequest, TILE_BORDER_RADIUS, TILE_ICON_GLYPH_SIZE, TILE_ICON_SIZE,
+use crate::components::home::{
+    app_icon::{app_icon, app_icon_background_color},
+    launch::{
+        AnimatedRect, HOME_HERO_ICON_GLYPH_SIZE, HOME_HERO_ICON_SIZE, HOME_LAUNCH_ANIMATION_ID,
+        HOME_LAUNCH_BACKDROP_TAG, HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID, HOME_LAUNCH_SURFACE_RADIUS,
+        HOME_LAUNCH_SURFACE_TAG, HOME_SHARED_CONTENT_WIDTH, LaunchOverlayEvent, LaunchPhase,
+        LaunchTransitionState,
+    },
+    model::{LaunchRequest, TILE_BORDER_RADIUS, TILE_ICON_GLYPH_SIZE, TILE_ICON_SIZE},
 };
-use daiko::animation::easing::{Easing as _, EasingFunction};
-use daiko::animation::{AnimationParameters, Interpolable as _};
-use daiko::component::{Component, ComponentContext};
-use daiko::layout::FlexDirection;
-use daiko::style::{Border, BorderRadius, Color, Stroke, Style};
-use daiko::widgets::container::{Container, Fit};
-use daiko::widgets::overlay::Overlay;
-use daiko::widgets::text::{Text, TextStyle};
-use daiko::{Element, Id, Vec2};
-use std::sync::Arc;
-use std::time::Duration;
+use daiko::{
+    Element, Id, Vec2,
+    animation::{
+        AnimationParameters, Interpolable as _,
+        easing::{Easing as _, EasingFunction},
+    },
+    component::{Component, ComponentContext},
+    widgets::{
+        container::{Container, Fit},
+        overlay::Overlay,
+        text::Text,
+    },
+};
+use std::{sync::Arc, time::Duration};
 
 #[derive(Clone)]
 pub(in crate::components::home) struct LaunchOverlay {
@@ -38,11 +49,6 @@ impl Component for LaunchOverlay {
         let animation_progress = update_launch_animation(ctx, self.launch.clone());
         render_launch_overlay(ctx, self.launch.clone(), animation_progress)
     }
-}
-
-fn with_opacity(color: Color, opacity: f32) -> Color {
-    let alpha = ((color.a() as f32) * opacity.clamp(0.0, 1.0)).round() as u8;
-    Color::from_rgba_premultiplied(color.r(), color.g(), color.b(), alpha)
 }
 
 fn update_launch_animation(ctx: &mut ComponentContext, launch: LaunchTransitionState) -> f32 {
@@ -134,12 +140,12 @@ fn render_launch_overlay(
     };
     let surface_rect = launch_surface_rect(source, target, animation_progress);
     let accent = launch.request.app.accent;
-    let surface_background = Color::from_rgb(14, 18, 27);
     let border_color = accent.gamma_multiply(0.9);
     let backdrop_opacity = if launch.phase == LaunchPhase::WaitingForSurface {
-        0.78
+        BACKDROP_MAX_OPACITY
     } else {
-        0.78 * EasingFunction::EaseOut.apply(interval(animation_progress, 0.08, 0.5))
+        BACKDROP_MAX_OPACITY
+            * EasingFunction::EaseOut.apply(interval(animation_progress, 0.08, 0.5))
     };
     let destination_icon_opacity = 1.0;
     // let destination_icon_opacity = if launch.phase == LaunchPhase::WaitingForSurface {
@@ -198,7 +204,7 @@ fn render_launch_overlay(
     };
     let border_radius =
         TILE_BORDER_RADIUS + (HOME_LAUNCH_SURFACE_RADIUS - TILE_BORDER_RADIUS) * radius_progress;
-    let border_width = 2.0 * (1.0 - border_progress);
+    let border_width = SURFACE_BORDER_WIDTH * (1.0 - border_progress);
     let surface_content_size = Vec2::new(
         (surface_rect.size.x - border_width * 2.0).max(0.0),
         (surface_rect.size.y - border_width * 2.0).max(0.0),
@@ -206,18 +212,7 @@ fn render_launch_overlay(
 
     let backdrop = Element::new()
         .with_tag(HOME_LAUNCH_BACKDROP_TAG)
-        .with_style(
-            Style::new()
-                .with_fixed_position(Vec2::zero())
-                .with_fixed_size(viewport_size.x, viewport_size.y)
-                .with_background_color(Color::from_rgba_premultiplied(
-                    0,
-                    0,
-                    0,
-                    (255.0 * backdrop_opacity).round() as u8,
-                ))
-                .with_order(10),
-        );
+        .with_style(backdrop_style(viewport_size, backdrop_opacity));
 
     let tile_content = build_launch_tile_content(launch.request.clone(), false);
     let shared_app_content =
@@ -234,15 +229,14 @@ fn render_launch_overlay(
 
     let surface = Element::new()
         .with_tag(HOME_LAUNCH_SURFACE_TAG)
-        .with_style(
-            Style::new()
-                .with_fixed_position(surface_rect.position)
-                .with_fixed_size(surface_content_size.x, surface_content_size.y)
-                .with_background_color(surface_background)
-                .with_border(Border::uniform(Stroke::new(border_width, border_color)))
-                .with_border_radius(BorderRadius::all(border_radius))
-                .with_order(11),
-        )
+        .with_style(launch_surface_style(
+            surface_rect.position,
+            surface_content_size,
+            LAUNCH_SURFACE_BACKGROUND,
+            border_color,
+            border_width,
+            border_radius,
+        ))
         .with_content(tile_content);
 
     Overlay::new_fullscreen(
@@ -260,24 +254,18 @@ fn build_launch_tile_content(request: LaunchRequest, show_icon: bool) -> Element
     let icon_background = app_icon_background_color(accent);
 
     let icon = Element::new()
-        .with_style(
-            Style::new()
-                .with_fixed_size(TILE_ICON_SIZE, TILE_ICON_SIZE)
-                .with_centered_content()
-                .with_background_color(icon_background)
-                .with_border_radius(BorderRadius::all(14.0)),
-        )
+        .with_style(launch_tile_icon_style(icon_background))
         .with_content(app_icon(&request.app.icon, TILE_ICON_GLYPH_SIZE));
 
     let icon_slot = if show_icon {
         icon
     } else {
-        Element::new().with_style(Style::new().with_fixed_size(TILE_ICON_SIZE, TILE_ICON_SIZE))
+        Element::new().with_style(launch_tile_icon_placeholder_style())
     };
 
     let meta = Container::vertical()
         .with_fit(Fit::new().at_least_parent_width().at_least_content_height())
-        .with_spacing((4.0, 4.0))
+        .with_spacing((LAUNCH_TILE_META_GAP, LAUNCH_TILE_META_GAP))
         .build();
     // let meta = Container::vertical()
     //     .with_fit(Fit::new().at_least_parent_width().at_least_content_height())
@@ -299,14 +287,7 @@ fn build_launch_tile_content(request: LaunchRequest, show_icon: bool) -> Element
     //     );
 
     Element::new()
-        .with_style(
-            Style::new()
-                .with_fixed_size(request.size.x, request.size.y)
-                .with_direction(FlexDirection::Column)
-                .with_align_items(daiko::layout::AlignItems::FlexStart)
-                .with_padding(16.0)
-                .with_spacing((12.0, 12.0)),
-        )
+        .with_style(launch_tile_content_style(request.size))
         .with_content(icon_slot)
         .with_content(meta)
 }
@@ -334,8 +315,9 @@ fn build_launch_destination_shared_content(props: LaunchDestinationSharedContent
     let current_icon_size = props.source_icon_size
         + (HOME_HERO_ICON_SIZE - props.source_icon_size) * props.scale_progress;
     let source_icon_scale = props.source_icon_size / TILE_ICON_SIZE;
-    let icon_radius =
-        14.0 * source_icon_scale + (24.0 - 14.0 * source_icon_scale) * props.scale_progress;
+    let icon_radius = DESTINATION_ICON_RADIUS.source * source_icon_scale
+        + (DESTINATION_ICON_RADIUS.target - DESTINATION_ICON_RADIUS.source * source_icon_scale)
+            * props.scale_progress;
     let current_icon_top_left =
         current_icon_center - Vec2::new(current_icon_size / 2.0, current_icon_size / 2.0);
     let local_icon_x = (HOME_SHARED_CONTENT_WIDTH - current_icon_size) / 2.0;
@@ -350,20 +332,15 @@ fn build_launch_destination_shared_content(props: LaunchDestinationSharedContent
         .round()
         .max(1.0);
     let icon = Element::new()
-        .with_style(
-            Style::new()
-                .with_absolute_position(Vec2::new(local_icon_x, local_icon_y))
-                .with_fixed_size(current_icon_size, current_icon_size)
-                .with_centered_content()
-                .with_background_color(with_opacity(
-                    app_icon_background_color(accent),
-                    props.icon_opacity,
-                ))
-                .with_border_radius(BorderRadius::all(icon_radius)),
-        )
+        .with_style(destination_icon_style(
+            Vec2::new(local_icon_x, local_icon_y),
+            current_icon_size,
+            with_opacity(app_icon_background_color(accent), props.icon_opacity),
+            icon_radius,
+        ))
         .with_content(
             app_icon(&props.request.app.icon, HOME_HERO_ICON_GLYPH_SIZE)
-                .with_style(Style::new().with_fixed_size(icon_glyph_size, icon_glyph_size))
+                .with_style(destination_icon_glyph_style(icon_glyph_size))
                 .fit_to_container(true),
         );
 
@@ -374,48 +351,25 @@ fn build_launch_destination_shared_content(props: LaunchDestinationSharedContent
                 .exact_content_height(),
         )
         .align_items_center()
-        .with_spacing((18.0, 18.0))
+        .with_spacing((DESTINATION_LABELS_GAP, DESTINATION_LABELS_GAP))
         .build()
         .with_content(
-            Text::new(Arc::clone(&props.request.app.name)).with_style(
-                TextStyle::default()
-                    .with_font_size(34.0)
-                    .with_font_color(with_opacity(
-                        Color::from_rgb(247, 250, 255),
-                        props.labels_opacity,
-                    ))
-                    .with_center_alignment(),
-            ),
+            Text::new(Arc::clone(&props.request.app.name))
+                .with_style(destination_title_style(props.labels_opacity)),
         )
         .with_content(
-            Text::new("Opening app").with_style(
-                TextStyle::default()
-                    .with_font_size(16.0)
-                    .with_font_color(with_opacity(
-                        Color::from_rgb(154, 171, 196),
-                        props.labels_opacity,
-                    ))
-                    .with_center_alignment(),
-            ),
+            Text::new("Opening app").with_style(destination_subtitle_style(props.labels_opacity)),
         );
 
     Element::new()
         .with_tag(format!("launch-overlay-app-{}", props.request.app.id()))
-        .with_style(
-            Style::new()
-                .with_fixed_position(current_shared_content_top_left)
-                .with_fixed_size(HOME_SHARED_CONTENT_WIDTH, HOME_SHARED_CONTENT_HEIGHT)
-                .with_order(12)
-                .with_direction(FlexDirection::Column)
-                .with_align_items(daiko::layout::AlignItems::FlexStart)
-                .with_overflow(daiko::style::Overflow::Hidden),
-        )
+        .with_style(shared_content_style(current_shared_content_top_left))
         .with_content(icon)
         .with_content(
             Element::new()
-                .with_style(
-                    Style::new().with_absolute_position(Vec2::new(0.0, current_icon_size + 18.0)),
-                )
+                .with_style(labels_offset_style(
+                    current_icon_size + DESTINATION_LABELS_TOP_GAP,
+                ))
                 .with_content(labels),
         )
 }

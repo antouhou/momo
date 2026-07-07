@@ -1,7 +1,5 @@
 use crate::components::home::model::HOME_POWER_HANDLE_ID;
-use daiko::AppContext;
-use daiko::Id;
-use daiko::component::ComponentContext;
+use daiko::{AppContext, Id, component::ComponentContext};
 use system_control::PowerHandle;
 
 pub(crate) fn initialize_power_state(app_context: &mut AppContext, power_handle: PowerHandle) {

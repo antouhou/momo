@@ -1,6 +1,7 @@
-use std::collections::BTreeMap;
-use std::sync::atomic::AtomicU64;
-use std::sync::{Arc, Mutex};
+use std::{
+    collections::BTreeMap,
+    sync::{Arc, Mutex, atomic::AtomicU64},
+};
 
 use crate::battery::BatteryFeatureState;
 

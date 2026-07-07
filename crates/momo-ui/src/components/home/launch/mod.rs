@@ -1,5 +1,6 @@
 pub(super) mod controller;
 pub(super) mod overlay;
+mod style;
 
 use crate::components::home::model::LaunchRequest;
 use daiko::Vec2;

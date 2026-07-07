@@ -24,13 +24,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .join("momo-greeter-lib")
             .canonicalize()?;
 
-        let app = HotReloadApp::new(app_crate_path).watch_path(momo_ui_lib_path.clone());
+        let app = HotReloadApp::new(app_crate_path).watch_path(momo_ui_lib_path);
 
         daiko::run(app)
     }
     #[cfg(not(debug_assertions))]
     {
-        let ui = create_greeter(std::env::args().skip(1));
+        let ui = create_greeter(std::env::args().skip(1))?;
         daiko::run(ui);
     }
 

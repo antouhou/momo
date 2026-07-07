@@ -27,7 +27,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .join("momo-ui")
             .canonicalize()?;
 
-        let app = HotReloadApp::new(app_crate_path).watch_path(momo_ui_lib_path.clone());
+        let app = HotReloadApp::new(app_crate_path).watch_path(momo_ui_lib_path);
 
         daiko::run(app)
     }
@@ -40,8 +40,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let backend = WayfireBackend::disconnected();
         let app = ShellApp::new(configuration, backend);
-        let system_control = system_control::SystemControl::new()
-            .expect("failed to initialize system control services");
+        let system_control = system_control::SystemControl::new()?;
         let ui = MomoUi::new(app.initial_view_model(), system_control);
 
         daiko::run(ui);

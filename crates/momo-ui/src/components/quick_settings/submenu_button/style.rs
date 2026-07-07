@@ -1,25 +1,32 @@
-use super::super::common::QuickSettingsControlState;
-use super::super::style::{
-    CONTROL_RADIUS, CONTROL_TRANSITION_MS, SETTINGS_COMPACT_CONTENT_GAP, SETTINGS_MENU_INNER_WIDTH,
-    SETTINGS_ROUND_BUTTON_SIZE, SETTINGS_SUBMENU_BUTTON_PADDING, SETTINGS_SUBMENU_SWITCH_HEIGHT,
-    SETTINGS_SUBMENU_SWITCH_INSET, SETTINGS_SUBMENU_SWITCH_KNOB_SIZE,
-    SETTINGS_SUBMENU_SWITCH_KNOB_Y, SETTINGS_SUBMENU_SWITCH_WIDTH, SETTINGS_SUBMENU_TOGGLE_PADDING,
-    settings_accent_border_color, settings_accent_color, settings_bright_surface_color,
-    settings_button_focus_transform, settings_emphasized_surface_border_color,
-    settings_emphasized_surface_border_focus_color, settings_emphasized_surface_color,
-    settings_emphasized_surface_focus_color, settings_emphasized_surface_hover_color,
-    settings_label_text_style, settings_surface_border_color, settings_surface_border_focus_color,
-    settings_surface_border_hover_color, settings_surface_color, settings_surface_focus_color,
-    settings_surface_hover_color, settings_surface_muted_color, settings_text_color,
+use super::{
+    super::{
+        common::QuickSettingsControlState,
+        style::{
+            CONTROL_RADIUS, CONTROL_TRANSITION_MS, SETTINGS_COMPACT_CONTENT_GAP,
+            SETTINGS_MENU_INNER_WIDTH, SETTINGS_ROUND_BUTTON_SIZE, SETTINGS_SUBMENU_BUTTON_PADDING,
+            SETTINGS_SUBMENU_SWITCH_HEIGHT, SETTINGS_SUBMENU_SWITCH_INSET,
+            SETTINGS_SUBMENU_SWITCH_KNOB_SIZE, SETTINGS_SUBMENU_SWITCH_KNOB_Y,
+            SETTINGS_SUBMENU_SWITCH_WIDTH, SETTINGS_SUBMENU_TOGGLE_PADDING,
+            settings_accent_border_color, settings_accent_color, settings_bright_surface_color,
+            settings_button_focus_transform, settings_emphasized_surface_border_color,
+            settings_emphasized_surface_border_focus_color, settings_emphasized_surface_color,
+            settings_emphasized_surface_focus_color, settings_emphasized_surface_hover_color,
+            settings_label_text_style, settings_surface_border_color,
+            settings_surface_border_focus_color, settings_surface_border_hover_color,
+            settings_surface_color, settings_surface_focus_color, settings_surface_hover_color,
+            settings_surface_muted_color, settings_text_color,
+        },
+    },
+    SubmenuButtonState, SubmenuButtonSurface,
 };
-use super::{SubmenuButtonState, SubmenuButtonSurface};
-use daiko::animation::easing::EasingFunction;
-use daiko::animation::{AnimationParameters, transition};
-use daiko::component::ComponentContext;
-use daiko::layout::{AlignItems, FlexDirection, ItemSize, JustifyContent, SizeConstraint};
-use daiko::style::{Border, BorderRadius, Color, CursorIcon, Overflow, Stroke};
-use daiko::widgets::text::TextStyle;
-use daiko::{Vec2, style::Style};
+use daiko::{
+    Vec2,
+    animation::{AnimationParameters, easing::EasingFunction, transition},
+    component::ComponentContext,
+    layout::{AlignItems, FlexDirection, ItemSize, JustifyContent, SizeConstraint},
+    style::{Border, BorderRadius, Color, CursorIcon, Overflow, Stroke, Style},
+    widgets::text::TextStyle,
+};
 use std::time::Duration;
 
 pub(super) fn submenu_button_style(

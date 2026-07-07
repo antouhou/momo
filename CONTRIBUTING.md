@@ -10,6 +10,7 @@ is a greetd greeter. Apps are just runtimes; Actual UI and integrations live in 
   - [`crates/momo-greeter-lib`] - Greeter UI. 
   - [`crates/momo-greetd`] - greetd authentication integration.
   - [`crates/momo-kit`] - Shared UI code. Includes styles, behaviors, components and assets.
+  - [`crates/momo-tracing`] - Shared process-level tracing subscriber initialization.
   - [`crates/momo-ui`] - Shell/Launcher app UI.
   - [`crates/momo-wayfire`] - Wayfire compositor integration
   - [`crates/system-control`] - The library for controlling various system functions: Bluetooth, network, sound volume, etc.

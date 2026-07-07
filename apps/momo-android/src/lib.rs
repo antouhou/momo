@@ -10,7 +10,7 @@ use winit::platform::android::activity::AndroidApp;
 #[cfg(target_os = "android")]
 #[unsafe(no_mangle)]
 pub fn android_main(android_app: AndroidApp) {
-    momo_ui::init_tracing();
+    momo_tracing::initialize_tracing("momo").expect("failed to initialize tracing");
 
     let configuration = ShellConfiguration {
         mode: ShellMode::Standalone,

@@ -11,12 +11,8 @@ daiko.workspace = true
 momo-app = { path = "../momo-app" }
 momo-kit = { path = "../momo-kit" }
 system-control = { path = "../system-control" }
-tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 tracing = "0.1.44"
 appkeeper = { path = "../../../appkeeper" }
-
-[target.'cfg(target_os = "android")'.dependencies]
-tracing-android = "0.2.0"
 
 [dev-dependencies]
 criterion = "0.5.1"

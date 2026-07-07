@@ -2202,7 +2202,6 @@ name = "momo-shell"
 version = "0.1.0"
 dependencies = [
  "daiko",
- "log",
  "momo-app",
  "momo-tracing",
  "momo-ui",

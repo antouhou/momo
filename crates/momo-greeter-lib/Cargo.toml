@@ -6,10 +6,10 @@ edition.workspace = true
 [dependencies]
 daiko.workspace = true
 momo-greetd = { path = "../momo-greetd" }
-momo-kit = { path = "../momo-kit" }
-system-control = { path = "../system-control" }
-thiserror = "2.0.17"
-tracing = "0.1.44"
+momo-kit.workspace = true
+system-control.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
 
 [lints]
 workspace = true

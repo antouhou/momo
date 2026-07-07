@@ -4,13 +4,12 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-momo-app = { path = "../../crates/momo-app" }
-momo-tracing = { path = "../../crates/momo-tracing" }
-momo-ui = { path = "../../crates/momo-ui" }
-momo-wayfire = { path = "../../crates/momo-wayfire" }
-system-control = { path = "../../crates/system-control" }
-daiko = { workspace = true }
-log = "0.4.29"
+daiko.workspace = true
+momo-app.workspace = true
+momo-tracing.workspace = true
+momo-ui.workspace = true
+momo-wayfire.workspace = true
+system-control.workspace = true
 
 [lints]
 workspace = true

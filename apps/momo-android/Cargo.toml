@@ -9,11 +9,11 @@ name = "main"
 crate-type = ["cdylib"]
 
 [dependencies]
-daiko = { workspace = true }
-momo-app = { path = "../../crates/momo-app" }
-momo-tracing = { path = "../../crates/momo-tracing" }
-momo-ui = { path = "../../crates/momo-ui" }
-momo-wayfire = { path = "../../crates/momo-wayfire" }
+daiko.workspace = true
+momo-app.workspace = true
+momo-tracing.workspace = true
+momo-ui.workspace = true
+momo-wayfire.workspace = true
 # Winit is required for the android's equivalent of the main() function
 winit = { version = "0.30.7", features = ["android-native-activity"] }
 

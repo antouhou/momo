@@ -849,6 +849,7 @@ dependencies = [
  "grafo",
  "raw-window-handle",
  "smithay-client-toolkit",
+ "smol_str 0.2.2",
  "tracing",
  "wayland-client",
 ]

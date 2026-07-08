@@ -58,8 +58,9 @@ impl ShellLaunchConfiguration {
                 namespace: "momo-shell".to_string(),
                 layer: ShellLayer::Background,
                 anchors: ShellAnchors::all(),
-                keyboard_interactivity: ShellKeyboardInteractivity::Exclusive,
+                keyboard_interactivity: ShellKeyboardInteractivity::OnDemand,
                 exclusive_zone: ShellExclusiveZone::None,
+                request_initial_keyboard_focus: true,
             },
         }
     }
@@ -77,7 +78,7 @@ pub enum ShellLaunchConfigurationError {
 mod tests {
     use super::{ShellLaunchConfiguration, ShellLaunchConfigurationError};
     #[cfg(target_os = "linux")]
-    use dailand::{ShellBackend, ShellLayer};
+    use dailand::{ShellBackend, ShellKeyboardInteractivity, ShellLayer};
     use momo_app::ShellMode;
 
     fn args(values: &[&str]) -> Vec<String> {
@@ -100,6 +101,11 @@ mod tests {
         assert_eq!(configuration.mode, ShellMode::Shell);
         assert_eq!(runner_options.backend, ShellBackend::WlrLayerShell);
         assert_eq!(runner_options.surface.layer, ShellLayer::Background);
+        assert_eq!(
+            runner_options.surface.keyboard_interactivity,
+            ShellKeyboardInteractivity::OnDemand
+        );
+        assert!(runner_options.surface.request_initial_keyboard_focus);
     }
 
     #[test]

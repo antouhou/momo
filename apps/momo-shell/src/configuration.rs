@@ -27,27 +27,14 @@ impl ShellLaunchConfiguration {
     pub fn from_args(
         args: impl IntoIterator<Item = String>,
     ) -> Result<Self, ShellLaunchConfigurationError> {
-        let mut configuration = Self::default();
+        let mode = args
+            .into_iter()
+            .try_fold(ShellMode::Standalone, |_mode, arg| match arg.as_str() {
+                "--shell" => shell_mode(),
+                _ => Err(ShellLaunchConfigurationError::UnknownArgument(arg)),
+            })?;
 
-        for arg in args {
-            match arg.as_str() {
-                "--shell" => {
-                    #[cfg(target_os = "linux")]
-                    {
-                        configuration.mode = ShellMode::Shell;
-                    }
-                    #[cfg(not(target_os = "linux"))]
-                    {
-                        return Err(ShellLaunchConfigurationError::ShellModeUnsupported);
-                    }
-                }
-                _ => {
-                    return Err(ShellLaunchConfigurationError::UnknownArgument(arg));
-                }
-            }
-        }
-
-        Ok(configuration)
+        Ok(Self { mode })
     }
 
     #[cfg(target_os = "linux")]
@@ -64,6 +51,16 @@ impl ShellLaunchConfiguration {
             },
         }
     }
+}
+
+#[cfg(target_os = "linux")]
+fn shell_mode() -> Result<ShellMode, ShellLaunchConfigurationError> {
+    Ok(ShellMode::Shell)
+}
+
+#[cfg(not(target_os = "linux"))]
+fn shell_mode() -> Result<ShellMode, ShellLaunchConfigurationError> {
+    Err(ShellLaunchConfigurationError::ShellModeUnsupported)
 }
 
 #[derive(Debug, Error, PartialEq, Eq)]

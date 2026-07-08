@@ -1,6 +1,8 @@
 use super::{ShellLaunchConfiguration, ShellLaunchConfigurationError};
 #[cfg(target_os = "linux")]
-use dailand::{ShellBackend, ShellKeyboardInteractivity, ShellLayer};
+use dailand::{
+    ShellBackend, ShellInputRegion, ShellKeyboardInteractivity, ShellLayer, ShellOutputTarget,
+};
 use momo_app::ShellMode;
 
 fn args(values: &[&str]) -> Vec<String> {
@@ -26,6 +28,14 @@ fn shell_flag_selects_shell_runner_options() {
     assert_eq!(
         runner_options.surface.keyboard_interactivity,
         ShellKeyboardInteractivity::OnDemand
+    );
+    assert_eq!(
+        runner_options.surface.output_target,
+        ShellOutputTarget::CompositorDefault
+    );
+    assert_eq!(
+        runner_options.surface.input_region,
+        ShellInputRegion::Unspecified
     );
     assert!(runner_options.surface.request_initial_keyboard_focus);
 }

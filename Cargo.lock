@@ -789,15 +789,10 @@ dependencies = [
 name = "daiko"
 version = "0.0.2"
 dependencies = [
- "arboard",
- "bytemuck",
- "crossbeam-channel",
  "daiko-common",
  "daikore",
  "futures",
- "gilrs",
  "grafo",
- "softbuffer",
  "tracing",
  "wasm-bindgen-futures",
  "winit",

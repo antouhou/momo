@@ -1,7 +1,8 @@
 #[cfg(target_os = "linux")]
 use dailand::{
-    ShellAnchors, ShellBackend, ShellExclusiveZone, ShellKeyboardInteractivity, ShellLayer,
-    ShellRunnerOptions, ShellSurfaceOptions,
+    ShellAnchors, ShellBackend, ShellExclusiveZone, ShellInputRegion, ShellKeyboardInteractivity,
+    ShellLayer, ShellMargins, ShellOutputTarget, ShellRunnerOptions, ShellSurfaceOptions,
+    ShellSurfaceSize,
 };
 use momo_app::ShellMode;
 use thiserror::Error;
@@ -44,9 +45,13 @@ impl ShellLaunchConfiguration {
             surface: ShellSurfaceOptions {
                 namespace: "momo-shell".to_string(),
                 layer: ShellLayer::Background,
+                size: ShellSurfaceSize::default(),
                 anchors: ShellAnchors::all(),
+                margins: ShellMargins::default(),
+                output_target: ShellOutputTarget::CompositorDefault,
                 keyboard_interactivity: ShellKeyboardInteractivity::OnDemand,
                 exclusive_zone: ShellExclusiveZone::None,
+                input_region: ShellInputRegion::Unspecified,
                 request_initial_keyboard_focus: true,
             },
         }

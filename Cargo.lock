@@ -850,6 +850,7 @@ dependencies = [
  "raw-window-handle",
  "smithay-client-toolkit",
  "smol_str 0.2.2",
+ "thiserror 2.0.18",
  "tracing",
  "wayland-client",
 ]

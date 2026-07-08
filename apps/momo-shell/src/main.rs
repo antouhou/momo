@@ -8,9 +8,12 @@ use {daiko::hot_reloading::HotReloadApp, std::path::PathBuf};
 fn run_configured_app<T: daiko::App + Send + 'static>(
     app: T,
     launch_configuration: ShellLaunchConfiguration,
-) {
+) -> Result<(), Box<dyn std::error::Error>> {
     match launch_configuration.mode {
-        ShellMode::Standalone => daiko::run(app),
+        ShellMode::Standalone => {
+            daiko::run(app);
+            Ok(())
+        }
         ShellMode::Shell => run_shell(app, launch_configuration),
     }
 }
@@ -19,15 +22,16 @@ fn run_configured_app<T: daiko::App + Send + 'static>(
 fn run_shell<T: daiko::App + Send + 'static>(
     app: T,
     launch_configuration: ShellLaunchConfiguration,
-) {
-    dailand::run(app, launch_configuration.shell_runner_options());
+) -> Result<(), Box<dyn std::error::Error>> {
+    dailand::run(app, launch_configuration.shell_runner_options())?;
+    Ok(())
 }
 
 #[cfg(not(target_os = "linux"))]
 fn run_shell<T: daiko::App + Send + 'static>(
     _app: T,
     _launch_configuration: ShellLaunchConfiguration,
-) {
+) -> Result<(), Box<dyn std::error::Error>> {
     unreachable!("shell mode is rejected during launch configuration parsing on non-Linux targets");
 }
 
@@ -54,13 +58,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let app = HotReloadApp::new(app_crate_path).watch_path(momo_ui_lib_path);
 
-        run_configured_app(app, launch_configuration);
+        run_configured_app(app, launch_configuration)?;
     }
     #[cfg(not(debug_assertions))]
     {
         let ui = create_ui(launch_configuration)?;
 
-        run_configured_app(ui, launch_configuration);
+        run_configured_app(ui, launch_configuration)?;
     }
 
     Ok(())

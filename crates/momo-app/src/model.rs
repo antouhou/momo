@@ -1,7 +1,7 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ShellMode {
     Standalone,
-    LayerShell,
+    Shell,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

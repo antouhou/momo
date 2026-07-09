@@ -1,15 +1,44 @@
+use momo_app::ShellMode;
+use momo_shell::ShellLaunchConfiguration;
+#[cfg(not(debug_assertions))]
+use momo_shell::create_ui;
 #[cfg(debug_assertions)]
 use {daiko::hot_reloading::HotReloadApp, std::path::PathBuf};
-#[cfg(not(debug_assertions))]
-use {
-    momo_app::{ShellApp, ShellConfiguration, ShellMode},
-    momo_ui::MomoUi,
-    momo_wayfire::WayfireBackend,
-};
+
+fn run_configured_app<T: daiko::App + Send + 'static>(
+    app: T,
+    launch_configuration: ShellLaunchConfiguration,
+) -> Result<(), Box<dyn std::error::Error>> {
+    match launch_configuration.mode {
+        ShellMode::Standalone => {
+            daiko::run(app);
+            Ok(())
+        }
+        ShellMode::Shell => run_shell(app, launch_configuration),
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn run_shell<T: daiko::App + Send + 'static>(
+    app: T,
+    launch_configuration: ShellLaunchConfiguration,
+) -> Result<(), Box<dyn std::error::Error>> {
+    dailand::run(app, launch_configuration.shell_runner_options())?;
+    Ok(())
+}
+
+#[cfg(not(target_os = "linux"))]
+fn run_shell<T: daiko::App + Send + 'static>(
+    _app: T,
+    _launch_configuration: ShellLaunchConfiguration,
+) -> Result<(), Box<dyn std::error::Error>> {
+    unreachable!("shell mode is rejected during launch configuration parsing on non-Linux targets");
+}
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Set up basic logging
     momo_tracing::initialize_tracing("momo")?;
+    let launch_configuration = ShellLaunchConfiguration::from_env()?;
 
     // Set a panic hook that exits the process with if any of the threads panic
     let original_hook = std::panic::take_hook();
@@ -29,21 +58,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let app = HotReloadApp::new(app_crate_path).watch_path(momo_ui_lib_path);
 
-        daiko::run(app)
+        run_configured_app(app, launch_configuration)?;
     }
     #[cfg(not(debug_assertions))]
     {
-        // App setup
-        let configuration = ShellConfiguration {
-            mode: ShellMode::Standalone,
-        };
+        let ui = create_ui(launch_configuration)?;
 
-        let backend = WayfireBackend::disconnected();
-        let app = ShellApp::new(configuration, backend);
-        let system_control = system_control::SystemControl::new()?;
-        let ui = MomoUi::new(app.initial_view_model(), system_control);
-
-        daiko::run(ui);
+        run_configured_app(ui, launch_configuration)?;
     }
 
     Ok(())

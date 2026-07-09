@@ -18,6 +18,8 @@ pub fn android_main(android_app: AndroidApp) {
 
     let backend = WayfireBackend::disconnected();
     let app = ShellApp::new(configuration, backend);
-    let app = MomoUi::new(app.initial_view_model());
+    let system_control =
+        system_control::SystemControl::new().expect("failed to initialize system control services");
+    let app = MomoUi::new(app.initial_view_model(), system_control);
     daiko::run_android(app, android_app);
 }

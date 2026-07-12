@@ -1,11 +1,42 @@
+#[cfg(target_os = "linux")]
+use momo_app::shell_runner_options;
 #[cfg(not(debug_assertions))]
 use momo_greeter::create_greeter;
+use momo_greeter::{GreeterLaunchConfiguration, GreeterLaunchMode};
 #[cfg(debug_assertions)]
 use {daiko::hot_reloading::HotReloadApp, std::path::PathBuf};
+
+#[cfg(target_os = "linux")]
+fn run_greeter<T: daiko::App + Send + 'static>(
+    app: T,
+    launch_mode: GreeterLaunchMode,
+) -> Result<(), Box<dyn std::error::Error>> {
+    match launch_mode {
+        GreeterLaunchMode::Shell => {
+            dailand::run(app, shell_runner_options("momo-greeter"))?;
+            Ok(())
+        }
+        GreeterLaunchMode::Standalone => {
+            daiko::run(app);
+            Ok(())
+        }
+    }
+}
+
+#[cfg(not(target_os = "linux"))]
+fn run_greeter<T: daiko::App + Send + 'static>(
+    app: T,
+    _launch_mode: GreeterLaunchMode,
+) -> Result<(), Box<dyn std::error::Error>> {
+    daiko::run(app);
+    Ok(())
+}
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Set up basic logging
     momo_tracing::initialize_tracing("momo-greeter")?;
+    let launch_configuration = GreeterLaunchConfiguration::from_env();
+    let launch_mode = launch_configuration.mode;
 
     // Set a panic hook that exits the process with if any of the threads panic
     let original_hook = std::panic::take_hook();
@@ -25,12 +56,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let app = HotReloadApp::new(app_crate_path).watch_path(momo_ui_lib_path);
 
-        daiko::run(app)
+        run_greeter(app, launch_mode)?;
     }
     #[cfg(not(debug_assertions))]
     {
-        let ui = create_greeter(std::env::args().skip(1))?;
-        daiko::run(ui);
+        let ui = create_greeter(launch_configuration.into_greeter_arguments())?;
+        run_greeter(ui, launch_mode)?;
     }
 
     Ok(())

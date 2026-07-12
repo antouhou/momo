@@ -792,7 +792,7 @@ dependencies = [
  "daiko-common",
  "daikore",
  "futures",
- "grafo",
+ "grafo 0.17.0",
  "tracing",
  "wasm-bindgen-futures",
  "winit",
@@ -807,7 +807,7 @@ dependencies = [
  "crossbeam-channel",
  "daikore",
  "gilrs",
- "grafo",
+ "grafo 0.17.0",
  "tracing",
 ]
 
@@ -841,7 +841,7 @@ dependencies = [
  "daiko-common",
  "daikore",
  "futures",
- "grafo",
+ "grafo 0.16.2",
  "raw-window-handle",
  "smithay-client-toolkit",
  "smol_str 0.2.2",
@@ -1542,6 +1542,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "grafo"
+version = "0.17.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fbc1dd6d17723f86153b9b80a2138bb79f32ce7ba498ec68ddb4d35b30b90ea3"
+dependencies = [
+ "ahash",
+ "bytemuck",
+ "easy-tree",
+ "half",
+ "lru",
+ "lyon",
+ "regex",
+ "smallvec",
+ "softbuffer",
+ "thiserror 2.0.18",
+ "tracing",
+ "wgpu",
+]
+
+[[package]]
 name = "half"
 version = "2.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2183,6 +2203,7 @@ dependencies = [
 name = "momo-app"
 version = "0.1.0"
 dependencies = [
+ "dailand",
  "momo-compositor",
 ]
 
@@ -2208,6 +2229,8 @@ name = "momo-greeter"
 version = "0.1.0"
 dependencies = [
  "daiko",
+ "dailand",
+ "momo-app",
  "momo-greeter-lib",
  "momo-tracing",
 ]

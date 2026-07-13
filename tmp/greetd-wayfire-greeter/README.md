@@ -15,9 +15,8 @@ Layout:
 ## Files
 
 - `greetd/config.toml`: greetd session config.
-- `wayfire/wayfire.ini`: minimal greeter-only Wayfire config.
-- `libexec/momo-greeter-wayfire`: starts temporary Wayfire, waits for it, runs `momo-greeter`, then stops temporary 
-Wayfire.
+- `wayfire/wayfire.ini`: minimal greeter-only Wayfire config that autostarts `momo-greeter`.
+- `libexec/momo-greeter-wayfire`: starts the temporary Wayfire compositor; Wayfire then starts `momo-greeter`.
 
 ## Install On Target
 
@@ -85,5 +84,5 @@ sudo journalctl -u greetd -b --no-pager -o cat
 sudo cat /tmp/momo-greeter.log
 ```
 
-Use mock mode while testing by changing `MOMO_GREETER_AUTH_ARGS` in
-`libexec/momo-greeter-wayfire` to `--mock-users --mock-auth`.
+Use mock mode while testing by temporarily changing the `momo-greeter` command
+in `wayfire/wayfire.ini` to add `--mock-users --mock-auth`.

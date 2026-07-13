@@ -1,10 +1,8 @@
 #[cfg(target_os = "linux")]
-use dailand::{
-    ShellAnchors, ShellBackend, ShellExclusiveZone, ShellInputRegion, ShellKeyboardInteractivity,
-    ShellLayer, ShellMargins, ShellOutputTarget, ShellRunnerOptions, ShellSurfaceOptions,
-    ShellSurfaceSize,
-};
+use dailand::ShellRunnerOptions;
 use momo_app::ShellMode;
+#[cfg(target_os = "linux")]
+use momo_app::shell_runner_options;
 use thiserror::Error;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -40,21 +38,7 @@ impl ShellLaunchConfiguration {
 
     #[cfg(target_os = "linux")]
     pub fn shell_runner_options(self) -> ShellRunnerOptions {
-        ShellRunnerOptions {
-            backend: ShellBackend::WlrLayerShell,
-            surface: ShellSurfaceOptions {
-                namespace: "momo-shell".to_string(),
-                layer: ShellLayer::Background,
-                size: ShellSurfaceSize::default(),
-                anchors: ShellAnchors::all(),
-                margins: ShellMargins::default(),
-                output_target: ShellOutputTarget::CompositorDefault,
-                keyboard_interactivity: ShellKeyboardInteractivity::OnDemand,
-                exclusive_zone: ShellExclusiveZone::None,
-                input_region: ShellInputRegion::Unspecified,
-                request_initial_keyboard_focus: true,
-            },
-        }
+        shell_runner_options("momo-shell")
     }
 }
 

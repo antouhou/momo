@@ -1523,9 +1523,9 @@ dependencies = [
 
 [[package]]
 name = "grafo"
-version = "0.16.2"
+version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d787cea486f95ccdc9d46c01d26227791a0c85e63683809d7a80b865b7f0d7d2"
+checksum = "fbc1dd6d17723f86153b9b80a2138bb79f32ce7ba498ec68ddb4d35b30b90ea3"
 dependencies = [
  "ahash",
  "bytemuck",
@@ -2183,6 +2183,7 @@ dependencies = [
 name = "momo-app"
 version = "0.1.0"
 dependencies = [
+ "dailand",
  "momo-compositor",
 ]
 
@@ -2208,6 +2209,8 @@ name = "momo-greeter"
 version = "0.1.0"
 dependencies = [
  "daiko",
+ "dailand",
+ "momo-app",
  "momo-greeter-lib",
  "momo-tracing",
 ]

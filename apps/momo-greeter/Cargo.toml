@@ -5,8 +5,12 @@ edition.workspace = true
 
 [dependencies]
 daiko.workspace = true
+momo-app.workspace = true
 momo-greeter-lib = { path = "../../crates/momo-greeter-lib" }
 momo-tracing.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+dailand = { path = "../../../daiko/crates/dailand" }
 
 [lints]
 workspace = true

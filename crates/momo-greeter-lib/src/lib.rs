@@ -16,15 +16,23 @@ use daiko::{App, AppContext};
 use system_control::{SystemControl, SystemControlError};
 pub use users::{GreeterUser, GreeterUserSource, mock_users};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GreeterMode {
+    Shell,
+    Standalone,
+}
+
 pub struct MomoGreeter {
     system_control: SystemControl,
     user_source: GreeterUserSource,
     auth_handle: GreeterAuthHandle,
     session_command: Vec<String>,
+    mode: GreeterMode,
 }
 
 pub fn create_greeter(
     args: impl IntoIterator<Item = String>,
+    mode: GreeterMode,
 ) -> Result<MomoGreeter, SystemControlError> {
     let args = args.into_iter().collect::<Vec<_>>();
 
@@ -39,6 +47,7 @@ pub fn create_greeter(
         user_source,
         auth_handle,
         session_command,
+        mode,
     ))
 }
 
@@ -48,12 +57,14 @@ impl MomoGreeter {
         user_source: GreeterUserSource,
         auth_handle: GreeterAuthHandle,
         session_command: Vec<String>,
+        mode: GreeterMode,
     ) -> Self {
         Self {
             system_control,
             user_source,
             auth_handle,
             session_command,
+            mode,
         }
     }
 }
@@ -63,7 +74,9 @@ impl App for MomoGreeter {
 
     fn create(&mut self, app_context: &mut AppContext) -> Self::RootComponent {
         app_context.set_vsync_enabled(true);
-        app_context.set_fullscreen(true);
+        if self.mode == GreeterMode::Standalone {
+            app_context.set_fullscreen(true);
+        }
         init_greeter_users_state(app_context, self.system_control.users(), self.user_source);
         init_greeter_auth_state(
             app_context,

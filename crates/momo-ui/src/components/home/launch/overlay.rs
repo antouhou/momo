@@ -129,7 +129,7 @@ fn render_launch_overlay(
     launch: LaunchTransitionState,
     animation_progress: f32,
 ) -> Element {
-    let viewport_size = ctx.app_context.viewport().size().to_vector();
+    let viewport_size = ctx.viewport().unwrap_or_default().size().to_vector();
     let target = AnimatedRect {
         position: Vec2::zero(),
         size: viewport_size,

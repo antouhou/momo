@@ -100,7 +100,7 @@ impl Component for SettingsMenuPanel {
         }
 
         // TODO: verify those values
-        let max_drawer_height = (ctx.app_context.viewport().size().height
+        let max_drawer_height = (ctx.viewport().unwrap_or_default().size().height
             - SETTINGS_MENU_TOP_OFFSET
             - SETTINGS_MENU_EDGE_MARGIN)
             .max(SETTINGS_MENU_MIN_HEIGHT);

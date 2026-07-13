@@ -792,7 +792,7 @@ dependencies = [
  "daiko-common",
  "daikore",
  "futures",
- "grafo 0.17.0",
+ "grafo",
  "tracing",
  "wasm-bindgen-futures",
  "winit",
@@ -807,7 +807,7 @@ dependencies = [
  "crossbeam-channel",
  "daikore",
  "gilrs",
- "grafo 0.17.0",
+ "grafo",
  "tracing",
 ]
 
@@ -841,7 +841,7 @@ dependencies = [
  "daiko-common",
  "daikore",
  "futures",
- "grafo 0.16.2",
+ "grafo",
  "raw-window-handle",
  "smithay-client-toolkit",
  "smol_str 0.2.2",
@@ -1519,26 +1519,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fdf242682df893b86f33a73828fb09ca4b2d3bb6cc95249707fc684d27484b91"
 dependencies = [
  "bitflags 2.11.0",
-]
-
-[[package]]
-name = "grafo"
-version = "0.16.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d787cea486f95ccdc9d46c01d26227791a0c85e63683809d7a80b865b7f0d7d2"
-dependencies = [
- "ahash",
- "bytemuck",
- "easy-tree",
- "half",
- "lru",
- "lyon",
- "regex",
- "smallvec",
- "softbuffer",
- "thiserror 2.0.18",
- "tracing",
- "wgpu",
 ]
 
 [[package]]

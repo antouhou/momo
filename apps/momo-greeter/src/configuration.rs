@@ -1,12 +1,8 @@
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum GreeterLaunchMode {
-    Shell,
-    Standalone,
-}
+use momo_greeter_lib::GreeterMode;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GreeterLaunchConfiguration {
-    pub mode: GreeterLaunchMode,
+    pub mode: GreeterMode,
     greeter_arguments: Vec<String>,
 }
 
@@ -16,12 +12,12 @@ impl GreeterLaunchConfiguration {
     }
 
     pub fn from_args(arguments: impl IntoIterator<Item = String>) -> Self {
-        let mut mode = GreeterLaunchMode::Shell;
+        let mut mode = GreeterMode::Shell;
         let mut greeter_arguments = Vec::new();
 
         for argument in arguments {
             if argument == "--standalone-test" {
-                mode = GreeterLaunchMode::Standalone;
+                mode = GreeterMode::Standalone;
             } else {
                 greeter_arguments.push(argument);
             }

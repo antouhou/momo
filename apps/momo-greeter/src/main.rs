@@ -2,21 +2,21 @@
 use momo_app::shell_runner_options;
 #[cfg(not(debug_assertions))]
 use momo_greeter::create_greeter;
-use momo_greeter::{GreeterLaunchConfiguration, GreeterLaunchMode};
+use momo_greeter::{GreeterLaunchConfiguration, GreeterMode};
 #[cfg(debug_assertions)]
 use {daiko::hot_reloading::HotReloadApp, std::path::PathBuf};
 
 #[cfg(target_os = "linux")]
 fn run_greeter<T: daiko::App + Send + 'static>(
     app: T,
-    launch_mode: GreeterLaunchMode,
+    launch_mode: GreeterMode,
 ) -> Result<(), Box<dyn std::error::Error>> {
     match launch_mode {
-        GreeterLaunchMode::Shell => {
+        GreeterMode::Shell => {
             dailand::run(app, shell_runner_options("momo-greeter"))?;
             Ok(())
         }
-        GreeterLaunchMode::Standalone => {
+        GreeterMode::Standalone => {
             daiko::run(app);
             Ok(())
         }
@@ -26,7 +26,7 @@ fn run_greeter<T: daiko::App + Send + 'static>(
 #[cfg(not(target_os = "linux"))]
 fn run_greeter<T: daiko::App + Send + 'static>(
     app: T,
-    _launch_mode: GreeterLaunchMode,
+    _launch_mode: GreeterMode,
 ) -> Result<(), Box<dyn std::error::Error>> {
     daiko::run(app);
     Ok(())
@@ -60,7 +60,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     #[cfg(not(debug_assertions))]
     {
-        let ui = create_greeter(launch_configuration.into_greeter_arguments())?;
+        let ui = create_greeter(launch_configuration.into_greeter_arguments(), launch_mode)?;
         run_greeter(ui, launch_mode)?;
     }
 

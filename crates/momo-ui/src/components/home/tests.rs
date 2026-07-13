@@ -3,14 +3,7 @@ use super::{
     system_status::initialize_system_status_state,
 };
 use crate::app_state::{APPS_STATE_ID, AppEntry, AppsState};
-use daiko::{
-    App, AppContext, Id, Pos2, Vec2,
-    integration::input::{InputEvent, InputEventModifiers},
-    navigation::{FocusKey, FocusOrigin},
-    style::{Color, Transform},
-    testing::TestRunner,
-    window_events::WindowEvent,
-};
+use daiko::{App, AppContext, Id, Pos2, Vec2, integration::input::{InputEvent, InputEventModifiers}, navigation::{FocusKey, FocusOrigin}, style::{Color, Transform}, testing::TestRunner, window_events::WindowEvent, SurfaceId};
 use std::{
     path::PathBuf,
     sync::Arc,
@@ -219,7 +212,7 @@ fn vertical_wheel_scroll_pages_the_grid() {
         runner
             .app_runner_mut()
             .context
-            .add_input_event(InputEvent::scroll(
+            .add_input_event(SurfaceId::ROOT, InputEvent::scroll(
                 Vec2::new(0.0, 2.0),
                 InputEventModifiers::default(),
                 Instant::now(),
@@ -230,7 +223,7 @@ fn vertical_wheel_scroll_pages_the_grid() {
         runner
             .app_runner_mut()
             .context
-            .add_input_event(InputEvent::scroll(
+            .add_input_event(SurfaceId::ROOT, InputEvent::scroll(
                 Vec2::new(0.0, 2.0),
                 InputEventModifiers::default(),
                 Instant::now(),
@@ -260,7 +253,7 @@ fn vertical_wheel_scroll_pages_the_grid() {
         runner
             .app_runner_mut()
             .context
-            .add_input_event(InputEvent::scroll(
+            .add_input_event(SurfaceId::ROOT, InputEvent::scroll(
                 Vec2::new(0.0, -2.0),
                 InputEventModifiers::default(),
                 Instant::now(),
@@ -375,7 +368,7 @@ fn window_focus_loss_reverses_launch_overlay() {
     runner
         .app_runner_mut()
         .context
-        .add_window_event(WindowEvent::focus_lost(Instant::now()));
+        .add_window_event(SurfaceId::ROOT, WindowEvent::focus_lost(Instant::now()));
     runner.run_frame();
     run_until(&mut runner, "focus-loss launch contraction", |runner| {
         runner.find_element_by_tag("launch-overlay").is_none()

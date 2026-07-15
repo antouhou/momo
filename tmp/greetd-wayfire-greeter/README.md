@@ -8,7 +8,9 @@ Layout:
 
 - `/etc/greetd/config.toml`
 - `/usr/lib/momo-greeter/wayfire.ini`
+- `/usr/lib/momo-shell/wayfire.ini`
 - `/usr/libexec/momo-greeter-wayfire`
+- `/usr/libexec/momo-shell-wayfire`
 - `/usr/local/bin/momo-greeter`
 - `/usr/local/bin/momo-shell`
 
@@ -16,7 +18,9 @@ Layout:
 
 - `greetd/config.toml`: greetd session config.
 - `wayfire/wayfire.ini`: minimal greeter-only Wayfire config that autostarts `momo-greeter`.
+- `wayfire/momo-shell.ini`: user-session Wayfire config that loads the IPC plugins and autostarts Momo Shell.
 - `libexec/momo-greeter-wayfire`: starts the temporary Wayfire compositor; Wayfire then starts `momo-greeter`.
+- `libexec/momo-shell-wayfire`: starts the authenticated user's Momo Wayfire session.
 
 ## Install On Target
 
@@ -32,7 +36,9 @@ The installer copies:
 - `momo-greeter` to `/usr/local/bin/momo-greeter`
 - `momo-shell` to `/usr/local/bin/momo-shell`
 - `libexec/momo-greeter-wayfire` to `/usr/libexec/momo-greeter-wayfire`
+- `libexec/momo-shell-wayfire` to `/usr/libexec/momo-shell-wayfire`
 - `wayfire/wayfire.ini` to `/usr/lib/momo-greeter/wayfire.ini`
+- `wayfire/momo-shell.ini` to `/usr/lib/momo-shell/wayfire.ini`
 - a generated greetd config to `/etc/greetd/config.toml`
 
 If `/etc/greetd/config.toml` already exists, the installer backs it up to a
@@ -65,10 +71,12 @@ Manual install commands, if needed:
 sudo rm -f /usr/local/libexec/momo-greeter-wayfire
 sudo rm -f /usr/local/libexec/momo-greeter-client
 sudo rm -f /usr/libexec/momo-greeter-client
-sudo mkdir -p /etc/greetd /usr/lib/momo-greeter /usr/libexec
+sudo mkdir -p /etc/greetd /usr/lib/momo-greeter /usr/lib/momo-shell /usr/libexec
 sudo cp greetd/config.toml /etc/greetd/config.toml
 sudo cp wayfire/wayfire.ini /usr/lib/momo-greeter/wayfire.ini
+sudo cp wayfire/momo-shell.ini /usr/lib/momo-shell/wayfire.ini
 sudo install -m 0755 libexec/momo-greeter-wayfire /usr/libexec/momo-greeter-wayfire
+sudo install -m 0755 libexec/momo-shell-wayfire /usr/libexec/momo-shell-wayfire
 sudo install -m 0755 momo-greeter /usr/local/bin/momo-greeter
 sudo install -m 0755 momo-shell /usr/local/bin/momo-shell
 ```
@@ -82,6 +90,7 @@ On this VM that appears to be `_greetd`.
 sudo systemctl restart greetd
 sudo journalctl -u greetd -b --no-pager -o cat
 sudo cat /tmp/momo-greeter.log
+sudo cat /tmp/momo-shell.log
 ```
 
 Use mock mode while testing by temporarily changing the `momo-greeter` command

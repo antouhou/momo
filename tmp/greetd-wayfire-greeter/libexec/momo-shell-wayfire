@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+
+LOG="${MOMO_SHELL_LOG:-/tmp/momo-shell.log}"
+WAYFIRE_CONFIG="${MOMO_SHELL_WAYFIRE_CONFIG:-/usr/lib/momo-shell/wayfire.ini}"
+
+{
+  echo "===== momo-shell-wayfire start $(date) ====="
+  echo "uid/gid: $(id)"
+  echo "wayfire config: ${WAYFIRE_CONFIG}"
+  echo "momo-shell is started by the Wayfire autostart plugin"
+} >>"${LOG}" 2>&1
+
+exec wayfire -c "${WAYFIRE_CONFIG}" >>"${LOG}" 2>&1

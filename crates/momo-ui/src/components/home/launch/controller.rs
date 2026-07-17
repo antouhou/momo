@@ -10,7 +10,7 @@ use crate::{
 };
 use daiko::{
     component::ComponentContext,
-    integration::{SurfaceLayer},
+    integration::SurfaceLayer,
     navigation::{FocusKey, FocusOrigin, NavigationInputAction},
     state_management::StateHandle,
     window_events::{WindowEvent, WindowEventData},

@@ -2,7 +2,7 @@
 use dailand::ShellRunnerOptions;
 use momo_app::ShellMode;
 #[cfg(target_os = "linux")]
-use momo_app::shell_runner_options;
+use momo_app::desktop_shell_runner_options;
 use thiserror::Error;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -38,7 +38,7 @@ impl ShellLaunchConfiguration {
 
     #[cfg(target_os = "linux")]
     pub fn shell_runner_options(self) -> ShellRunnerOptions {
-        shell_runner_options("momo-shell")
+        desktop_shell_runner_options("momo-shell")
     }
 }
 

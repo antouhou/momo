@@ -75,7 +75,8 @@ impl App for MomoGreeter {
     fn create(&mut self, app_context: &mut AppContext) -> Self::RootComponent {
         app_context.set_vsync_enabled(true);
         if self.mode == GreeterMode::Standalone {
-            app_context.set_fullscreen(true);
+            // TODO: make fullscreen on startup?
+            // app_context.set_fullscreen(true);
         }
         init_greeter_users_state(app_context, self.system_control.users(), self.user_source);
         init_greeter_auth_state(

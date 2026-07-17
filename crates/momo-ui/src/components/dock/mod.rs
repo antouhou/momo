@@ -1,4 +1,5 @@
 mod icon;
+mod layer_toggle;
 mod style;
 
 use crate::{app_state::use_apps_state, components::home::app_tile::AppInfo};
@@ -37,6 +38,10 @@ impl Component for Dock {
                     == Some(app.id()),
             });
         }
+
+        dock.add_content(layer_toggle::LayerToggleButton {
+            interactions_disabled: self.interactions_disabled,
+        });
 
         Element::new()
             .with_style(style::dock_outer_container())

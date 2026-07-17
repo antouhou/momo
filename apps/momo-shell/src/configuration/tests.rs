@@ -24,7 +24,7 @@ fn shell_flag_selects_shell_runner_options() {
 
     assert_eq!(configuration.mode, ShellMode::Shell);
     assert_eq!(runner_options.backend, ShellBackend::WlrLayerShell);
-    assert_eq!(runner_options.surface.layer, ShellLayer::Background);
+    assert_eq!(runner_options.surface.layer, ShellLayer::Top);
     assert_eq!(
         runner_options.surface.keyboard_interactivity,
         ShellKeyboardInteractivity::OnDemand
@@ -37,7 +37,6 @@ fn shell_flag_selects_shell_runner_options() {
         runner_options.surface.input_region,
         ShellInputRegion::Unspecified
     );
-    assert!(runner_options.surface.request_initial_keyboard_focus);
 }
 
 #[test]

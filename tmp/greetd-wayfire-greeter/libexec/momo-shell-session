@@ -1,0 +1,11 @@
+#!/bin/sh
+set -eu
+
+LOG="${MOMO_SHELL_LOG:-/tmp/momo-shell.log}"
+
+{
+  echo "===== momo-shell start $(date) ====="
+  echo "uid/gid: $(id)"
+} >>"${LOG}" 2>&1
+
+exec /usr/local/bin/momo-shell --shell >>"${LOG}" 2>&1

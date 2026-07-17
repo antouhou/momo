@@ -11,6 +11,7 @@ Layout:
 - `/usr/lib/momo-shell/wayfire.ini`
 - `/usr/libexec/momo-greeter-wayfire`
 - `/usr/libexec/momo-shell-wayfire`
+- `/usr/libexec/momo-shell-session`
 - `/usr/local/bin/momo-greeter`
 - `/usr/local/bin/momo-shell`
 
@@ -21,6 +22,7 @@ Layout:
 - `wayfire/momo-shell.ini`: user-session Wayfire config that loads the IPC plugins and autostarts Momo Shell.
 - `libexec/momo-greeter-wayfire`: starts the temporary Wayfire compositor; Wayfire then starts `momo-greeter`.
 - `libexec/momo-shell-wayfire`: starts the authenticated user's Momo Wayfire session.
+- `libexec/momo-shell-session`: starts Momo Shell and writes its dedicated process log.
 
 ## Install On Target
 
@@ -37,6 +39,7 @@ The installer copies:
 - `momo-shell` to `/usr/local/bin/momo-shell`
 - `libexec/momo-greeter-wayfire` to `/usr/libexec/momo-greeter-wayfire`
 - `libexec/momo-shell-wayfire` to `/usr/libexec/momo-shell-wayfire`
+- `libexec/momo-shell-session` to `/usr/libexec/momo-shell-session`
 - `wayfire/wayfire.ini` to `/usr/lib/momo-greeter/wayfire.ini`
 - `wayfire/momo-shell.ini` to `/usr/lib/momo-shell/wayfire.ini`
 - a generated greetd config to `/etc/greetd/config.toml`
@@ -77,6 +80,7 @@ sudo cp wayfire/wayfire.ini /usr/lib/momo-greeter/wayfire.ini
 sudo cp wayfire/momo-shell.ini /usr/lib/momo-shell/wayfire.ini
 sudo install -m 0755 libexec/momo-greeter-wayfire /usr/libexec/momo-greeter-wayfire
 sudo install -m 0755 libexec/momo-shell-wayfire /usr/libexec/momo-shell-wayfire
+sudo install -m 0755 libexec/momo-shell-session /usr/libexec/momo-shell-session
 sudo install -m 0755 momo-greeter /usr/local/bin/momo-greeter
 sudo install -m 0755 momo-shell /usr/local/bin/momo-shell
 ```
@@ -91,6 +95,7 @@ sudo systemctl restart greetd
 sudo journalctl -u greetd -b --no-pager -o cat
 sudo cat /tmp/momo-greeter.log
 sudo cat /tmp/momo-shell.log
+sudo cat /tmp/momo-wayfire.log
 ```
 
 Use mock mode while testing by temporarily changing the `momo-greeter` command

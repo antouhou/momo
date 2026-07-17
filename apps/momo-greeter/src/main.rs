@@ -1,5 +1,5 @@
 #[cfg(target_os = "linux")]
-use momo_app::shell_runner_options;
+use momo_app::greeter_shell_runner_options;
 #[cfg(not(debug_assertions))]
 use momo_greeter::create_greeter;
 use momo_greeter::{GreeterLaunchConfiguration, GreeterMode};
@@ -13,7 +13,7 @@ fn run_greeter<T: daiko::App + Send + 'static>(
 ) -> Result<(), Box<dyn std::error::Error>> {
     match launch_mode {
         GreeterMode::Shell => {
-            dailand::run(app, shell_runner_options("momo-greeter"))?;
+            dailand::run(app, greeter_shell_runner_options("momo-greeter"))?;
             Ok(())
         }
         GreeterMode::Standalone => {

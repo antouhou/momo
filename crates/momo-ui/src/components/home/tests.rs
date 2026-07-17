@@ -2,11 +2,21 @@ use super::{
     Home, bluetooth::initialize_bluetooth_state, model::TILE_HEIGHT,
     system_status::initialize_system_status_state,
 };
-use crate::app_state::{APPS_STATE_ID, AppEntry, AppsState};
-use daiko::{App, AppContext, Id, Pos2, Vec2, integration::input::{InputEvent, InputEventModifiers}, navigation::{FocusKey, FocusOrigin}, style::{Color, Transform}, testing::TestRunner, window_events::WindowEvent, SurfaceId};
+use crate::app_state::{APPS_STATE_ID, AppCommand, AppEntry, AppsState};
+use daiko::{
+    App, AppContext, Id, Pos2, SurfaceId, Vec2,
+    integration::{
+        AppMessage, SurfaceCommand, SurfaceLayer,
+        input::{InputEvent, InputEventModifiers},
+    },
+    navigation::{FocusKey, FocusOrigin},
+    style::{Color, Transform},
+    testing::TestRunner,
+    window_events::WindowEvent,
+};
 use std::{
     path::PathBuf,
-    sync::Arc,
+    sync::{Arc, mpsc},
     time::{Duration, Instant},
 };
 use system_control::SystemControl;
@@ -209,25 +219,25 @@ fn vertical_wheel_scroll_pages_the_grid() {
 
     runner.move_pointer_to(first_tile_center);
     for _ in 0..4 {
-        runner
-            .app_runner_mut()
-            .context
-            .add_input_event(SurfaceId::ROOT, InputEvent::scroll(
+        runner.app_runner_mut().context.add_input_event(
+            SurfaceId::ROOT,
+            InputEvent::scroll(
                 Vec2::new(0.0, 2.0),
                 InputEventModifiers::default(),
                 Instant::now(),
-            ));
+            ),
+        );
         runner.run_frame();
     }
     for _ in 0..8 {
-        runner
-            .app_runner_mut()
-            .context
-            .add_input_event(SurfaceId::ROOT, InputEvent::scroll(
+        runner.app_runner_mut().context.add_input_event(
+            SurfaceId::ROOT,
+            InputEvent::scroll(
                 Vec2::new(0.0, 2.0),
                 InputEventModifiers::default(),
                 Instant::now(),
-            ));
+            ),
+        );
         runner.run_frame();
     }
     run_until(&mut runner, "first page scroll animation", |runner| {
@@ -250,14 +260,14 @@ fn vertical_wheel_scroll_pages_the_grid() {
     let (first_page_scrolled_position, _first_page_scrolled_size) =
         runner.get_element_bounds("apps-grid-page-0");
     run_until(&mut runner, "return page scroll animation", |runner| {
-        runner
-            .app_runner_mut()
-            .context
-            .add_input_event(SurfaceId::ROOT, InputEvent::scroll(
+        runner.app_runner_mut().context.add_input_event(
+            SurfaceId::ROOT,
+            InputEvent::scroll(
                 Vec2::new(0.0, -2.0),
                 InputEventModifiers::default(),
                 Instant::now(),
-            ));
+            ),
+        );
         runner.get_element_bounds("apps-grid-page-0").0.x > first_page_scrolled_position.x + 100.0
     });
 

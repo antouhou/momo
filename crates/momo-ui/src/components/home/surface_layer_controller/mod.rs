@@ -10,6 +10,8 @@ use daiko::{
 };
 use style::no_view_style;
 
+// Please note that only one Component can read from the channel. It is not enforced by the
+//  compiler, but something to keep in mind
 pub(super) const HOME_FOCUS_LOST_CHANNEL_ID: &str = "momo_home_focus_lost_channel";
 const HOME_SURFACE_LAYER_REQUEST_CHANNEL_ID: &str = "momo_home_surface_layer_request_channel";
 const HOME_SURFACE_LAYER_STATE_ID: &str = "momo_home_surface_layer_state";

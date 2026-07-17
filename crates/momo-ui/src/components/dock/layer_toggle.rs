@@ -1,5 +1,5 @@
 use super::style::{layer_toggle_button_style, layer_toggle_label_style};
-use daiko::{Element, component::{Component, ComponentContext}, integration::SurfaceLayer, widgets::text::Text, Id};
+use daiko::{Element, component::{Component, ComponentContext}, integration::SurfaceLayer, widgets::text::Text};
 use momo_kit::interaction::ButtonBehavior;
 
 pub(super) struct LayerToggleButton {

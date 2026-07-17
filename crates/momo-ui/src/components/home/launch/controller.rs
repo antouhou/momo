@@ -6,14 +6,13 @@ use crate::{
             LaunchTransitionState,
         },
         model::{HOME_LAUNCH_CHANNEL_ID, LaunchRequest, LaunchRestoreFocus},
+        surface_layer_controller::HOME_FOCUS_LOST_CHANNEL_ID,
     },
 };
 use daiko::{
     component::ComponentContext,
-    integration::SurfaceLayer,
     navigation::{FocusKey, FocusOrigin, NavigationInputAction},
     state_management::StateHandle,
-    window_events::{WindowEvent, WindowEventData},
 };
 use std::sync::Arc;
 use tracing::error;
@@ -41,8 +40,8 @@ pub(in crate::components::home) struct LaunchControllerOutput {
 pub(in crate::components::home) fn use_launch_controller(
     ctx: &mut ComponentContext,
 ) -> LaunchControllerOutput {
-    let window_events = ctx.window_events();
-    let handoff_signal = detect_launch_handoff_signal(window_events);
+    let focus_lost_channel = ctx.use_channel_with_id::<()>(HOME_FOCUS_LOST_CHANNEL_ID);
+    let handoff_signal_received = focus_lost_channel.iter().next().is_some();
     let launch_channel = ctx.use_channel_with_id::<LaunchRequest>(HOME_LAUNCH_CHANNEL_ID);
     let overlay_event_channel = ctx.use_channel_with_id(HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID);
     let launch_state_handle = ctx.use_local_state(|| None::<LaunchTransitionState>);
@@ -111,13 +110,12 @@ pub(in crate::components::home) fn use_launch_controller(
         }
     }
 
-    if launch_transition_state.is_some() && (current_launch_failed || handoff_signal.is_some()) {
+    if launch_transition_state.is_some() && (current_launch_failed || handoff_signal_received) {
         next_launch_request = None;
         should_reverse_launch = true;
     }
 
     if let Some(request) = next_launch_request {
-        ctx.set_surface_layer(SurfaceLayer::Background);
         *launch_state_handle.write() = Some(LaunchTransitionState {
             request,
             phase: LaunchPhase::Expanding,
@@ -189,16 +187,4 @@ pub(in crate::components::home) fn use_launch_controller(
         preferred_dock_focus_key: restore_dock_focus_key.read().as_ref().map(|val| val.1),
         active_launch: launch_transition_state,
     }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum LaunchHandoffSignal {
-    WindowFocusLost,
-}
-
-fn detect_launch_handoff_signal(window_events: &[WindowEvent]) -> Option<LaunchHandoffSignal> {
-    window_events
-        .iter()
-        .any(|event| matches!(event.data, WindowEventData::FocusLost))
-        .then_some(LaunchHandoffSignal::WindowFocusLost)
 }

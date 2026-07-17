@@ -2,7 +2,7 @@ use super::{
     Home, bluetooth::initialize_bluetooth_state, model::TILE_HEIGHT,
     system_status::initialize_system_status_state,
 };
-use crate::app_state::{APPS_STATE_ID, AppCommand, AppEntry, AppsState};
+use crate::app_state::{APPS_STATE_ID, AppEntry, AppsState};
 use daiko::{
     App, AppContext, Id, Pos2, SurfaceId, Vec2,
     integration::{
@@ -385,6 +385,75 @@ fn window_focus_loss_reverses_launch_overlay() {
     });
 
     assert!(runner.find_element_by_tag("launch-overlay").is_none());
+}
+
+#[test]
+fn launch_moves_shell_to_background_only_after_window_focus_is_lost() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+    let (app_message_sender, app_message_receiver) = mpsc::channel();
+    runner
+        .app_runner_mut()
+        .context
+        .set_app_message_bus(app_message_sender);
+
+    runner.click_element("movies");
+    runner.run_frame();
+
+    assert!(
+        !received_surface_layer(&app_message_receiver, SurfaceLayer::Background),
+        "launching should keep the shell on its current layer until the app takes focus"
+    );
+
+    runner
+        .app_runner_mut()
+        .context
+        .add_window_event(SurfaceId::ROOT, WindowEvent::focus_lost(Instant::now()));
+    runner.run_frame();
+
+    assert!(
+        received_surface_layer(&app_message_receiver, SurfaceLayer::Background),
+        "the shell should move to the background when the launched app takes focus"
+    );
+}
+
+#[test]
+fn window_focus_gain_moves_shell_to_top_layer() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+    let (app_message_sender, app_message_receiver) = mpsc::channel();
+    runner
+        .app_runner_mut()
+        .context
+        .set_app_message_bus(app_message_sender);
+
+    runner
+        .app_runner_mut()
+        .context
+        .add_window_event(SurfaceId::ROOT, WindowEvent::focus_gained(Instant::now()));
+    runner.run_frame();
+
+    assert!(
+        received_surface_layer(&app_message_receiver, SurfaceLayer::Top),
+        "the shell should move to the top layer when it regains focus"
+    );
+}
+
+fn received_surface_layer(
+    app_message_receiver: &mpsc::Receiver<AppMessage>,
+    expected_layer: SurfaceLayer,
+) -> bool {
+    app_message_receiver.try_iter().any(|message| {
+        matches!(
+            message,
+            AppMessage::SurfaceCommand(
+                SurfaceId::ROOT,
+                SurfaceCommand::SetLayer(layer)
+            ) if layer == expected_layer
+        )
+    })
 }
 
 fn wait_for_launch_expansion(runner: &mut TestRunner<HomeTestApp>) {

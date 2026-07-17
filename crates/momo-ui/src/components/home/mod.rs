@@ -11,6 +11,7 @@ pub(crate) mod model;
 pub(crate) mod power;
 // pub(crate) mod settings_button;
 pub(crate) mod session;
+mod surface_layer_controller;
 pub(crate) mod system_status;
 #[cfg(test)]
 mod tests;
@@ -23,6 +24,7 @@ use crate::components::{
         header::HomeHeader,
         launch::{controller::use_launch_controller, overlay::LaunchOverlay},
         model::{HOME_CLOCK_STATE_ID, HOME_CLOCK_THREAD_ID, SECTION_GAP},
+        surface_layer_controller::SurfaceLayerController,
         time::{read_system_time, spawn_clock_thread},
     },
     quick_settings::{settings_overlay, should_render_settings_menu},
@@ -66,15 +68,17 @@ impl Component for Home {
         }
 
         let launch = use_launch_controller(ctx);
+        let launch_is_active = launch.active_launch.is_some();
         let should_render_settings_menu = should_render_settings_menu(ctx);
 
         let mut root = Element::new()
             .with_tag("login_screen-root")
             .with_style(home_style())
+            .with_content(SurfaceLayerController { launch_is_active })
             // TODO: make the element inside the header into a view transition
             .with_content(HomeHeader::new(PageDots))
             .with_content(AppGrid {
-                interactions_disabled: launch.active_launch.is_some(),
+                interactions_disabled: launch_is_active,
                 hidden_app_id: launch.launched_app_id.clone(),
                 preferred_focus_app_id: launch.preferred_focus_app_id,
                 prefer_first_tile: launch.preferred_dock_focus_key.is_none(),
@@ -83,7 +87,7 @@ impl Component for Home {
                 Element::new()
                     .with_style(Style::new().with_fixed_height(ItemSize::Points(96.0)))
                     .with_content(Dock {
-                        interactions_disabled: launch.active_launch.is_some(),
+                        interactions_disabled: launch_is_active,
                         hidden_app_id: launch.launched_app_id,
                         preferred_focus_key: launch.preferred_dock_focus_key,
                     }),

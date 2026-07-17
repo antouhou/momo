@@ -11,7 +11,7 @@ pub(crate) mod model;
 pub(crate) mod power;
 // pub(crate) mod settings_button;
 pub(crate) mod session;
-mod surface_layer_controller;
+pub(crate) mod surface_layer_controller;
 pub(crate) mod system_status;
 #[cfg(test)]
 mod tests;

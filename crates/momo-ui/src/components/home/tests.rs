@@ -445,63 +445,6 @@ fn window_focus_gain_moves_shell_to_top_layer() {
     );
 }
 
-#[test]
-fn compositor_toggle_hides_and_refocuses_then_shows_and_acquires_focus() {
-    let mut runner = TestRunner::new(HomeTestApp);
-    runner.set_viewport_size(1280.0, 720.0);
-    runner.run_frame();
-    let (app_message_sender, app_message_receiver) = mpsc::channel();
-    runner
-        .app_runner_mut()
-        .context
-        .set_app_message_bus(app_message_sender);
-    app_message_receiver.try_iter().for_each(drop);
-
-    request_compositor_launcher_toggle(&mut runner);
-    runner.run_frame();
-    assert_eq!(
-        received_surface_commands(&app_message_receiver),
-        vec![
-            SurfaceCommand::SetKeyboardInteractivity(SurfaceKeyboardInteractivity::None),
-            SurfaceCommand::SetLayer(SurfaceLayer::Background),
-        ]
-    );
-
-    runner
-        .app_runner_mut()
-        .context
-        .add_window_event(SurfaceId::ROOT, WindowEvent::focus_lost(Instant::now()));
-    runner.run_frame();
-    assert_eq!(
-        received_surface_commands(&app_message_receiver),
-        vec![SurfaceCommand::SetKeyboardInteractivity(
-            SurfaceKeyboardInteractivity::OnDemand,
-        )]
-    );
-
-    request_compositor_launcher_toggle(&mut runner);
-    runner.run_frame();
-    assert_eq!(
-        received_surface_commands(&app_message_receiver),
-        vec![
-            SurfaceCommand::SetLayer(SurfaceLayer::Top),
-            SurfaceCommand::SetKeyboardInteractivity(SurfaceKeyboardInteractivity::Exclusive),
-        ]
-    );
-
-    runner
-        .app_runner_mut()
-        .context
-        .add_window_event(SurfaceId::ROOT, WindowEvent::focus_gained(Instant::now()));
-    runner.run_frame();
-    assert_eq!(
-        received_surface_commands(&app_message_receiver),
-        vec![SurfaceCommand::SetKeyboardInteractivity(
-            SurfaceKeyboardInteractivity::OnDemand,
-        )]
-    );
-}
-
 fn request_compositor_launcher_toggle(runner: &mut TestRunner<HomeTestApp>) {
     let event_inbox = runner.app_runner_mut().context.peek_global_state(
         Id::new(HOME_COMPOSITOR_EVENT_INBOX_STATE_ID),

@@ -1,11 +1,11 @@
 mod configuration;
 
+pub use configuration::{ShellLaunchConfiguration, ShellLaunchConfigurationError};
 use daiko::hot_reloading::DynApp;
 use momo_app::{ShellApp, ShellConfiguration, ShellMode};
 use momo_ui::MomoUi;
 use momo_wayfire::WayfireBackend;
 use system_control::SystemControl;
-pub use configuration::{ShellLaunchConfiguration, ShellLaunchConfigurationError};
 
 pub fn create_ui(
     launch_configuration: ShellLaunchConfiguration,

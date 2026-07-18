@@ -1,15 +1,13 @@
-use std::{collections::HashMap, env, path::PathBuf, time::Duration};
-
+use crate::{
+    client::WayfireClient,
+    protocol::{BindingRegistrationResponse, MethodCall, WayfireEvent, object},
+};
 use momo_compositor::{
     BackendMetadata, CapabilitySet, CompositorAction, CompositorBackend, CompositorCommand,
     CompositorError, CompositorEvent, CompositorSnapshot, ConnectionConfiguration,
 };
 use serde_json::Value;
-
-use crate::{
-    client::WayfireClient,
-    protocol::{BindingRegistrationResponse, MethodCall, WayfireEvent, object},
-};
+use std::{collections::HashMap, env, path::PathBuf, time::Duration};
 
 const WAYFIRE_SOCKET_ENVIRONMENT_VARIABLE: &str = "WAYFIRE_SOCKET";
 const EVENT_POLL_TIMEOUT: Duration = Duration::from_millis(100);

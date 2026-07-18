@@ -1,3 +1,5 @@
+use serde::Serialize;
+use serde_json::Value;
 use std::{
     collections::VecDeque,
     io::{self, Read, Write},
@@ -6,9 +8,6 @@ use std::{
     thread,
     time::{Duration, Instant},
 };
-
-use serde::Serialize;
-use serde_json::Value;
 use thiserror::Error;
 
 const HEADER_LENGTH: usize = 4;

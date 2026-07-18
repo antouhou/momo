@@ -1,7 +1,7 @@
 use super::{
     Home,
     bluetooth::initialize_bluetooth_state,
-    compositor::{CompositorActionState, HOME_COMPOSITOR_ACTION_STATE_ID},
+    compositor::{CompositorEventInbox, HOME_COMPOSITOR_EVENT_INBOX_STATE_ID},
     model::TILE_HEIGHT,
     system_status::initialize_system_status_state,
 };
@@ -17,6 +17,7 @@ use daiko::{
     testing::TestRunner,
     window_events::WindowEvent,
 };
+use momo_compositor::{CompositorAction, CompositorEvent};
 use std::{
     path::PathBuf,
     sync::{Arc, mpsc},
@@ -502,12 +503,16 @@ fn compositor_toggle_hides_and_refocuses_then_shows_and_acquires_focus() {
 }
 
 fn request_compositor_launcher_toggle(runner: &mut TestRunner<HomeTestApp>) {
-    let action_state = runner.app_runner_mut().context.peek_global_state(
-        Id::new(HOME_COMPOSITOR_ACTION_STATE_ID),
-        CompositorActionState::default,
+    let event_inbox = runner.app_runner_mut().context.peek_global_state(
+        Id::new(HOME_COMPOSITOR_EVENT_INBOX_STATE_ID),
+        CompositorEventInbox::default,
     );
-    let next_revision = action_state.read().launcher_toggle_revision.wrapping_add(1);
-    action_state.write().launcher_toggle_revision = next_revision;
+    event_inbox
+        .write()
+        .pending_events
+        .push(CompositorEvent::ActionActivated(
+            CompositorAction::ToggleLauncher,
+        ));
 }
 
 fn received_surface_commands(

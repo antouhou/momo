@@ -6,7 +6,7 @@ pub use crate::components::home::benchmark_support;
 use crate::{
     app_state::init_app_state,
     components::home::{
-        Home, bluetooth::initialize_bluetooth_state, compositor::initialize_compositor_actions,
+        Home, bluetooth::initialize_bluetooth_state, compositor::initialize_compositor_events,
         power::initialize_power_state, session::initialize_session_state,
         system_status::initialize_system_status_state,
     },
@@ -62,7 +62,7 @@ impl App for MomoUi {
             .compositor_runtime
             .as_mut()
             .and_then(CompositorRuntime::take_event_receiver);
-        initialize_compositor_actions(app_context, compositor_event_receiver);
+        initialize_compositor_events(app_context, compositor_event_receiver);
         init_app_state(app_context);
         Home::new()
     }

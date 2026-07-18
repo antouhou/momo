@@ -1,5 +1,6 @@
 mod style;
 
+use super::compositor::use_compositor_event_inbox;
 use daiko::{
     Element, Id,
     component::{Component, ComponentContext},
@@ -7,9 +8,8 @@ use daiko::{
     state_management::StateHandle,
     window_events::{WindowEvent, WindowEventData},
 };
+use momo_compositor::{CompositorAction, CompositorEvent};
 use style::no_view_style;
-
-use super::compositor::take_launcher_toggle_count;
 
 // Please note that only one Component can read from the channel. It is not enforced by the
 //  compiler, but something to keep in mind
@@ -63,7 +63,20 @@ impl Component for SurfaceLayerController {
         let surface_layer_control = use_surface_layer_control(ctx);
         let focus_lost_channel = ctx.use_channel_with_id::<()>(HOME_FOCUS_LOST_CHANNEL_ID);
         let transition = ctx.use_local_state(VisibilityTransition::default);
-        let requested_toggle_count = take_launcher_toggle_count(ctx);
+        let compositor_event_inbox = use_compositor_event_inbox(ctx);
+        let requested_toggle_count = {
+            let mut compositor_event_inbox = compositor_event_inbox.write_silent();
+            compositor_event_inbox
+                .pending_events
+                .drain(..)
+                .filter(|event| {
+                    matches!(
+                        event,
+                        CompositorEvent::ActionActivated(CompositorAction::ToggleLauncher)
+                    )
+                })
+                .count()
+        };
         let latest_focus_event = ctx
             .window_events()
             .iter()

@@ -10,6 +10,7 @@ bench-support = []
 appkeeper = { path = "../../../appkeeper" }
 daiko.workspace = true
 momo-app.workspace = true
+momo-compositor.workspace = true
 momo-kit.workspace = true
 system-control.workspace = true
 tracing.workspace = true

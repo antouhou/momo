@@ -5,6 +5,7 @@ pub(crate) mod app_tile;
 pub mod benchmark_support;
 pub(crate) mod bluetooth;
 mod clock_chip;
+pub(crate) mod compositor;
 mod header;
 mod launch;
 pub(crate) mod model;

@@ -5,6 +5,13 @@ edition.workspace = true
 
 [dependencies]
 momo-compositor.workspace = true
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+tempfile = "3.20"
 
 [lints]
 workspace = true

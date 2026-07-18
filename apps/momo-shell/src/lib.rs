@@ -5,7 +5,6 @@ use momo_app::{ShellApp, ShellConfiguration, ShellMode};
 use momo_ui::MomoUi;
 use momo_wayfire::WayfireBackend;
 use system_control::SystemControl;
-
 pub use configuration::{ShellLaunchConfiguration, ShellLaunchConfigurationError};
 
 pub fn create_ui(
@@ -18,13 +17,15 @@ fn create_ui_with_wayfire_backend(mode: ShellMode) -> Result<MomoUi, Box<dyn std
     let configuration = ShellConfiguration { mode };
 
     let backend = WayfireBackend::disconnected();
-    let mut app = ShellApp::new(configuration, backend);
-    if mode == ShellMode::Shell {
-        app.connect_backend()?;
-    }
+    let app = ShellApp::new(configuration, backend);
+    let started_app = app.start()?;
 
     let system_control = SystemControl::new()?;
-    Ok(MomoUi::new(app.initial_view_model(), system_control))
+    Ok(MomoUi::new(
+        started_app.view_model,
+        system_control,
+        started_app.runtime,
+    ))
 }
 
 /// For the hot-reloading system to work, the function must have this exact name and signature.

@@ -5,6 +5,7 @@ edition.workspace = true
 
 [dependencies]
 momo-compositor.workspace = true
+tracing.workspace = true
 
 [target.'cfg(target_os = "linux")'.dependencies]
 dailand = { path = "../../../daiko/crates/dailand" }

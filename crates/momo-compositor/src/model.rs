@@ -4,6 +4,12 @@ pub struct CapabilitySet {
     pub view_management: bool,
     pub output_management: bool,
     pub plugin_activation: bool,
+    pub global_shortcuts: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CompositorAction {
+    ToggleLauncher,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -51,6 +57,7 @@ pub enum CompositorCommand {
     ActivatePluginBinding {
         binding_name: String,
     },
+    RegisterAction(CompositorAction),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -65,4 +72,5 @@ pub enum CompositorEvent {
         output_name: String,
         workspace_identifier: String,
     },
+    ActionActivated(CompositorAction),
 }

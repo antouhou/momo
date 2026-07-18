@@ -1,15 +1,12 @@
 use super::{
-    Home,
-    bluetooth::initialize_bluetooth_state,
-    compositor::{CompositorEventInbox, HOME_COMPOSITOR_EVENT_INBOX_STATE_ID},
-    model::TILE_HEIGHT,
+    Home, bluetooth::initialize_bluetooth_state, model::TILE_HEIGHT,
     system_status::initialize_system_status_state,
 };
 use crate::app_state::{APPS_STATE_ID, AppEntry, AppsState};
 use daiko::{
     App, AppContext, Id, Pos2, SurfaceId, Vec2,
     integration::{
-        AppMessage, SurfaceCommand, SurfaceKeyboardInteractivity, SurfaceLayer,
+        AppMessage, SurfaceCommand, SurfaceLayer,
         input::{InputEvent, InputEventModifiers},
     },
     navigation::{FocusKey, FocusOrigin},
@@ -17,7 +14,6 @@ use daiko::{
     testing::TestRunner,
     window_events::WindowEvent,
 };
-use momo_compositor::{CompositorAction, CompositorEvent};
 use std::{
     path::PathBuf,
     sync::{Arc, mpsc},
@@ -443,31 +439,6 @@ fn window_focus_gain_moves_shell_to_top_layer() {
         received_surface_layer(&app_message_receiver, SurfaceLayer::Top),
         "the shell should move to the top layer when it regains focus"
     );
-}
-
-fn request_compositor_launcher_toggle(runner: &mut TestRunner<HomeTestApp>) {
-    let event_inbox = runner.app_runner_mut().context.peek_global_state(
-        Id::new(HOME_COMPOSITOR_EVENT_INBOX_STATE_ID),
-        CompositorEventInbox::default,
-    );
-    event_inbox
-        .write()
-        .pending_events
-        .push(CompositorEvent::ActionActivated(
-            CompositorAction::ToggleLauncher,
-        ));
-}
-
-fn received_surface_commands(
-    app_message_receiver: &mpsc::Receiver<AppMessage>,
-) -> Vec<SurfaceCommand> {
-    app_message_receiver
-        .try_iter()
-        .filter_map(|message| match message {
-            AppMessage::SurfaceCommand(SurfaceId::ROOT, command) => Some(command),
-            _ => None,
-        })
-        .collect()
 }
 
 fn received_surface_layer(

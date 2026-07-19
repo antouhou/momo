@@ -48,7 +48,7 @@ consistent.
 4. Do not use inline values for paddings, font sizes, colors, spacings, etc. Store the actual value somewhere, so the 
 app style is consistent and can be changed by changing a single value.
 5. Keep all styles and animations consistent with the rest of the project.
-6. When working with focus, try to avoid using focus keys as much as possible. Use them only when absolutely necessary, 
+6. When working with focus, avoid using focus keys unless absolutely necessary. Focus keys are allowed
 in extremely rare cases, when there is absolutely no other way to achieve the desired result. In all other cases, rely 
 on the spatial navigation, scopes, and such. Build a correct topology first.
 7. When designing a new component, keep in mind that all spacings, sizes, and padding should be uniform and rhythm with 

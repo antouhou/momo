@@ -1,9 +1,11 @@
 mod icon;
+mod overview_button;
 mod style;
 
 use crate::{app_state::use_apps_state, components::home::app_tile::AppInfo};
 use daiko::{
     Element,
+    channel::Channel,
     component::{Component, ComponentContext},
     navigation::FocusKey,
 };
@@ -13,6 +15,8 @@ pub struct Dock {
     pub(crate) interactions_disabled: bool,
     pub(crate) hidden_app_id: Option<Arc<String>>,
     pub(crate) preferred_focus_key: Option<FocusKey>,
+    pub(crate) overview_toggle_channel: Channel<()>,
+    pub(crate) overview_is_active: bool,
 }
 
 impl Component for Dock {
@@ -37,6 +41,12 @@ impl Component for Dock {
                     == Some(app.id()),
             });
         }
+
+        dock.add_content(overview_button::OverviewDockButton {
+            activation_channel: self.overview_toggle_channel.clone(),
+            interactions_disabled: self.interactions_disabled,
+            is_active: self.overview_is_active,
+        });
 
         Element::new()
             .with_style(style::dock_outer_container())

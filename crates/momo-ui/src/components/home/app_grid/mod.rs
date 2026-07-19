@@ -17,15 +17,12 @@ use daiko::{
 use metrics::AppGridMetrics;
 pub(crate) use page_dots::PageDots;
 use state::app_grid_state_handle;
-use std::{sync::Arc, time::Duration};
+use std::sync::Arc;
 use style::{
     ACTIVE_PAGE_DOT_WIDTH, PAGE_DOT_FOCUS_BORDER_WIDTH, PAGE_DOT_FOCUS_PADDING, PAGE_DOT_SIZE,
     PAGE_DOTS_GAP, PAGE_DOTS_HEIGHT, PAGE_DOTS_TOP_GAP, app_grid_pager_style,
     app_grid_wrapper_style,
 };
-const PAGE_SCROLL_THRESHOLD: f32 = 8.0;
-const PAGE_SCROLL_REARM_DURATION: Duration = Duration::from_millis(220);
-
 pub(in crate::components::home::app_grid) fn page_dot_focus_key(page_index: usize) -> FocusKey {
     FocusKey::new(format!("apps-grid-page-dot-{page_index}"))
 }

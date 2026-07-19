@@ -10,6 +10,7 @@ pub struct ButtonBehavior<'context, 'app> {
     preferred_focus: bool,
     enabled: bool,
     requested_focus: Option<FocusOrigin>,
+    tracks_layout: bool,
 }
 
 impl<'context, 'app> ButtonBehavior<'context, 'app> {
@@ -20,6 +21,7 @@ impl<'context, 'app> ButtonBehavior<'context, 'app> {
             preferred_focus: false,
             enabled: true,
             requested_focus: None,
+            tracks_layout: true,
         }
     }
 
@@ -43,10 +45,19 @@ impl<'context, 'app> ButtonBehavior<'context, 'app> {
         self
     }
 
+    /// Avoids subscribing the component to its own layout.
+    ///
+    /// Use this for controls whose layout is animated. Tracking an animated layout can recreate
+    /// the component during the same render pass and feed the new layout back into the animation.
+    pub fn without_layout_tracking(mut self) -> Self {
+        self.tracks_layout = false;
+        self
+    }
+
     pub fn apply(self) -> ButtonInteractionState {
         let mut pointer = self.ctx.pointer();
         let focusable = self.ctx.focusable();
-        let layout = self.ctx.layout();
+        let layout = self.tracks_layout.then(|| self.ctx.layout()).flatten();
 
         focusable.set_navigation_enabled(self.enabled);
         focusable.set_preferred_focus(self.preferred_focus);
@@ -70,6 +81,7 @@ impl<'context, 'app> ButtonBehavior<'context, 'app> {
             is_hovering: self.enabled && pointer.is_hovering(),
             is_focus_visible: self.enabled && focusable.is_focus_visible(),
             is_focused: self.enabled && focusable.is_focused(),
+            just_focused: self.enabled && focusable.just_focused(),
             is_pressed: self.enabled && pointer.is_pressed(),
             just_activated: pointer_activated || focus_activated,
             layout,
@@ -81,6 +93,7 @@ pub struct ButtonInteractionState {
     pub is_hovering: bool,
     pub is_focus_visible: bool,
     pub is_focused: bool,
+    pub just_focused: bool,
     pub is_pressed: bool,
     pub just_activated: bool,
     pub layout: Option<Layout>,

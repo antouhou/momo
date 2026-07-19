@@ -6,24 +6,32 @@ pub use crate::components::home::benchmark_support;
 use crate::{
     app_state::init_app_state,
     components::home::{
-        Home, bluetooth::initialize_bluetooth_state, power::initialize_power_state,
-        session::initialize_session_state, system_status::initialize_system_status_state,
+        Home, bluetooth::initialize_bluetooth_state, compositor::initialize_compositor_events,
+        power::initialize_power_state, session::initialize_session_state,
+        system_status::initialize_system_status_state,
     },
 };
 use daiko::{App, AppContext};
 use momo_app::{ShellMode, ShellViewModel};
+use momo_compositor::CompositorSession;
 use system_control::SystemControl;
 
 pub struct MomoUi {
     view_model: ShellViewModel,
     system_control: SystemControl,
+    compositor_session: Option<CompositorSession>,
 }
 
 impl MomoUi {
-    pub fn new(view_model: ShellViewModel, system_control: SystemControl) -> Self {
+    pub fn new(
+        view_model: ShellViewModel,
+        system_control: SystemControl,
+        compositor_session: Option<CompositorSession>,
+    ) -> Self {
         Self {
             view_model,
             system_control,
+            compositor_session,
         }
     }
 
@@ -51,11 +59,18 @@ impl App for MomoUi {
             self.system_control.volume(),
             self.system_control.battery(),
         );
+        let compositor_event_receiver = self
+            .compositor_session
+            .as_mut()
+            .and_then(CompositorSession::take_event_receiver);
+        initialize_compositor_events(app_context, compositor_event_receiver);
         init_app_state(app_context);
         Home::new()
     }
 
     fn stop(&mut self, _app_context: &mut AppContext) {
-        println!("Stopping MomoUi");
+        if let Some(compositor_session) = self.compositor_session.as_mut() {
+            compositor_session.stop();
+        }
     }
 }

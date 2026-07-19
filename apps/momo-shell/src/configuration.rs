@@ -28,9 +28,11 @@ impl ShellLaunchConfiguration {
     ) -> Result<Self, ShellLaunchConfigurationError> {
         let mode = args
             .into_iter()
-            .try_fold(ShellMode::Standalone, |_mode, arg| match arg.as_str() {
-                "--shell" => shell_mode(),
-                _ => Err(ShellLaunchConfigurationError::UnknownArgument(arg)),
+            .try_fold(ShellMode::Standalone, |_mode, argument| {
+                match argument.as_str() {
+                    "--shell" => shell_mode(),
+                    _ => Err(ShellLaunchConfigurationError::UnknownArgument(argument)),
+                }
             })?;
 
         Ok(Self { mode })

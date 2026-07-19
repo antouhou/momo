@@ -35,6 +35,8 @@ Apps are launchable runtimes, and should not contain any logic. With their UI im
 Platform-specific logic and integrations belongs in logic/system integration crates, and those crates must not depend on
 UI crates. This keeps the code structured and makes navigation and reasoning about bounds and responsibilities much easier.
 8. Avoid dynamic dispatch, trait objects and such as much as possible.
+9. Do not add empty lines in between groups of any `use`; This makes it impossible for the formatter to reformat and 
+reorganize imports properly.
 
 ## Rules for UI development:
 

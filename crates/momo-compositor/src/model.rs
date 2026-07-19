@@ -1,9 +1,40 @@
+use daikore::integration::input::Key;
+
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct CapabilitySet {
     pub workspace_control: bool,
     pub view_management: bool,
     pub output_management: bool,
     pub plugin_activation: bool,
+    pub global_shortcuts: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ShortcutId(u64);
+
+impl ShortcutId {
+    pub const fn new(value: u64) -> Self {
+        Self(value)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ShortcutTrigger {
+    pub keys: Vec<Key>,
+}
+
+impl ShortcutTrigger {
+    pub fn super_key() -> Self {
+        Self {
+            keys: vec![Key::Super],
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ShortcutRegistration {
+    pub id: ShortcutId,
+    pub trigger: ShortcutTrigger,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -65,4 +96,5 @@ pub enum CompositorEvent {
         output_name: String,
         workspace_identifier: String,
     },
+    ShortcutActivated(ShortcutId),
 }

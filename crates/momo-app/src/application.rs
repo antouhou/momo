@@ -1,8 +1,16 @@
+use crate::{ShellConfiguration, ShellMode, ShellViewModel};
 use momo_compositor::{
-    CompositorBackend, CompositorError, CompositorSnapshot, ConnectionConfiguration,
+    BackendMetadata, CompositorBackend, CompositorError, CompositorSession, CompositorSnapshot,
+    CompositorStartupConfiguration, ShortcutId, ShortcutRegistration, ShortcutTrigger,
 };
 
-use crate::{ShellConfiguration, ShellViewModel};
+#[cfg(test)]
+mod tests;
+
+pub struct StartedShellApp {
+    pub view_model: ShellViewModel,
+    pub compositor_session: Option<CompositorSession>,
+}
 
 pub struct ShellApp<Backend>
 where
@@ -23,24 +31,50 @@ where
         }
     }
 
-    pub fn connect_backend(&mut self) -> Result<(), CompositorError> {
-        self.backend.connect(&ConnectionConfiguration::default())
+    pub fn start(self) -> Result<StartedShellApp, CompositorError> {
+        if self.configuration.mode == ShellMode::Standalone {
+            return Ok(StartedShellApp {
+                view_model: self.initial_view_model(),
+                compositor_session: None,
+            });
+        }
+
+        let mode = self.configuration.mode;
+        let compositor_session = self.backend.start(CompositorStartupConfiguration {
+            shortcuts: vec![ShortcutRegistration {
+                id: ShortcutId::new(0),
+                trigger: ShortcutTrigger::super_key(),
+            }],
+        })?;
+        let view_model = shell_view_model(
+            mode,
+            compositor_session.metadata(),
+            compositor_session.snapshot(),
+        );
+        Ok(StartedShellApp {
+            view_model,
+            compositor_session: Some(compositor_session),
+        })
     }
 
     pub fn initial_view_model(&self) -> ShellViewModel {
-        let snapshot = self
-            .backend
-            .snapshot()
-            .unwrap_or_else(|_| CompositorSnapshot {
-                outputs: Vec::new(),
-                views: Vec::new(),
-            });
+        shell_view_model(
+            self.configuration.mode,
+            self.backend.metadata(),
+            &CompositorSnapshot::default(),
+        )
+    }
+}
 
-        ShellViewModel {
-            mode: self.configuration.mode,
-            output_count: snapshot.outputs.len(),
-            view_count: snapshot.views.len(),
-            compositor_name: self.backend.metadata().name,
-        }
+fn shell_view_model(
+    mode: ShellMode,
+    metadata: BackendMetadata,
+    snapshot: &CompositorSnapshot,
+) -> ShellViewModel {
+    ShellViewModel {
+        mode,
+        output_count: snapshot.outputs.len(),
+        view_count: snapshot.views.len(),
+        compositor_name: metadata.name,
     }
 }

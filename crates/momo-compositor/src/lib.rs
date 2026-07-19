@@ -8,5 +8,5 @@ pub use backend::{
 pub use daikore::integration::input::Key;
 pub use model::{
     CapabilitySet, CompositorCommand, CompositorEvent, CompositorSnapshot, Output, ShortcutId,
-    ShortcutRegistration, ShortcutTrigger, ShortcutTriggerParseError, ViewSummary, Workspace,
+    ShortcutRegistration, ShortcutTrigger, ViewSummary, Workspace,
 };

@@ -2,7 +2,7 @@ use crate::{WayfireBackend, WayfireIpcConfiguration};
 use bytes::Bytes;
 use futures_util::{SinkExt, StreamExt};
 use momo_compositor::{
-    CompositorBackend, CompositorEvent, CompositorStartupConfiguration, ShortcutId,
+    CompositorBackend, CompositorEvent, CompositorStartupConfiguration, Key, ShortcutId,
     ShortcutRegistration, ShortcutTrigger,
 };
 use serde_json::{Value, json};
@@ -78,9 +78,9 @@ fn registers_configured_shortcut_and_forwards_queued_and_live_binding_events() {
         .start(CompositorStartupConfiguration {
             shortcuts: vec![ShortcutRegistration {
                 id: TEST_SHORTCUT_ID,
-                trigger: "Ctrl+Alt+Space+L"
-                    .parse::<ShortcutTrigger>()
-                    .expect("test shortcut should parse"),
+                trigger: ShortcutTrigger {
+                    keys: vec![Key::Control, Key::Alt, Key::Space, Key::L],
+                },
             }],
         })
         .expect("backend should start");

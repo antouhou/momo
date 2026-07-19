@@ -8,7 +8,8 @@ use tokio::{net::UnixStream, time::Instant};
 use tokio_util::codec::{Framed, LengthDelimitedCodec};
 
 const HEADER_LENGTH: usize = 4;
-const MAXIMUM_MESSAGE_LENGTH: usize = 1 << 20;
+const ONE_MEGABYTE: usize = 1024 * 1024;
+const MAXIMUM_MESSAGE_LENGTH: usize = ONE_MEGABYTE;
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(3);
 
 pub(super) struct WayfireClient {

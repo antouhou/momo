@@ -15,7 +15,7 @@ use super::{
 use daiko::{
     Element, Id,
     component::{Component, ComponentContext},
-    navigation::{FocusEntryPolicy, FocusOrigin, NavigationInputAction},
+    navigation::{FocusEntryPolicy, FocusOrigin, NavigationInputAction, FocusBoundary},
 };
 use momo_kit::interaction::ButtonBehavior;
 
@@ -79,6 +79,7 @@ pub(super) fn handle_submenu_back_navigation(
 ) {
     let focus_scope = ctx.focus_scope();
     focus_scope.set_entry_policy(FocusEntryPolicy::Remembered);
+    focus_scope.set_boundary(FocusBoundary::Cycle);
     focus_scope
         .capture_when_contains_focus(&[NavigationInputAction::Cancel, NavigationInputAction::Back]);
 

@@ -16,7 +16,7 @@ pub fn create_ui(
 fn create_ui_with_wayfire_backend(mode: ShellMode) -> Result<MomoUi, Box<dyn std::error::Error>> {
     let configuration = ShellConfiguration { mode };
 
-    let backend = WayfireBackend::disconnected();
+    let backend = WayfireBackend::default();
     let app = ShellApp::new(configuration, backend);
     let started_app = app.start()?;
 
@@ -24,7 +24,7 @@ fn create_ui_with_wayfire_backend(mode: ShellMode) -> Result<MomoUi, Box<dyn std
     Ok(MomoUi::new(
         started_app.view_model,
         system_control,
-        started_app.runtime,
+        started_app.compositor_session,
     ))
 }
 

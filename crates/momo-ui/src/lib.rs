@@ -12,25 +12,26 @@ use crate::{
     },
 };
 use daiko::{App, AppContext};
-use momo_app::{CompositorRuntime, ShellMode, ShellViewModel};
+use momo_app::{ShellMode, ShellViewModel};
+use momo_compositor::CompositorSession;
 use system_control::SystemControl;
 
 pub struct MomoUi {
     view_model: ShellViewModel,
     system_control: SystemControl,
-    compositor_runtime: Option<CompositorRuntime>,
+    compositor_session: Option<CompositorSession>,
 }
 
 impl MomoUi {
     pub fn new(
         view_model: ShellViewModel,
         system_control: SystemControl,
-        compositor_runtime: Option<CompositorRuntime>,
+        compositor_session: Option<CompositorSession>,
     ) -> Self {
         Self {
             view_model,
             system_control,
-            compositor_runtime,
+            compositor_session,
         }
     }
 
@@ -59,17 +60,17 @@ impl App for MomoUi {
             self.system_control.battery(),
         );
         let compositor_event_receiver = self
-            .compositor_runtime
+            .compositor_session
             .as_mut()
-            .and_then(CompositorRuntime::take_event_receiver);
+            .and_then(CompositorSession::take_event_receiver);
         initialize_compositor_events(app_context, compositor_event_receiver);
         init_app_state(app_context);
         Home::new()
     }
 
     fn stop(&mut self, _app_context: &mut AppContext) {
-        if let Some(compositor_runtime) = self.compositor_runtime.as_mut() {
-            compositor_runtime.stop();
+        if let Some(compositor_session) = self.compositor_session.as_mut() {
+            compositor_session.stop();
         }
     }
 }

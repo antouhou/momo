@@ -21,6 +21,7 @@ version = "0.1.0"
 
 [workspace.dependencies]
 daiko = { path = "../daiko/crates/daiko" }
+daikore = { path = "../daiko/crates/daikore", default-features = false }
 momo-app = { path = "crates/momo-app" }
 momo-compositor = { path = "crates/momo-compositor" }
 momo-kit = { path = "crates/momo-kit" }
@@ -29,6 +30,7 @@ momo-ui = { path = "crates/momo-ui" }
 momo-wayfire = { path = "crates/momo-wayfire" }
 system-control = { path = "crates/system-control" }
 thiserror = "2.0.17"
+tokio = "1.48.0"
 tracing = "0.1.44"
 
 [workspace.lints.clippy]

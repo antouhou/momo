@@ -8,7 +8,7 @@ use daiko::{
     state_management::StateHandle,
     window_events::{WindowEvent, WindowEventData},
 };
-use momo_compositor::{CompositorAction, CompositorEvent};
+use momo_compositor::{CompositorEvent, ShortcutId};
 use style::no_view_style;
 
 // Please note that only one Component can read from the channel. It is not enforced by the
@@ -70,10 +70,7 @@ impl Component for SurfaceLayerController {
                 .pending_events
                 .drain(..)
                 .filter(|event| {
-                    matches!(
-                        event,
-                        CompositorEvent::ActionActivated(CompositorAction::ToggleLauncher)
-                    )
+                    matches!(event, CompositorEvent::ShortcutActivated(shortcut_id) if *shortcut_id == ShortcutId::new(0))
                 })
                 .count()
         };

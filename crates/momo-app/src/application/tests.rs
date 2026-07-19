@@ -1,24 +1,22 @@
+use super::ShellApp;
+use crate::{ShellConfiguration, ShellMode};
+use momo_compositor::{
+    BackendMetadata, CapabilitySet, CompositorBackend, CompositorError, CompositorEvent,
+    CompositorSession, CompositorSnapshot, CompositorStartupConfiguration, ShortcutId,
+    ShortcutRegistration, ShortcutTrigger,
+};
 use std::{
     sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
     },
-    thread,
     time::Duration,
 };
 
-use momo_compositor::{
-    BackendMetadata, CapabilitySet, CompositorAction, CompositorBackend, CompositorCommand,
-    CompositorError, CompositorEvent, CompositorSnapshot, ConnectionConfiguration,
-};
-
-use super::ShellApp;
-use crate::{ShellConfiguration, ShellMode};
-
 struct FakeBackend {
     connected: Arc<AtomicBool>,
-    action_registered: Arc<AtomicBool>,
-    action_sent: bool,
+    shortcut_registered: Arc<AtomicBool>,
+    event_loop_stopped: Arc<AtomicBool>,
 }
 
 impl CompositorBackend for FakeBackend {
@@ -30,45 +28,44 @@ impl CompositorBackend for FakeBackend {
         CapabilitySet::default()
     }
 
-    fn connect(&mut self, _configuration: &ConnectionConfiguration) -> Result<(), CompositorError> {
+    fn start(
+        self,
+        configuration: CompositorStartupConfiguration,
+    ) -> Result<CompositorSession, CompositorError> {
         self.connected.store(true, Ordering::SeqCst);
-        Ok(())
-    }
-
-    fn snapshot(&self) -> Result<CompositorSnapshot, CompositorError> {
-        Ok(CompositorSnapshot::default())
-    }
-
-    fn dispatch(&mut self, command: CompositorCommand) -> Result<(), CompositorError> {
         assert_eq!(
-            command,
-            CompositorCommand::RegisterAction(CompositorAction::ToggleLauncher)
+            configuration.shortcuts,
+            vec![ShortcutRegistration {
+                id: ShortcutId::new(0),
+                trigger: ShortcutTrigger::super_key(),
+            }]
         );
-        self.action_registered.store(true, Ordering::SeqCst);
-        Ok(())
-    }
-
-    fn poll_events(&mut self) -> Result<Vec<CompositorEvent>, CompositorError> {
-        if self.action_sent {
-            thread::sleep(Duration::from_millis(1));
-            Ok(Vec::new())
-        } else {
-            self.action_sent = true;
-            Ok(vec![CompositorEvent::ActionActivated(
-                CompositorAction::ToggleLauncher,
-            )])
-        }
+        self.shortcut_registered.store(true, Ordering::SeqCst);
+        CompositorSession::spawn(
+            BackendMetadata { name: "fake" },
+            CapabilitySet::default(),
+            CompositorSnapshot::default(),
+            move |event_sender, shutdown_receiver| {
+                event_sender
+                    .send(CompositorEvent::ShortcutActivated(ShortcutId::new(0)))
+                    .map_err(|error| CompositorError::new(error.to_string()))?;
+                shutdown_receiver.blocking_wait();
+                self.event_loop_stopped.store(true, Ordering::SeqCst);
+                Ok(())
+            },
+        )
     }
 }
 
 #[test]
-fn shell_mode_registers_and_forwards_the_launcher_action() {
+fn shell_mode_registers_and_forwards_the_launcher_shortcut() {
     let connected = Arc::new(AtomicBool::new(false));
-    let action_registered = Arc::new(AtomicBool::new(false));
+    let shortcut_registered = Arc::new(AtomicBool::new(false));
+    let event_loop_stopped = Arc::new(AtomicBool::new(false));
     let backend = FakeBackend {
         connected: Arc::clone(&connected),
-        action_registered: Arc::clone(&action_registered),
-        action_sent: false,
+        shortcut_registered: Arc::clone(&shortcut_registered),
+        event_loop_stopped: Arc::clone(&event_loop_stopped),
     };
     let app = ShellApp::new(
         ShellConfiguration {
@@ -79,30 +76,37 @@ fn shell_mode_registers_and_forwards_the_launcher_action() {
 
     let mut started = app.start().expect("shell should start");
     let event_receiver = started
-        .runtime
+        .compositor_session
         .as_mut()
-        .and_then(super::CompositorRuntime::take_event_receiver)
+        .and_then(CompositorSession::take_event_receiver)
         .expect("shell mode should expose compositor events");
     let event = event_receiver
         .recv_timeout(Duration::from_secs(1))
-        .expect("launcher action should arrive");
+        .expect("launcher shortcut should arrive");
 
     assert!(connected.load(Ordering::SeqCst));
-    assert!(action_registered.load(Ordering::SeqCst));
+    assert!(shortcut_registered.load(Ordering::SeqCst));
     assert_eq!(
         event,
-        CompositorEvent::ActionActivated(CompositorAction::ToggleLauncher)
+        CompositorEvent::ShortcutActivated(ShortcutId::new(0))
     );
+    started
+        .compositor_session
+        .as_mut()
+        .expect("shell mode should have a compositor runtime")
+        .stop();
+    assert!(event_loop_stopped.load(Ordering::SeqCst));
 }
 
 #[test]
-fn standalone_mode_does_not_connect_or_register_actions() {
+fn standalone_mode_does_not_connect_or_register_shortcuts() {
     let connected = Arc::new(AtomicBool::new(false));
-    let action_registered = Arc::new(AtomicBool::new(false));
+    let shortcut_registered = Arc::new(AtomicBool::new(false));
+    let event_loop_stopped = Arc::new(AtomicBool::new(false));
     let backend = FakeBackend {
         connected: Arc::clone(&connected),
-        action_registered: Arc::clone(&action_registered),
-        action_sent: false,
+        shortcut_registered: Arc::clone(&shortcut_registered),
+        event_loop_stopped: Arc::clone(&event_loop_stopped),
     };
     let app = ShellApp::new(
         ShellConfiguration {
@@ -113,7 +117,8 @@ fn standalone_mode_does_not_connect_or_register_actions() {
 
     let started = app.start().expect("standalone app should start");
 
-    assert!(started.runtime.is_none());
+    assert!(started.compositor_session.is_none());
     assert!(!connected.load(Ordering::SeqCst));
-    assert!(!action_registered.load(Ordering::SeqCst));
+    assert!(!shortcut_registered.load(Ordering::SeqCst));
+    assert!(!event_loop_stopped.load(Ordering::SeqCst));
 }

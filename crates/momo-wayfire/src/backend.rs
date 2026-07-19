@@ -16,7 +16,7 @@ pub struct WayfireBackend {
     ipc_configuration: WayfireIpcConfiguration,
 }
 
-struct ShortcutRegistration {
+struct CompositorShortcut {
     id: ShortcutId,
     binding: String,
 }
@@ -75,7 +75,7 @@ impl CompositorBackend for WayfireBackend {
             .into_iter()
             .map(|shortcut| {
                 wayfire_binding(&shortcut.trigger)
-                    .map(|binding| ShortcutRegistration {
+                    .map(|binding| CompositorShortcut {
                         id: shortcut.id,
                         binding,
                     })
@@ -112,7 +112,7 @@ impl CompositorBackend for WayfireBackend {
 
 async fn run_wayfire(
     socket_path: PathBuf,
-    shortcut_registrations: Vec<ShortcutRegistration>,
+    shortcut_registrations: Vec<CompositorShortcut>,
     event_sender: Sender<CompositorEvent>,
     mut shutdown_receiver: EventLoopShutdownReceiver,
 ) -> Result<(), CompositorError> {
@@ -160,7 +160,7 @@ async fn run_wayfire(
 async fn register_shortcut(
     client: &mut WayfireClient,
     binding_shortcuts: &mut HashMap<u64, ShortcutId>,
-    shortcut: ShortcutRegistration,
+    shortcut: CompositorShortcut,
     shutdown_receiver: &mut EventLoopShutdownReceiver,
 ) -> Result<bool, CompositorError> {
     let request = MethodCall::new(

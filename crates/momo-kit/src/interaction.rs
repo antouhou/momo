@@ -45,10 +45,8 @@ impl<'context, 'app> ButtonBehavior<'context, 'app> {
         self
     }
 
-    /// Avoids subscribing the component to its own layout.
-    ///
-    /// Use this for controls whose layout is animated. Tracking an animated layout can recreate
-    /// the component during the same render pass and feed the new layout back into the animation.
+    /// A hack to avoid a loopback between smooth follow and layout hooks. TODO: Need to think that
+    /// through a little better
     pub fn without_layout_tracking(mut self) -> Self {
         self.tracks_layout = false;
         self

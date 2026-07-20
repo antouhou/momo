@@ -5,7 +5,7 @@ use daiko::{
 };
 
 pub struct ButtonBehavior<'context, 'app> {
-    ctx: &'context mut ComponentContext<'app>,
+    context: &'context mut ComponentContext<'app>,
     focus_key: Option<FocusKey>,
     preferred_focus: bool,
     enabled: bool,
@@ -14,9 +14,9 @@ pub struct ButtonBehavior<'context, 'app> {
 }
 
 impl<'context, 'app> ButtonBehavior<'context, 'app> {
-    pub fn new(ctx: &'context mut ComponentContext<'app>) -> Self {
+    pub fn new(context: &'context mut ComponentContext<'app>) -> Self {
         Self {
-            ctx,
+            context,
             focus_key: None,
             preferred_focus: false,
             enabled: true,
@@ -53,9 +53,9 @@ impl<'context, 'app> ButtonBehavior<'context, 'app> {
     }
 
     pub fn apply(self) -> ButtonInteractionState {
-        let mut pointer = self.ctx.pointer();
-        let focusable = self.ctx.focusable();
-        let layout = self.tracks_layout.then(|| self.ctx.layout()).flatten();
+        let mut pointer = self.context.pointer();
+        let focusable = self.context.focusable();
+        let layout = self.tracks_layout.then(|| self.context.layout()).flatten();
 
         focusable.set_navigation_enabled(self.enabled);
         focusable.set_preferred_focus(self.preferred_focus);

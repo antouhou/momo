@@ -10,7 +10,6 @@ mod header;
 mod launch;
 pub(crate) mod model;
 mod overview;
-mod paging;
 pub(crate) mod power;
 // pub(crate) mod settings_button;
 pub(crate) mod session;

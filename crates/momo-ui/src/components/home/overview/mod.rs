@@ -10,7 +10,6 @@ use self::{
         overview_window_close_icon_style, overview_window_close_target_position,
     },
 };
-use crate::components::home::paging::scroll_page_delta;
 use daiko::{
     Element, Id, Vec2,
     animation::SmoothFollowConfig,
@@ -19,7 +18,7 @@ use daiko::{
     navigation::NavigationInputAction,
     widgets::image::{Image, ImageParams, ImageSource, ImageType},
 };
-use momo_kit::interaction::ButtonBehavior;
+use momo_kit::interaction::{ButtonBehavior, PageScrollDirection, ScrollPagingBehavior};
 use std::time::Duration;
 
 const OVERVIEW_SCROLL_STATE_ID: &str = "momo_home_overview_scroll_state";
@@ -106,11 +105,12 @@ impl Component for OverviewCarousel {
             next_state.apply(action);
         }
 
-        if let Some(page_delta) = scroll_page_delta(ctx, Id::new(OVERVIEW_SCROLL_STATE_ID)) {
-            let action = if page_delta.is_negative() {
-                OverviewCarouselAction::ShowPrevious
-            } else {
-                OverviewCarouselAction::ShowNext
+        if let Some(page_scroll_direction) =
+            ScrollPagingBehavior::new(ctx, Id::new(OVERVIEW_SCROLL_STATE_ID)).apply()
+        {
+            let action = match page_scroll_direction {
+                PageScrollDirection::Previous => OverviewCarouselAction::ShowPrevious,
+                PageScrollDirection::Next => OverviewCarouselAction::ShowNext,
             };
             next_state.apply(action);
         }

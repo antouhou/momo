@@ -113,6 +113,24 @@ fn directional_navigation_moves_across_the_grid() {
 }
 
 #[test]
+fn overview_card_size_grows_with_the_available_height() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+    runner.click_element("overview-toggle");
+    runner.run_frame();
+    let initial_size = runner.get_element_bounds("overview-card-active").1;
+
+    runner.set_viewport_size(1280.0, 960.0);
+    run_until(&mut runner, "overview card resize", |runner| {
+        runner.get_element_bounds("overview-card-active").1.y > initial_size.y + 60.0
+    });
+
+    let resized_size = runner.get_element_bounds("overview-card-active").1;
+    assert!(resized_size.x > initial_size.x + 100.0);
+}
+
+#[test]
 fn app_grid_height_shrinks_after_window_height_shrinks() {
     let mut runner = TestRunner::new(HomeTestApp);
     runner.set_viewport_size(1280.0, 980.0);

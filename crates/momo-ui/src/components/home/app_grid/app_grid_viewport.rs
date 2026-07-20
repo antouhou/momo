@@ -1,15 +1,13 @@
 use crate::{
     app_state::{AppEntry, use_apps_state},
     components::home::{
-        app_grid::{
-            AppGrid, PAGE_SCROLL_REARM_DURATION, PAGE_SCROLL_THRESHOLD, metrics::AppGridMetrics,
-            state::app_grid_state_handle,
-        },
+        app_grid::{AppGrid, metrics::AppGridMetrics, state::app_grid_state_handle},
         app_tile::{AppInfo, AppTile},
         model::{
             GRID_GAP, HOME_APP_GRID_FOCUSED_KEY_ID, HOME_APP_GRID_SCROLL_ACCUMULATOR_ID,
             HOME_APP_GRID_SMOOTH_OFFSET_ID,
         },
+        paging::scroll_page_delta,
     },
 };
 use daiko::{
@@ -21,7 +19,7 @@ use daiko::{
     style::{Overflow, Style},
     widgets::container::{Container, Fit},
 };
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 #[derive(Clone)]
 pub(in crate::components::home::app_grid) struct AppGridViewport {
@@ -55,7 +53,9 @@ impl Component for AppGridViewport {
             }
         }
 
-        if let Some(page_delta) = scroll_page_delta(ctx) {
+        if let Some(page_delta) =
+            scroll_page_delta(ctx, Id::new(HOME_APP_GRID_SCROLL_ACCUMULATOR_ID))
+        {
             target_page = self
                 .metrics
                 .offset_page(target_page, page_delta)
@@ -95,12 +95,6 @@ impl Component for AppGridViewport {
     }
 }
 
-#[derive(Default)]
-struct AppGridScrollState {
-    accumulated_delta: f32,
-    locked_until: Option<Instant>,
-}
-
 fn focused_page_index(
     focused_key: Option<FocusKey>,
     tiles_per_page: usize,
@@ -110,57 +104,6 @@ fn focused_page_index(
     apps.iter()
         .position(|app| FocusKey::new(app.id()) == focused_key)
         .map(|app_index| app_index / tiles_per_page)
-}
-
-fn scroll_page_delta(ctx: &mut ComponentContext) -> Option<isize> {
-    let scroll_state = ctx.use_local_state_with_id(
-        Id::new(HOME_APP_GRID_SCROLL_ACCUMULATOR_ID),
-        AppGridScrollState::default,
-    );
-    let scroll_delta = ctx.consume_scroll()?;
-
-    let scroll_axis_delta = scroll_axis_delta(scroll_delta);
-    if scroll_axis_delta.abs() <= f32::EPSILON {
-        return None;
-    }
-
-    let now = Instant::now();
-    let mut scroll_state = scroll_state.write_silent();
-    if scroll_state
-        .locked_until
-        .is_some_and(|locked_until| now < locked_until)
-    {
-        scroll_state.accumulated_delta = 0.0;
-        return None;
-    }
-
-    scroll_state.locked_until = None;
-    scroll_state.accumulated_delta += scroll_axis_delta;
-    let page_delta = page_delta_for_scroll(scroll_state.accumulated_delta);
-    if page_delta.is_some() {
-        scroll_state.accumulated_delta = 0.0;
-        scroll_state.locked_until = Some(now + PAGE_SCROLL_REARM_DURATION);
-    }
-    page_delta
-}
-
-fn page_delta_for_scroll(accumulated_delta: f32) -> Option<isize> {
-    // Scroll down to get to the next page, scroll up to get to the previous one
-    if accumulated_delta <= -PAGE_SCROLL_THRESHOLD {
-        Some(-1)
-    } else if accumulated_delta >= PAGE_SCROLL_THRESHOLD {
-        Some(1)
-    } else {
-        None
-    }
-}
-
-fn scroll_axis_delta(scroll_delta: Vec2) -> f32 {
-    if scroll_delta.y.abs() > f32::EPSILON {
-        scroll_delta.y
-    } else {
-        scroll_delta.x
-    }
 }
 
 fn build_page_strip(

@@ -1,6 +1,6 @@
 mod style;
 
-use self::style::{
+pub(super) use self::style::{
     DOCK_BUTTON_SIZE, DOCK_ICON_GLYPH_SIZE, DOCK_ICON_SIZE, dock_button_style,
     hidden_dock_button_style,
 };

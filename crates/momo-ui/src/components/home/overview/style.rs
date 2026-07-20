@@ -24,7 +24,6 @@ const OVERVIEW_CARD_OVERLAP_RATIO: f32 = 112.0 / 480.0;
 const OVERVIEW_CARD_RADIUS: f32 = 18.0;
 const OVERVIEW_SIDE_CARD_ORDER: u16 = 0;
 const OVERVIEW_ACTIVE_CARD_ORDER: u16 = 1000;
-const OVERVIEW_CLOSE_BUTTON_ORDER: u16 = 2000;
 const OVERVIEW_CONTROL_TRANSITION_MS: u64 = 100;
 const OVERVIEW_CARD_TRANSITION_MS: u64 = 140;
 
@@ -90,7 +89,6 @@ pub(super) fn overview_window_close_button_style(
         )))
         .with_border_radius(BorderRadius::all(OVERVIEW_CLOSE_BUTTON_SIZE * 0.5))
         .with_cursor(CursorIcon::PointingHand)
-        .with_order(OVERVIEW_CLOSE_BUTTON_ORDER)
 }
 
 pub(super) fn overview_window_close_icon_style() -> Style {
@@ -237,8 +235,7 @@ pub(super) fn overview_card_surface_style(
     };
 
     Style::new()
-        .with_fixed_width(ItemSize::Percent(1.0))
-        .with_fixed_height(ItemSize::Percent(1.0))
+        .with_grow(1.0)
         .with_background_color(transition(
             background,
             AnimationParameters::default()

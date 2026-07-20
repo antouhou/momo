@@ -499,17 +499,6 @@ fn run_until(
     panic!("timed out waiting for {description}");
 }
 
-fn parent_tag<'runner>(
-    runner: &'runner TestRunner<HomeTestApp>,
-    child_tag: &str,
-) -> Option<&'runner str> {
-    let child_id = runner.tree().elements().find_map(|(element_id, element)| {
-        (element.tag() == Some(child_tag)).then_some(element_id)
-    })?;
-    let parent_id = runner.tree().parent_id(&child_id)?;
-    runner.tree().element(&parent_id)?.tag()
-}
-
 fn rendered_element_bounds(
     position_absolute: Vec2,
     size: Vec2,

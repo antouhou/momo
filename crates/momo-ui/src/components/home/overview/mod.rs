@@ -4,10 +4,10 @@ mod style;
 use self::{
     state::{OVERVIEW_CARD_COUNT, OverviewCarouselAction, OverviewCarouselState},
     style::{
-        OverviewCardFrame, overview_card_layout_style, overview_card_stage_style,
-        overview_card_surface_style, overview_card_target_frame, overview_carousel_style,
-        overview_style, overview_window_close_button_style, overview_window_close_target_position,
-        overview_window_close_text_style,
+        OVERVIEW_CLOSE_ICON_SIZE, OverviewCardFrame, overview_card_layout_style,
+        overview_card_stage_style, overview_card_surface_style, overview_card_target_frame,
+        overview_carousel_style, overview_style, overview_window_close_button_style,
+        overview_window_close_icon_style, overview_window_close_target_position,
     },
 };
 use crate::components::home::paging::scroll_page_delta;
@@ -17,7 +17,7 @@ use daiko::{
     channel::Channel,
     component::{Component, ComponentContext},
     navigation::{FocusBoundary, NavigationInputAction},
-    widgets::text::Text,
+    widgets::image::{Image, ImageParams, ImageSource, ImageType},
 };
 use momo_kit::interaction::ButtonBehavior;
 use std::time::Duration;
@@ -29,6 +29,8 @@ const OVERVIEW_WINDOW_CLOSE_POSITION_MOTION_ID: &str =
     "momo_home_overview_window_close_position_motion";
 const OVERVIEW_FALLBACK_VIEWPORT_SIZE: Vec2 = Vec2::new(1200.0, 360.0);
 const OVERVIEW_PAGE_MOTION_DURATION_MS: u64 = 260;
+const OVERVIEW_WINDOW_CLOSE_ICON: &[u8] =
+    include_bytes!("../../../../../momo-kit/assets/xmark.svg");
 
 #[derive(Clone, Copy)]
 pub(super) enum OverviewCardPosition {
@@ -265,8 +267,19 @@ impl Component for OverviewWindowCloseButton {
                 button.is_hovering,
                 button.is_focused,
             ))
-            .with_content(Text::new("×").with_style(overview_window_close_text_style()))
+            .with_content(overview_window_close_icon())
     }
+}
+
+fn overview_window_close_icon() -> Image {
+    Image::new(ImageParams {
+        max_width: OVERVIEW_CLOSE_ICON_SIZE,
+        max_height: OVERVIEW_CLOSE_ICON_SIZE,
+        image_type: Some(ImageType::Svg),
+        source: ImageSource::BytesSlice(OVERVIEW_WINDOW_CLOSE_ICON),
+    })
+    .with_style(overview_window_close_icon_style())
+    .fit_to_container(true)
 }
 
 fn overview_page_motion_config() -> SmoothFollowConfig {

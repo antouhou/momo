@@ -15,7 +15,7 @@ use super::{
 use daiko::{
     Element, Id,
     component::{Component, ComponentContext},
-    navigation::{FocusEntryPolicy, FocusOrigin, NavigationInputAction, FocusBoundary},
+    navigation::{FocusBoundary, FocusEntryPolicy, FocusOrigin, NavigationInputAction},
 };
 use momo_kit::interaction::ButtonBehavior;
 

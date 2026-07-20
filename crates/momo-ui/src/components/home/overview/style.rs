@@ -6,14 +6,13 @@ use daiko::{
     component::ComponentContext,
     layout::{AlignItems, FlexDirection, ItemSize, JustifyContent},
     style::{Border, BorderRadius, Color, CursorIcon, Overflow, Stroke, Style},
-    widgets::text::{TextStyle, TextWrap},
 };
 use std::time::Duration;
 
-const OVERVIEW_CLOSE_BUTTON_SIZE: f32 = 44.0;
+pub(super) const OVERVIEW_CLOSE_BUTTON_SIZE: f32 = 44.0;
+pub(super) const OVERVIEW_CLOSE_ICON_SIZE: usize = 18;
 const OVERVIEW_CLOSE_BUTTON_GAP: f32 = 18.0;
 const OVERVIEW_CLOSE_BUTTON_BORDER_WIDTH: f32 = 1.0;
-const OVERVIEW_CLOSE_TEXT_SIZE: f32 = 30.0;
 const OVERVIEW_CARD_ACTIVE_HEIGHT_RATIO: f32 = 0.58;
 const OVERVIEW_CARD_ACTIVE_WIDTH_RATIO: f32 = 0.5;
 const OVERVIEW_CARD_ACTIVE_ASPECT_RATIO: f32 = 480.0 / 278.0;
@@ -94,12 +93,11 @@ pub(super) fn overview_window_close_button_style(
         .with_order(OVERVIEW_CLOSE_BUTTON_ORDER)
 }
 
-pub(super) fn overview_window_close_text_style() -> TextStyle {
-    TextStyle::default()
-        .with_font_size(OVERVIEW_CLOSE_TEXT_SIZE)
-        .with_font_color(Color::from_rgb(20, 24, 29))
-        .with_line_height(1.0)
-        .with_wrap(TextWrap::NoWrap)
+pub(super) fn overview_window_close_icon_style() -> Style {
+    Style::new().with_fixed_size(
+        OVERVIEW_CLOSE_ICON_SIZE as f32,
+        OVERVIEW_CLOSE_ICON_SIZE as f32,
+    )
 }
 
 pub(super) fn overview_carousel_style() -> Style {

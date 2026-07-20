@@ -10,7 +10,6 @@ use daiko::{
     animation::{AnimationParameters, easing::EasingFunction, transition},
     component::{Component, ComponentContext},
     layout::{AlignItems, FlexDirection, JustifyContent},
-    navigation::FocusBoundary,
     style::{BorderRadius, Color, Overflow, Style},
     widgets::container::{Container, Fit},
 };
@@ -47,7 +46,6 @@ impl Component for PageDots {
         };
 
         let focus_scope = ctx.focus_scope();
-        focus_scope.set_boundary(FocusBoundary::Escape);
         focus_scope.set_default_focus(page_dot_focus_key(active_page));
 
         let compact_track_width = page_dots_compact_track_width(page_count);

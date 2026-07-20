@@ -16,7 +16,7 @@ use daiko::{
     animation::SmoothFollowConfig,
     channel::Channel,
     component::{Component, ComponentContext},
-    navigation::{FocusBoundary, NavigationInputAction},
+    navigation::NavigationInputAction,
     widgets::image::{Image, ImageParams, ImageSource, ImageType},
 };
 use momo_kit::interaction::ButtonBehavior;
@@ -76,7 +76,6 @@ impl Overview {
 impl Component for Overview {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         let focus_scope = ctx.focus_scope();
-        focus_scope.set_boundary(FocusBoundary::Escape);
         focus_scope.capture_when_contains_focus(&[
             NavigationInputAction::Cancel,
             NavigationInputAction::Back,
@@ -99,8 +98,7 @@ impl Component for OverviewCarousel {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         let carousel_state = ctx.use_local_state(OverviewCarouselState::default);
         let action_channel: Channel<OverviewCarouselAction> = ctx.create_channel();
-        let focus_scope = ctx.focus_scope();
-        focus_scope.set_boundary(FocusBoundary::Escape);
+        ctx.focus_scope();
         let current_state = *carousel_state.read();
         let mut next_state = current_state;
 

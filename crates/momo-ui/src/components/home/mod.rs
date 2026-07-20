@@ -23,7 +23,7 @@ use crate::components::{
     dock::Dock,
     home::{
         app_grid::{AppGrid, PageDots},
-        header::HomeHeader,
+        header::{HomeHeader, OverviewHeaderTitle},
         launch::{controller::use_launch_controller, overlay::LaunchOverlay},
         model::{HOME_CLOCK_STATE_ID, HOME_CLOCK_THREAD_ID, SECTION_GAP},
         overview::Overview,
@@ -92,13 +92,17 @@ impl Component for Home {
         }
 
         let active_home_view = *home_view.read();
+        let header = match active_home_view {
+            HomeView::Apps => HomeHeader::new(PageDots),
+            HomeView::Overview => HomeHeader::new(OverviewHeaderTitle),
+        };
 
         let mut root = Element::new()
             .with_tag("login_screen-root")
             .with_style(home_style())
             .with_content(SurfaceLayerController { launch_is_active })
             // TODO: make the element inside the header into a view transition
-            .with_content(HomeHeader::new(PageDots));
+            .with_content(header);
 
         match active_home_view {
             HomeView::Apps => root.add_content(AppGrid {

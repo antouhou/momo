@@ -33,6 +33,16 @@ under this directory, then run:
 sudo ./install.sh
 ```
 
+When installing in a VM, force software cursors for both the greeter and the
+authenticated Wayfire session:
+
+```sh
+sudo ./install.sh --software-cursor
+```
+
+This sets `WLR_NO_HARDWARE_CURSORS=1` in both installed Wayfire launcher
+wrappers.
+
 The installer copies:
 
 - `momo-greeter` to `/usr/local/bin/momo-greeter`

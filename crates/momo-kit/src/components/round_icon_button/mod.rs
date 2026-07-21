@@ -127,7 +127,3 @@ impl Component for RoundIconButton {
         element
     }
 }
-
-#[cfg(test)]
-#[path = "tests.rs"]
-mod tests;

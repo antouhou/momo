@@ -9,6 +9,7 @@ use daiko::{
 pub struct ButtonEvents {
     activation_channel: Channel<()>,
     focused_channel: Channel<()>,
+    activation_events_requested: bool,
     focus_events_requested: bool,
 }
 
@@ -17,11 +18,13 @@ impl ButtonEvents {
         Self {
             activation_channel: context.create_channel(),
             focused_channel: context.create_channel(),
+            activation_events_requested: false,
             focus_events_requested: false,
         }
     }
 
-    pub fn activated(&self) -> bool {
+    pub fn has_been_activated(&mut self) -> bool {
+        self.activation_events_requested = true;
         self.activation_channel.iter().next().is_some()
     }
 
@@ -31,7 +34,7 @@ impl ButtonEvents {
     }
 
     pub fn publish(&self, interaction: &ButtonInteractionState) {
-        if interaction.just_activated {
+        if self.activation_events_requested && interaction.just_activated {
             let _ = self.activation_channel.send(());
         }
         if self.focus_events_requested && interaction.just_focused {

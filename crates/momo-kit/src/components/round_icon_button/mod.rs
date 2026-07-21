@@ -53,8 +53,8 @@ impl RoundIconButton {
         }
     }
 
-    pub fn activated(&self) -> bool {
-        self.events.activated()
+    pub fn has_been_activated(&mut self) -> bool {
+        self.events.has_been_activated()
     }
 
     pub fn has_been_focused(&mut self) -> bool {

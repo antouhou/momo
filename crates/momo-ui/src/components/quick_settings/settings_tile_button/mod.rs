@@ -47,8 +47,8 @@ impl SettingsTileButton {
         self.should_request_focus = true;
     }
 
-    pub fn activated(&self) -> bool {
-        self.events.activated()
+    pub fn has_been_activated(&mut self) -> bool {
+        self.events.has_been_activated()
     }
 }
 

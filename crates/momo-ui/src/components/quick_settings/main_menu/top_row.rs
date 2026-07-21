@@ -20,23 +20,23 @@ const MOON_ICON: &[u8] = include_bytes!("../../../../assets/moon.svg");
 const GEAR_ICON: &[u8] = include_bytes!("../../../../assets/gear-solid-full.svg");
 const EYE_ICON: &[u8] = include_bytes!("../../../../assets/eye.svg");
 const POWER_ACTION_TAG: &str = "header-settings-power-button";
-const QUICK_ACTIONS: [QuickActionSpec; 4] = [
-    QuickActionSpec {
+const QUICK_ACTIONS: [QuickActionButtonConfig; 4] = [
+    QuickActionButtonConfig {
         tag: None,
         glyph: QuickSettingsGlyph::Asset(EYE_ICON),
         variant: RoundIconButtonVariant::Accent,
     },
-    QuickActionSpec {
+    QuickActionButtonConfig {
         tag: None,
         glyph: QuickSettingsGlyph::Asset(MOON_ICON),
         variant: RoundIconButtonVariant::Standard,
     },
-    QuickActionSpec {
+    QuickActionButtonConfig {
         tag: None,
         glyph: QuickSettingsGlyph::Asset(GEAR_ICON),
         variant: RoundIconButtonVariant::Standard,
     },
-    QuickActionSpec {
+    QuickActionButtonConfig {
         tag: Some(POWER_ACTION_TAG),
         glyph: QuickSettingsGlyph::Asset(POWER_ICON),
         variant: RoundIconButtonVariant::Danger,
@@ -44,13 +44,13 @@ const QUICK_ACTIONS: [QuickActionSpec; 4] = [
 ];
 
 #[derive(Clone, Copy)]
-struct QuickActionSpec {
+struct QuickActionButtonConfig {
     tag: Option<&'static str>,
     glyph: QuickSettingsGlyph,
     variant: RoundIconButtonVariant,
 }
 
-impl QuickActionSpec {
+impl QuickActionButtonConfig {
     fn is_power_action(self) -> bool {
         self.tag == Some(POWER_ACTION_TAG)
     }
@@ -76,16 +76,16 @@ fn top_actions(ctx: &mut ComponentContext) -> Element {
     let is_enabled = is_menu_view_active(ctx, SettingsMenuViewType::Main);
     let mut actions = Element::new().with_style(settings_top_actions_style());
 
-    for spec in QUICK_ACTIONS {
-        let should_restore_focus = should_restore_power_focus && spec.is_power_action();
-        let mut button = RoundIconButton::new(ctx, spec.glyph.svg())
-            .with_variant(spec.variant)
+    for button_config in QUICK_ACTIONS {
+        let should_restore_focus = should_restore_power_focus && button_config.is_power_action();
+        let mut button = RoundIconButton::new(ctx, button_config.glyph.svg())
+            .with_variant(button_config.variant)
             .with_enabled(is_enabled)
             .with_requested_focus(should_restore_focus.then_some(FocusOrigin::Programmatic));
-        if let Some(tag) = spec.tag {
+        if let Some(tag) = button_config.tag {
             button = button.with_tag(tag);
         }
-        handle_quick_action_activation(ctx, spec, button.activated());
+        handle_quick_action_activation(ctx, button_config, button.has_been_activated());
         if should_restore_focus && button.has_been_focused() {
             complete_power_focus_handoff(ctx);
         }
@@ -97,7 +97,7 @@ fn top_actions(ctx: &mut ComponentContext) -> Element {
 
 fn handle_quick_action_activation(
     ctx: &mut ComponentContext,
-    spec: QuickActionSpec,
+    spec: QuickActionButtonConfig,
     was_activated: bool,
 ) {
     if !was_activated {

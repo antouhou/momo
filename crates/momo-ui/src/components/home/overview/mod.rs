@@ -249,11 +249,11 @@ impl Component for OverviewWindowCloseButton {
             );
             position_motion.follow(self.target_position)
         };
-        let button = RoundIconButton::new(ctx, XMARK_ICON)
+        let mut button = RoundIconButton::new(ctx, XMARK_ICON)
             .with_tag("overview-window-close")
             .with_variant(RoundIconButtonVariant::Danger);
 
-        if button.activated() {
+        if button.has_been_activated() {
             let _ = self
                 .action_channel
                 .send(OverviewCarouselAction::CloseActive);

@@ -26,10 +26,10 @@ pub enum RoundIconButtonVariant {
 pub struct RoundIconButton {
     // TODO: ideally, I'd like for the round button to accept impl IntoChild, but unfortunately
     //  there's no API that would allow that: SVG color is animated. We can use clip path for
-    //  that probably, and that'd probably be faster, and we wouldn't even need to know the byetes,
-    //  but than again, that requires careful design around paths, becuase right now they're
+    //  that probably, and that'd probably be faster, and we wouldn't even need to know the byetes.
+    //  But then again, that requires careful design around paths. Right now they're
     //  just vecs, and ideally they should be refs, kinda like we have with StrignOrRef. You get
-    //  the point, it is needs some careful design and some time. 
+    //  the point, it is needs some careful design and some time.
     svg: &'static [u8],
     activation_channel: Channel<()>,
     focused_channel: Option<Channel<()>>,

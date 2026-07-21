@@ -4,10 +4,10 @@ mod style;
 use self::{
     state::{OVERVIEW_CARD_COUNT, OverviewCarouselAction, OverviewCarouselState},
     style::{
-        OVERVIEW_CLOSE_ICON_SIZE, OverviewCardFrame, overview_card_layout_style,
-        overview_card_stage_style, overview_card_surface_style, overview_card_target_frame,
-        overview_carousel_style, overview_style, overview_window_close_button_style,
-        overview_window_close_icon_style, overview_window_close_target_position,
+        OverviewCardFrame, overview_card_layout_style, overview_card_stage_style,
+        overview_card_surface_style, overview_card_target_frame, overview_carousel_style,
+        overview_style, overview_window_close_position_style,
+        overview_window_close_target_position,
     },
 };
 use daiko::{
@@ -16,9 +16,12 @@ use daiko::{
     channel::Channel,
     component::{Component, ComponentContext},
     navigation::NavigationInputAction,
-    widgets::image::{Image, ImageParams, ImageSource, ImageType},
 };
-use momo_kit::interaction::{ButtonBehavior, PageScrollDirection, ScrollPagingBehavior};
+use momo_kit::{
+    assets::XMARK_ICON,
+    components::{RoundIconButton, RoundIconButtonVariant},
+    interaction::{ButtonBehavior, PageScrollDirection, ScrollPagingBehavior},
+};
 use std::time::Duration;
 
 const OVERVIEW_SCROLL_STATE_ID: &str = "momo_home_overview_scroll_state";
@@ -28,8 +31,6 @@ const OVERVIEW_WINDOW_CLOSE_POSITION_MOTION_ID: &str =
     "momo_home_overview_window_close_position_motion";
 const OVERVIEW_FALLBACK_VIEWPORT_SIZE: Vec2 = Vec2::new(1200.0, 360.0);
 const OVERVIEW_PAGE_MOTION_DURATION_MS: u64 = 260;
-const OVERVIEW_WINDOW_CLOSE_ICON: &[u8] =
-    include_bytes!("../../../../../momo-kit/assets/xmark.svg");
 
 #[derive(Clone, Copy)]
 pub(super) enum OverviewCardPosition {
@@ -248,36 +249,20 @@ impl Component for OverviewWindowCloseButton {
             );
             position_motion.follow(self.target_position)
         };
-        let button = ButtonBehavior::new(ctx).without_layout_tracking().apply();
+        let button = RoundIconButton::new(ctx, XMARK_ICON)
+            .with_tag("overview-window-close")
+            .with_variant(RoundIconButtonVariant::Danger);
 
-        if button.just_activated {
+        if button.activated() {
             let _ = self
                 .action_channel
                 .send(OverviewCarouselAction::CloseActive);
         }
 
         Element::new()
-            .with_tag("overview-window-close")
-            .with_style(overview_window_close_button_style(
-                ctx,
-                rendered_position,
-                button.is_pressed,
-                button.is_hovering,
-                button.is_focused,
-            ))
-            .with_content(overview_window_close_icon())
+            .with_style(overview_window_close_position_style(rendered_position))
+            .with_content(button)
     }
-}
-
-fn overview_window_close_icon() -> Image {
-    Image::new(ImageParams {
-        max_width: OVERVIEW_CLOSE_ICON_SIZE,
-        max_height: OVERVIEW_CLOSE_ICON_SIZE,
-        image_type: Some(ImageType::Svg),
-        source: ImageSource::BytesSlice(OVERVIEW_WINDOW_CLOSE_ICON),
-    })
-    .with_style(overview_window_close_icon_style())
-    .fit_to_container(true)
 }
 
 fn overview_page_motion_config() -> SmoothFollowConfig {

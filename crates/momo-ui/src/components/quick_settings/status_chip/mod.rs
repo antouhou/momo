@@ -2,12 +2,9 @@ mod style;
 
 use self::style::{settings_status_chip_style, status_chip_content_style, status_value_style};
 use super::{
-    common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_element, is_menu_view_active},
+    common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_image, is_menu_view_active},
     state::SettingsMenuViewType,
-    style::{
-        SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_danger_text_color,
-        settings_text_color,
-    },
+    style::{SETTINGS_ICON_SIZE, settings_danger_text_color, settings_text_color},
 };
 use crate::components::home::system_status::battery_state;
 use daiko::{
@@ -66,10 +63,9 @@ fn status_chip_content(ctx: &mut ComponentContext) -> Element {
 
     Element::new()
         .with_style(status_chip_content_style())
-        .with_content(glyph_element(
+        .with_content(glyph_image(
             QuickSettingsGlyph::Asset(battery_icon(battery_percentage, charging_state)),
             SETTINGS_ICON_SIZE,
-            SETTINGS_ICON_FRAME_SIZE,
             content_color,
         ))
         .with_content(Text::new(label).with_style(status_value_style(content_color)))

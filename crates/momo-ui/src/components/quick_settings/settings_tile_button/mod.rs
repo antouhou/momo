@@ -5,8 +5,8 @@ use self::style::{
     settings_tile_text_column_style, tile_title_style,
 };
 use super::{
-    common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_element},
-    style::{SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_tile_icon_color},
+    common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_image},
+    style::{SETTINGS_ICON_SIZE, settings_tile_icon_color},
 };
 use daiko::{
     Element,
@@ -95,10 +95,9 @@ fn settings_tile_content(
         .with_content(
             Element::new()
                 .with_style(settings_tile_icon_style(ctx, is_active))
-                .with_content(glyph_element(
+                .with_content(glyph_image(
                     spec.glyph,
                     SETTINGS_ICON_SIZE,
-                    SETTINGS_ICON_FRAME_SIZE,
                     settings_tile_icon_color(is_active),
                 )),
         )

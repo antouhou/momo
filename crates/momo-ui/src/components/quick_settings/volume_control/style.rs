@@ -1,7 +1,7 @@
 use super::super::{
     common::QuickSettingsControlState,
     style::{
-        CONTROL_TRANSITION_MS, SETTINGS_COMPACT_CONTENT_GAP, SETTINGS_ICON_FRAME_SIZE,
+        CONTROL_TRANSITION_MS, SETTINGS_COMPACT_CONTENT_GAP, SETTINGS_LABEL_HEIGHT,
         SETTINGS_MENU_GAP, SETTINGS_MENU_INNER_WIDTH, SETTINGS_STATUS_CHIP_PADDING,
         SETTINGS_TILE_HEIGHT, SETTINGS_TILE_PADDING, SETTINGS_VOLUME_SLIDER_ROW_HEIGHT,
         TILE_RADIUS, settings_button_focus_transform, settings_label_text_style,
@@ -87,7 +87,7 @@ pub(crate) fn volume_label_style() -> TextStyle {
 
 pub(crate) fn volume_label_container_style() -> Style {
     Style::new()
-        .with_fixed_height(ItemSize::Points(SETTINGS_ICON_FRAME_SIZE))
+        .with_fixed_height(ItemSize::Points(SETTINGS_LABEL_HEIGHT))
         .with_direction(FlexDirection::Row)
         .with_align_items(AlignItems::Center)
         .with_justify_content(JustifyContent::FlexStart)

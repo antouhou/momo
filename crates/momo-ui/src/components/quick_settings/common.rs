@@ -5,9 +5,10 @@ use super::{
 use daiko::{
     Element, Id,
     component::{Component, ComponentContext},
-    style::{Color, Style},
-    widgets::image::{Image, ImageParams, ImageSource, ImageType},
+    style::Color,
+    widgets::image::Image,
 };
+use momo_kit::components::svg_icon;
 
 #[derive(Clone, Copy)]
 pub(super) struct QuickSettingsControlState {
@@ -26,23 +27,16 @@ pub(super) enum QuickSettingsGlyph {
     Asset(&'static [u8]),
 }
 
-pub(super) fn glyph_element(
-    glyph: QuickSettingsGlyph,
-    icon_size: usize,
-    frame_size: f32,
-    icon_color: Color,
-) -> Element {
-    match glyph {
-        QuickSettingsGlyph::Asset(svg) => centered_glyph_frame(frame_size).with_content(
-            Image::new(ImageParams {
-                max_width: icon_size,
-                max_height: icon_size,
-                image_type: Some(ImageType::Svg),
-                source: ImageSource::BytesSlice(svg),
-            })
-            .fill_color(Some(icon_color)),
-        ),
+impl QuickSettingsGlyph {
+    pub(super) fn svg(self) -> &'static [u8] {
+        match self {
+            Self::Asset(svg) => svg,
+        }
     }
+}
+
+pub(super) fn glyph_image(glyph: QuickSettingsGlyph, icon_size: usize, icon_color: Color) -> Image {
+    svg_icon(glyph.svg(), icon_size, icon_color)
 }
 
 pub(super) fn settings_row(content: impl Component) -> Element {
@@ -70,14 +64,4 @@ fn settings_row_with_padding(
 pub(super) fn is_menu_view_active(ctx: &mut ComponentContext, view: SettingsMenuViewType) -> bool {
     let state = ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
     state.read().active_view == view
-}
-
-fn centered_glyph_frame(size: f32) -> Element {
-    Element::new().with_style(
-        Style::new()
-            .with_fixed_size(size, size)
-            .with_direction(daiko::layout::FlexDirection::Row)
-            .with_align_items(daiko::layout::AlignItems::Center)
-            .with_justify_content(daiko::layout::JustifyContent::Center),
-    )
 }

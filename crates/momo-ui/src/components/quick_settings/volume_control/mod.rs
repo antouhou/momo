@@ -5,13 +5,12 @@ use self::style::{
     volume_slider_row_style, volume_slider_track_style,
 };
 use super::{
-    common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_element, is_menu_view_active},
+    common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_image, is_menu_view_active},
     state::SettingsMenuViewType,
     style::{
-        SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, SETTINGS_VOLUME_THUMB_SIZE,
-        SETTINGS_VOLUME_TRACK_HEIGHT, settings_accent_color, settings_bright_surface_border_color,
-        settings_bright_surface_color, settings_surface_muted_color, settings_text_color,
-        settings_volume_thumb_border_color,
+        SETTINGS_ICON_SIZE, SETTINGS_VOLUME_THUMB_SIZE, SETTINGS_VOLUME_TRACK_HEIGHT,
+        settings_accent_color, settings_bright_surface_border_color, settings_bright_surface_color,
+        settings_surface_muted_color, settings_text_color, settings_volume_thumb_border_color,
     },
 };
 use crate::components::{
@@ -106,10 +105,9 @@ fn request_volume_change(ctx: &mut ComponentContext, volume: u8) {
 fn volume_slider_row(state: QuickSettingsControlState, volume: u8) -> Element {
     Element::new()
         .with_style(volume_slider_row_style())
-        .with_content(glyph_element(
+        .with_content(glyph_image(
             QuickSettingsGlyph::Asset(AUDIO_ICON),
             SETTINGS_ICON_SIZE,
-            SETTINGS_ICON_FRAME_SIZE,
             settings_text_color(),
         ))
         .with_content(

@@ -1,13 +1,6 @@
-mod style;
-
-use self::style::settings_round_button_style;
 use super::{
-    common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_element, is_menu_view_active},
+    common::{QuickSettingsGlyph, is_menu_view_active},
     state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuViewType},
-    style::{
-        SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_danger_text_color,
-        settings_inverse_text_color, settings_text_color,
-    },
 };
 use daiko::{
     Element, Id,
@@ -15,7 +8,10 @@ use daiko::{
     component::{Component, ComponentContext},
     navigation::FocusOrigin,
 };
-use momo_kit::{assets::POWER_ICON, interaction::ButtonBehavior};
+use momo_kit::{
+    assets::POWER_ICON,
+    components::{RoundIconButton, RoundIconButtonVariant},
+};
 
 const MOON_ICON: &[u8] = include_bytes!("../../../../assets/moon.svg");
 const GEAR_ICON: &[u8] = include_bytes!("../../../../assets/gear-solid-full.svg");
@@ -56,19 +52,31 @@ pub(super) struct QuickActionSpec {
 }
 
 pub(super) struct QuickActionButton {
-    pub(super) spec: QuickActionSpec,
     should_request_focus: bool,
     should_complete_focus_handoff_when_focused: bool,
-    activation_channel: Option<Channel<()>>,
+    button: RoundIconButton,
+    focused_channel: Channel<()>,
 }
 
 impl QuickActionButton {
     pub(super) fn new(ctx: &mut ComponentContext, spec: QuickActionSpec) -> Self {
+        let mut button =
+            RoundIconButton::new(ctx, spec.glyph.svg()).with_variant(if spec.is_danger {
+                RoundIconButtonVariant::Danger
+            } else if spec.is_active {
+                RoundIconButtonVariant::Accent
+            } else {
+                RoundIconButtonVariant::Standard
+            });
+        if let Some(tag) = spec.tag {
+            button = button.with_tag(tag);
+        }
+
         Self {
-            spec,
             should_request_focus: false,
             should_complete_focus_handoff_when_focused: false,
-            activation_channel: Some(ctx.create_channel()),
+            button,
+            focused_channel: ctx.create_channel(),
         }
     }
 
@@ -81,71 +89,30 @@ impl QuickActionButton {
     }
 
     pub(super) fn activated(&self) -> bool {
-        match &self.activation_channel {
-            Some(channel) => channel.iter().count() > 0,
-            None => false,
-        }
+        self.button.activated()
     }
 }
 
 impl Component for QuickActionButton {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         let is_enabled = is_menu_view_active(ctx, SettingsMenuViewType::Main);
-        let button = ButtonBehavior::new(ctx)
-            .with_enabled(is_enabled)
-            .with_requested_focus(
-                self.should_request_focus
-                    .then_some(FocusOrigin::Programmatic),
-            )
-            .apply();
-
-        if self.should_complete_focus_handoff_when_focused && button.is_focused {
+        if self.should_complete_focus_handoff_when_focused
+            && self.focused_channel.iter().next().is_some()
+        {
             let state =
                 ctx.use_shared_state(Id::new(SETTINGS_MENU_STATE_ID), SettingsMenuState::default);
             state.write_silent().complete_view_focus_handoff();
         }
 
-        let state = QuickSettingsControlState {
-            is_hovered: button.is_hovering,
-            is_focused: button.is_focused,
-        };
-
-        if button.just_activated
-            && let Some(channel) = &self.activation_channel
-        {
-            let _ = channel.send(());
-        }
-
-        let mut element = Element::new()
-            .with_style(settings_round_button_style(
-                state,
-                ctx,
-                self.spec.is_active,
-                self.spec.is_danger,
-            ))
-            .with_content(quick_action_content(self.spec, state));
-
-        if let Some(tag) = self.spec.tag {
-            element.set_tag(tag);
-        }
-
-        element
+        let button = self
+            .button
+            .clone()
+            .with_focused_channel(self.focused_channel.clone())
+            .with_enabled(is_enabled)
+            .with_requested_focus(
+                self.should_request_focus
+                    .then_some(FocusOrigin::Programmatic),
+            );
+        button.to_element(ctx)
     }
-}
-
-fn quick_action_content(spec: QuickActionSpec, state: QuickSettingsControlState) -> Element {
-    let is_highlighted = state.is_hovered || state.is_focused;
-
-    glyph_element(
-        spec.glyph,
-        SETTINGS_ICON_SIZE,
-        SETTINGS_ICON_FRAME_SIZE,
-        if spec.is_danger {
-            settings_danger_text_color()
-        } else if is_highlighted {
-            settings_inverse_text_color()
-        } else {
-            settings_text_color()
-        },
-    )
 }

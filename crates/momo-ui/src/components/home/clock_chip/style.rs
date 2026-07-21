@@ -3,13 +3,12 @@ use daiko::{
     style::{Color, Style},
     widgets::text::{TextStyle, TextWrap},
 };
+use momo_kit::style::SYSTEM_TRAY_TEXT_SIZE;
 
 use crate::components::home::header::{
     HEADER_BUTTON_HEIGHT, HEADER_BUTTON_RADIUS, HEADER_CLOCK_WIDTH, HeaderButtonMetrics,
     HeaderButtonState, header_button_style,
 };
-
-const CLOCK_TEXT_SIZE: f32 = 22.0;
 
 pub(super) fn clock_button_style(ctx: &mut ComponentContext, state: HeaderButtonState) -> Style {
     header_button_style(
@@ -32,7 +31,7 @@ pub(super) fn clock_text_style(state: HeaderButtonState) -> TextStyle {
     };
 
     TextStyle::default()
-        .with_font_size(CLOCK_TEXT_SIZE)
+        .with_font_size(SYSTEM_TRAY_TEXT_SIZE)
         .with_line_height(1.0)
         .with_font_color(text_color)
         .with_wrap(TextWrap::NoWrap)

@@ -64,3 +64,4 @@ it has been activated, clicked or so on, and let the parent decide what to do wi
 11. Avoid cloning vectors or doing other allocations in the UI/component code. Use references. Do not create or clone
 `String`s or `Vec`s in the `Component::to_element` function, unless those are for some one-shot interaction that
 might happen once in a rare while.
+12. Look for the existing components in the momo-kit, maybe it already has something that fits your needs.

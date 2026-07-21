@@ -4,8 +4,7 @@ use daiko::{
     style::{Color, Style},
     widgets::text::{TextStyle, TextWrap},
 };
-
-const OVERVIEW_HEADER_TITLE_TEXT_SIZE: f32 = 18.0;
+use momo_kit::style::SYSTEM_TRAY_TEXT_SIZE;
 
 pub(super) fn overview_header_title_frame_style() -> Style {
     Style::new()
@@ -17,7 +16,7 @@ pub(super) fn overview_header_title_frame_style() -> Style {
 
 pub(super) fn overview_header_title_text_style() -> TextStyle {
     TextStyle::default()
-        .with_font_size(OVERVIEW_HEADER_TITLE_TEXT_SIZE)
+        .with_font_size(SYSTEM_TRAY_TEXT_SIZE)
         .with_line_height(1.0)
         .with_font_color(Color::from_rgb(236, 246, 255))
         .with_wrap(TextWrap::NoWrap)

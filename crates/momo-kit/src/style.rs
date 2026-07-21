@@ -1,6 +1,12 @@
 use daiko::style::{Color, LinearGradient, LinearSideOrCorner};
 
-/// The shared deep-space-to-copper background used across the Momo shell.
+/// The default text size used throughout interface
+pub const SYSTEM_TEXT_SIZE: f32 = 18.0;
+
+/// The text size for the header
+pub const SYSTEM_TRAY_TEXT_SIZE: f32 = 22.0;
+
+/// The deep-space-to-copper background
 pub fn shell_background_gradient() -> LinearGradient {
     LinearGradient::to(LinearSideOrCorner::BottomRight)
         .stop_at_percent(0.00, Color::from_rgb(2, 3, 12))

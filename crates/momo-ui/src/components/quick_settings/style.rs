@@ -5,6 +5,7 @@ use daiko::{
     style::{Color, Indent, Style, Transform},
     widgets::text::{TextStyle, TextWrap, Weight},
 };
+use momo_kit::style::SYSTEM_TEXT_SIZE;
 use std::time::Duration;
 
 pub(crate) const SETTINGS_MENU_WIDTH: f32 = 392.0;
@@ -34,9 +35,8 @@ pub(crate) const CONTROL_TRANSITION_MS: u64 = 120;
 pub(crate) const SETTINGS_TOP_ACTIONS_GAP: f32 = SETTINGS_MENU_GAP;
 pub(crate) const SETTINGS_COMPACT_CONTENT_GAP: f32 = 8.0;
 pub(crate) const SETTINGS_STATUS_CHIP_PADDING: Indent = Indent::uniform(10.0);
-pub(crate) const SETTINGS_LABEL_TEXT_SIZE: f32 = 18.0;
 pub(crate) const SETTINGS_LABEL_HEIGHT: f32 = 20.0;
-pub(crate) const SETTINGS_ICON_SIZE: usize = SETTINGS_LABEL_TEXT_SIZE as usize;
+pub(crate) const SETTINGS_ICON_SIZE: usize = SYSTEM_TEXT_SIZE as usize;
 pub(crate) const SETTINGS_TILE_CONTENT_GAP: f32 = SETTINGS_MENU_GAP;
 pub(crate) const SETTINGS_TILE_PADDING: Indent = Indent::uniform(14.0);
 pub(crate) const SETTINGS_TILE_TEXT_HEIGHT: f32 = 38.0;
@@ -142,7 +142,7 @@ pub(crate) fn settings_bright_surface_border_color() -> Color {
 
 pub(crate) fn settings_label_text_style(color: Color) -> TextStyle {
     TextStyle::default()
-        .with_font_size(SETTINGS_LABEL_TEXT_SIZE)
+        .with_font_size(SYSTEM_TEXT_SIZE)
         .with_weight(Weight::NORMAL)
         .with_font_color(color)
         .with_wrap(TextWrap::NoWrap)

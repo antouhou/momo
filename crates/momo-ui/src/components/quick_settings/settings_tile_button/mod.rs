@@ -10,12 +10,11 @@ use super::{
 };
 use daiko::{
     Element,
-    channel::Channel,
     component::{Component, ComponentContext},
     navigation::{FocusKey, FocusOrigin},
     widgets::text::Text,
 };
-use momo_kit::interaction::ButtonBehavior;
+use momo_kit::interaction::{ButtonBehavior, ButtonEvents};
 
 #[derive(Clone, Copy)]
 pub(super) struct SettingsTileSpec {
@@ -31,7 +30,7 @@ pub(super) struct SettingsTileButton {
     pub(super) spec: SettingsTileSpec,
     is_active: bool,
     should_request_focus: bool,
-    activation_channel: Option<Channel<()>>,
+    events: ButtonEvents,
 }
 
 impl SettingsTileButton {
@@ -40,7 +39,7 @@ impl SettingsTileButton {
             spec,
             is_active,
             should_request_focus: false,
-            activation_channel: Some(ctx.create_channel()),
+            events: ButtonEvents::new(ctx),
         }
     }
 
@@ -49,10 +48,7 @@ impl SettingsTileButton {
     }
 
     pub fn activated(&self) -> bool {
-        match &self.activation_channel {
-            Some(channel) => channel.iter().count() > 0,
-            None => false,
-        }
+        self.events.activated()
     }
 }
 
@@ -72,11 +68,7 @@ impl Component for SettingsTileButton {
             is_focused: button.is_focused,
         };
 
-        if button.just_activated
-            && let Some(channel) = &self.activation_channel
-        {
-            let _ = channel.send(());
-        }
+        self.events.publish(&button);
 
         Element::new()
             .with_tag(self.spec.tag)

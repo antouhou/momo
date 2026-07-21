@@ -1,8 +1,44 @@
 use daiko::{
+    channel::Channel,
     component::ComponentContext,
     layout::Layout,
     navigation::{FocusKey, FocusOrigin},
 };
+
+#[derive(Clone)]
+pub struct ButtonEvents {
+    activation_channel: Channel<()>,
+    focused_channel: Channel<()>,
+    focus_events_requested: bool,
+}
+
+impl ButtonEvents {
+    pub fn new(context: &mut ComponentContext) -> Self {
+        Self {
+            activation_channel: context.create_channel(),
+            focused_channel: context.create_channel(),
+            focus_events_requested: false,
+        }
+    }
+
+    pub fn activated(&self) -> bool {
+        self.activation_channel.iter().next().is_some()
+    }
+
+    pub fn has_been_focused(&mut self) -> bool {
+        self.focus_events_requested = true;
+        self.focused_channel.iter().next().is_some()
+    }
+
+    pub fn publish(&self, interaction: &ButtonInteractionState) {
+        if interaction.just_activated {
+            let _ = self.activation_channel.send(());
+        }
+        if self.focus_events_requested && interaction.just_focused {
+            let _ = self.focused_channel.send(());
+        }
+    }
+}
 
 pub struct ButtonBehavior<'context, 'app> {
     ctx: &'context mut ComponentContext<'app>,

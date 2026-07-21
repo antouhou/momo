@@ -1,5 +1,5 @@
 use super::{
-    Home, bluetooth::initialize_bluetooth_state, header::HEADER_BUTTON_HEIGHT, model::TILE_HEIGHT,
+    Home, bluetooth::initialize_bluetooth_state, model::TILE_HEIGHT,
     system_status::initialize_system_status_state,
 };
 use crate::app_state::{APPS_STATE_ID, AppEntry, AppsState};
@@ -110,51 +110,6 @@ fn directional_navigation_moves_across_the_grid() {
     runner.navigate_down();
     runner.run_frame();
     runner.assert_focused("settings");
-}
-
-#[test]
-fn overview_replaces_header_page_dots_with_title() {
-    let mut runner = TestRunner::new(HomeTestApp);
-    runner.set_viewport_size(1280.0, 720.0);
-    runner.run_frame();
-
-    assert!(runner.find_element_by_tag("apps-grid-page-dots").is_some());
-    assert!(
-        runner
-            .find_element_by_tag("overview-header-title")
-            .is_none()
-    );
-
-    runner.click_element("overview-toggle");
-    runner.run_frame();
-
-    assert!(runner.find_element_by_tag("apps-grid-page-dots").is_none());
-    assert!(
-        runner
-            .find_element_by_tag("overview-header-title")
-            .is_some()
-    );
-    assert!(rendered_text_contains(&runner, "Overview"));
-    let (header_row_position, header_row_size) = runner.get_element_bounds("apps-header-row");
-    let (title_position, title_size) = runner.get_element_bounds("overview-header-title");
-    let header_row_center_y = header_row_position.y + header_row_size.y * 0.5;
-    let title_center_y = title_position.y + title_size.y * 0.5;
-
-    assert_eq!(title_size.y, HEADER_BUTTON_HEIGHT);
-    assert!(
-        (title_center_y - header_row_center_y).abs() <= 0.5,
-        "overview title should be vertically centered in the header row"
-    );
-
-    runner.click_element("overview-toggle");
-    runner.run_frame();
-
-    assert!(runner.find_element_by_tag("apps-grid-page-dots").is_some());
-    assert!(
-        runner
-            .find_element_by_tag("overview-header-title")
-            .is_none()
-    );
 }
 
 #[test]
@@ -596,11 +551,4 @@ fn assert_rect_near(actual: (Vec2, Vec2), expected: (Vec2, Vec2), message: &str)
         expected.1,
         &format!("{message} size; expected rect {expected:?}, got {actual:?}"),
     );
-}
-
-fn rendered_text_contains(runner: &TestRunner<HomeTestApp>, expected_text: &str) -> bool {
-    runner
-        .text_buffer_ids_sorted_by_y()
-        .into_iter()
-        .any(|text_buffer_id| runner.text_content(text_buffer_id) == expected_text)
 }

@@ -2,10 +2,9 @@ mod style;
 
 use self::style::{round_icon_button_foreground_color, round_icon_button_style};
 use super::svg_icon;
-use crate::interaction::ButtonBehavior;
+use crate::interaction::{ButtonBehavior, ButtonEvents};
 use daiko::{
     Element,
-    channel::Channel,
     component::{Component, ComponentContext},
     navigation::FocusOrigin,
 };
@@ -31,8 +30,7 @@ pub struct RoundIconButton {
     //  just vecs, and ideally they should be refs, kinda like we have with StrignOrRef. You get
     //  the point, it is needs some careful design and some time.
     svg: &'static [u8],
-    activation_channel: Channel<()>,
-    focused_channel: Option<Channel<()>>,
+    events: ButtonEvents,
     tag: Option<&'static str>,
     variant: RoundIconButtonVariant,
     enabled: bool,
@@ -45,8 +43,7 @@ impl RoundIconButton {
     pub fn new(context: &mut ComponentContext, svg: &'static [u8]) -> Self {
         Self {
             svg,
-            activation_channel: context.create_channel(),
-            focused_channel: None,
+            events: ButtonEvents::new(context),
             tag: None,
             variant: RoundIconButtonVariant::Standard,
             enabled: true,
@@ -57,12 +54,11 @@ impl RoundIconButton {
     }
 
     pub fn activated(&self) -> bool {
-        self.activation_channel.iter().next().is_some()
+        self.events.activated()
     }
 
-    pub fn with_focused_channel(mut self, focused_channel: Channel<()>) -> Self {
-        self.focused_channel = Some(focused_channel);
-        self
+    pub fn has_been_focused(&mut self) -> bool {
+        self.events.has_been_focused()
     }
 
     pub fn with_tag(mut self, tag: &'static str) -> Self {
@@ -105,14 +101,7 @@ impl Component for RoundIconButton {
             .without_layout_tracking()
             .apply();
 
-        if interaction.just_activated {
-            let _ = self.activation_channel.send(());
-        }
-        if interaction.just_focused
-            && let Some(focused_channel) = &self.focused_channel
-        {
-            let _ = focused_channel.send(());
-        }
+        self.events.publish(&interaction);
 
         let mut element = Element::new()
             .with_style(round_icon_button_style(context, &interaction, self.variant))

@@ -6,8 +6,8 @@ use self::style::{
     submenu_toggle_switch_style,
 };
 use super::{
-    common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_element},
-    style::{SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE},
+    common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_image},
+    style::SETTINGS_ICON_SIZE,
 };
 use daiko::{
     Element,
@@ -40,12 +40,7 @@ pub(super) struct SubmenuButton {
 }
 
 pub(super) fn submenu_button_glyph(glyph: QuickSettingsGlyph, icon_color: Color) -> Element {
-    submenu_button_leading_slot(glyph_element(
-        glyph,
-        SETTINGS_ICON_SIZE,
-        SETTINGS_ICON_FRAME_SIZE,
-        icon_color,
-    ))
+    submenu_button_leading_slot().with_content(glyph_image(glyph, SETTINGS_ICON_SIZE, icon_color))
 }
 
 pub(super) fn submenu_button_surface_glyph(
@@ -56,10 +51,8 @@ pub(super) fn submenu_button_surface_glyph(
     submenu_button_glyph(glyph, submenu_button_foreground_color(surface, state))
 }
 
-pub(super) fn submenu_button_leading_slot(content: Element) -> Element {
-    Element::new()
-        .with_style(submenu_leading_slot_style())
-        .with_content(content)
+pub(super) fn submenu_button_leading_slot() -> Element {
+    Element::new().with_style(submenu_leading_slot_style())
 }
 
 pub(super) fn submenu_toggle_switch(ctx: &mut ComponentContext, is_enabled: bool) -> Element {

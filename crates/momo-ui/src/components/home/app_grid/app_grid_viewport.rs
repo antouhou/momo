@@ -7,7 +7,6 @@ use crate::{
             GRID_GAP, HOME_APP_GRID_FOCUSED_KEY_ID, HOME_APP_GRID_SCROLL_ACCUMULATOR_ID,
             HOME_APP_GRID_SMOOTH_OFFSET_ID,
         },
-        paging::scroll_page_delta,
     },
 };
 use daiko::{
@@ -19,6 +18,7 @@ use daiko::{
     style::{Overflow, Style},
     widgets::container::{Container, Fit},
 };
+use momo_kit::interaction::ScrollPagingBehavior;
 use std::time::Duration;
 
 #[derive(Clone)]
@@ -53,12 +53,12 @@ impl Component for AppGridViewport {
             }
         }
 
-        if let Some(page_delta) =
-            scroll_page_delta(ctx, Id::new(HOME_APP_GRID_SCROLL_ACCUMULATOR_ID))
+        if let Some(page_scroll_direction) =
+            ScrollPagingBehavior::new(ctx, Id::new(HOME_APP_GRID_SCROLL_ACCUMULATOR_ID)).apply()
         {
             target_page = self
                 .metrics
-                .offset_page(target_page, page_delta)
+                .offset_page(target_page, page_scroll_direction.page_delta())
                 .min(self.metrics.last_page_index());
         }
 

@@ -1,3 +1,4 @@
+mod overview_title;
 mod style;
 
 pub(super) use self::style::{
@@ -11,6 +12,7 @@ use daiko::{
     component::{Child, Component, ComponentContext, IntoChild},
     navigation::{FocusEntryPolicy, TraversalPolicy},
 };
+pub(super) use overview_title::OverviewHeaderTitle;
 
 pub(super) struct HomeHeader {
     center: Child,

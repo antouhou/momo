@@ -43,7 +43,7 @@ impl Component for SettingsTileGrid {
                 {
                     button.request_focus();
                 }
-                handle_tile_activation(ctx, tile, button.activated(), is_main_view);
+                handle_tile_activation(ctx, tile, button.has_been_activated(), is_main_view);
                 row_element.add_content(button);
             }
             grid.add_content(row_element);

@@ -5,17 +5,16 @@ use self::style::{
     settings_tile_text_column_style, tile_title_style,
 };
 use super::{
-    common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_element},
-    style::{SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE, settings_tile_icon_color},
+    common::{QuickSettingsControlState, QuickSettingsGlyph, glyph_image},
+    style::{SETTINGS_ICON_SIZE, settings_tile_icon_color},
 };
 use daiko::{
     Element,
-    channel::Channel,
     component::{Component, ComponentContext},
     navigation::{FocusKey, FocusOrigin},
     widgets::text::Text,
 };
-use momo_kit::interaction::ButtonBehavior;
+use momo_kit::interaction::{ButtonBehavior, ButtonEvents};
 
 #[derive(Clone, Copy)]
 pub(super) struct SettingsTileSpec {
@@ -31,7 +30,7 @@ pub(super) struct SettingsTileButton {
     pub(super) spec: SettingsTileSpec,
     is_active: bool,
     should_request_focus: bool,
-    activation_channel: Option<Channel<()>>,
+    events: ButtonEvents,
 }
 
 impl SettingsTileButton {
@@ -40,7 +39,7 @@ impl SettingsTileButton {
             spec,
             is_active,
             should_request_focus: false,
-            activation_channel: Some(ctx.create_channel()),
+            events: ButtonEvents::new(ctx),
         }
     }
 
@@ -48,11 +47,8 @@ impl SettingsTileButton {
         self.should_request_focus = true;
     }
 
-    pub fn activated(&self) -> bool {
-        match &self.activation_channel {
-            Some(channel) => channel.iter().count() > 0,
-            None => false,
-        }
+    pub fn has_been_activated(&mut self) -> bool {
+        self.events.has_been_activated()
     }
 }
 
@@ -72,11 +68,7 @@ impl Component for SettingsTileButton {
             is_focused: button.is_focused,
         };
 
-        if button.just_activated
-            && let Some(channel) = &self.activation_channel
-        {
-            let _ = channel.send(());
-        }
+        self.events.publish(&button);
 
         Element::new()
             .with_tag(self.spec.tag)
@@ -95,10 +87,9 @@ fn settings_tile_content(
         .with_content(
             Element::new()
                 .with_style(settings_tile_icon_style(ctx, is_active))
-                .with_content(glyph_element(
+                .with_content(glyph_image(
                     spec.glyph,
                     SETTINGS_ICON_SIZE,
-                    SETTINGS_ICON_FRAME_SIZE,
                     settings_tile_icon_color(is_active),
                 )),
         )

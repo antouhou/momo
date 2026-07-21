@@ -6,13 +6,13 @@ use self::style::{
 };
 use super::{
     common::{
-        QuickSettingsControlState, QuickSettingsGlyph, glyph_element, settings_bottom_row,
+        QuickSettingsControlState, QuickSettingsGlyph, glyph_image, settings_bottom_row,
         settings_row,
     },
     state::{SETTINGS_MENU_STATE_ID, SettingsMenuState, SettingsMenuViewType},
     style::{
-        SETTINGS_COMPACT_CONTENT_GAP, SETTINGS_ICON_FRAME_SIZE, SETTINGS_ICON_SIZE,
-        SETTINGS_ROUND_BUTTON_SIZE, settings_content_container_style, settings_text_color,
+        SETTINGS_COMPACT_CONTENT_GAP, SETTINGS_ICON_SIZE, SETTINGS_ROUND_BUTTON_SIZE,
+        settings_content_container_style, settings_text_color,
     },
     submenu::{
         handle_submenu_back_navigation, submenu_body_style, submenu_section_label_style,
@@ -252,13 +252,12 @@ impl Component for BluetoothDeviceRow {
             control,
             surface: SubmenuButtonSurface::Standard,
             state: button_state,
-            leading: submenu_button_leading_slot(
+            leading: submenu_button_leading_slot().with_content(
                 Element::new()
                     .with_style(submenu_device_icon_ring_style(availability, ctx))
-                    .with_content(glyph_element(
+                    .with_content(glyph_image(
                         glyph_for_device(&self.bluetooth_device),
                         SETTINGS_ICON_SIZE,
-                        SETTINGS_ICON_FRAME_SIZE,
                         submenu_device_icon_color(availability),
                     )),
             ),

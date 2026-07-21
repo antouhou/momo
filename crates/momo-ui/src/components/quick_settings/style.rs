@@ -5,6 +5,7 @@ use daiko::{
     style::{Color, Indent, Style, Transform},
     widgets::text::{TextStyle, TextWrap, Weight},
 };
+use momo_kit::style::SYSTEM_TEXT_SIZE;
 use std::time::Duration;
 
 pub(crate) const SETTINGS_MENU_WIDTH: f32 = 392.0;
@@ -34,13 +35,11 @@ pub(crate) const CONTROL_TRANSITION_MS: u64 = 120;
 pub(crate) const SETTINGS_TOP_ACTIONS_GAP: f32 = SETTINGS_MENU_GAP;
 pub(crate) const SETTINGS_COMPACT_CONTENT_GAP: f32 = 8.0;
 pub(crate) const SETTINGS_STATUS_CHIP_PADDING: Indent = Indent::uniform(10.0);
-pub(crate) const SETTINGS_LABEL_TEXT_SIZE: f32 = 18.0;
-pub(crate) const SETTINGS_ICON_SIZE: usize = SETTINGS_LABEL_TEXT_SIZE as usize;
-pub(crate) const SETTINGS_ICON_FRAME_SIZE: f32 = 20.0;
+pub(crate) const SETTINGS_LABEL_HEIGHT: f32 = 20.0;
+pub(crate) const SETTINGS_ICON_SIZE: usize = SYSTEM_TEXT_SIZE as usize;
 pub(crate) const SETTINGS_TILE_CONTENT_GAP: f32 = SETTINGS_MENU_GAP;
 pub(crate) const SETTINGS_TILE_PADDING: Indent = Indent::uniform(14.0);
 pub(crate) const SETTINGS_TILE_TEXT_HEIGHT: f32 = 38.0;
-pub(crate) const SETTINGS_SUBMENU_SECTION_LABEL_HEIGHT: f32 = 20.0;
 pub(crate) const SETTINGS_SUBMENU_SECTION_TITLE_TEXT_SIZE: f32 = 16.0;
 pub(crate) const SETTINGS_SUBMENU_ROW_PADDING: Indent = Indent::new(
     SETTINGS_TILE_PADDING.left,
@@ -137,21 +136,13 @@ pub(crate) fn settings_bright_surface_color() -> Color {
     Color::from_rgb(236, 240, 243)
 }
 
-pub(crate) fn settings_bright_surface_focus_color() -> Color {
-    Color::from_rgb(244, 246, 249)
-}
-
 pub(crate) fn settings_bright_surface_border_color() -> Color {
     Color::from_rgba_unmultiplied(255, 255, 255, 138)
 }
 
-pub(crate) fn settings_bright_surface_border_focus_color() -> Color {
-    Color::from_rgba_unmultiplied(255, 255, 255, 196)
-}
-
 pub(crate) fn settings_label_text_style(color: Color) -> TextStyle {
     TextStyle::default()
-        .with_font_size(SETTINGS_LABEL_TEXT_SIZE)
+        .with_font_size(SYSTEM_TEXT_SIZE)
         .with_weight(Weight::NORMAL)
         .with_font_color(color)
         .with_wrap(TextWrap::NoWrap)
@@ -159,10 +150,6 @@ pub(crate) fn settings_label_text_style(color: Color) -> TextStyle {
 
 pub(crate) fn settings_text_color() -> Color {
     Color::from_rgb(235, 240, 247)
-}
-
-pub(crate) fn settings_inverse_text_color() -> Color {
-    Color::from_rgb(12, 16, 20)
 }
 
 pub(crate) fn settings_accent_color() -> Color {
@@ -187,14 +174,6 @@ pub(crate) fn settings_warning_border_color() -> Color {
 
 pub(crate) fn settings_warning_text_color() -> Color {
     Color::from_rgb(255, 232, 153)
-}
-
-pub(crate) fn settings_danger_surface_focus_color() -> Color {
-    Color::from_rgb(108, 37, 50)
-}
-
-pub(crate) fn settings_danger_surface_border_focus_color() -> Color {
-    Color::from_rgba_unmultiplied(255, 189, 198, 220)
 }
 
 pub(crate) fn settings_emphasized_surface_color() -> Color {
@@ -239,22 +218,6 @@ pub(crate) fn settings_tile_icon_color(is_active: bool) -> Color {
     } else {
         Color::from_rgb(232, 238, 247)
     }
-}
-
-pub(crate) fn settings_danger_surface_hover_color() -> Color {
-    Color::from_rgb(92, 32, 43)
-}
-
-pub(crate) fn settings_danger_surface_color() -> Color {
-    Color::from_rgb(74, 28, 36)
-}
-
-pub(crate) fn settings_danger_surface_border_hover_color() -> Color {
-    Color::from_rgba_unmultiplied(255, 189, 198, 184)
-}
-
-pub(crate) fn settings_danger_surface_border_color() -> Color {
-    Color::from_rgba_unmultiplied(255, 160, 174, 72)
 }
 
 pub(crate) fn settings_danger_text_color() -> Color {

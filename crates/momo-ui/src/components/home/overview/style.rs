@@ -7,12 +7,10 @@ use daiko::{
     layout::{AlignItems, FlexDirection, ItemSize, JustifyContent},
     style::{Border, BorderRadius, Color, CursorIcon, Overflow, Stroke, Style},
 };
+use momo_kit::components::{ROUND_ICON_BUTTON_BORDER_WIDTH, ROUND_ICON_BUTTON_SIZE};
 use std::time::Duration;
 
-pub(super) const OVERVIEW_CLOSE_BUTTON_SIZE: f32 = 44.0;
-pub(super) const OVERVIEW_CLOSE_ICON_SIZE: usize = 18;
 const OVERVIEW_CLOSE_BUTTON_GAP: f32 = 18.0;
-const OVERVIEW_CLOSE_BUTTON_BORDER_WIDTH: f32 = 1.0;
 const OVERVIEW_CARD_ACTIVE_HEIGHT_RATIO: f32 = 0.58;
 const OVERVIEW_CARD_ACTIVE_WIDTH_RATIO: f32 = 0.5;
 const OVERVIEW_CARD_ACTIVE_ASPECT_RATIO: f32 = 480.0 / 278.0;
@@ -24,7 +22,6 @@ const OVERVIEW_CARD_OVERLAP_RATIO: f32 = 112.0 / 480.0;
 const OVERVIEW_CARD_RADIUS: f32 = 18.0;
 const OVERVIEW_SIDE_CARD_ORDER: u16 = 0;
 const OVERVIEW_ACTIVE_CARD_ORDER: u16 = 1000;
-const OVERVIEW_CONTROL_TRANSITION_MS: u64 = 100;
 const OVERVIEW_CARD_TRANSITION_MS: u64 = 140;
 
 pub(super) fn overview_style() -> Style {
@@ -40,62 +37,17 @@ pub(super) fn overview_style() -> Style {
 }
 
 pub(super) fn overview_window_close_target_position(active_card_frame: OverviewCardFrame) -> Vec2 {
-    let close_button_outer_size =
-        OVERVIEW_CLOSE_BUTTON_SIZE + OVERVIEW_CLOSE_BUTTON_BORDER_WIDTH * 2.0;
+    let close_button_outer_size = ROUND_ICON_BUTTON_SIZE + ROUND_ICON_BUTTON_BORDER_WIDTH * 2.0;
     Vec2::new(
         active_card_frame.position.x + (active_card_frame.size.x - close_button_outer_size) * 0.5,
         active_card_frame.position.y - close_button_outer_size - OVERVIEW_CLOSE_BUTTON_GAP,
     )
 }
 
-pub(super) fn overview_window_close_button_style(
-    ctx: &mut ComponentContext,
-    rendered_position: Vec2,
-    is_pressed: bool,
-    is_hovered: bool,
-    is_focused: bool,
-) -> Style {
-    let is_highlighted = is_hovered || is_focused;
-    let background = if is_pressed {
-        Color::from_rgb(202, 208, 214)
-    } else if is_highlighted {
-        Color::from_rgb(246, 249, 251)
-    } else {
-        Color::from_rgb(226, 231, 235)
-    };
-    let border_color = if is_highlighted {
-        Color::from_rgb(255, 255, 255)
-    } else {
-        Color::from_rgba_unmultiplied(255, 255, 255, 144)
-    };
-
+pub(super) fn overview_window_close_position_style(rendered_position: Vec2) -> Style {
     Style::new()
         .with_absolute_position(rendered_position)
-        .with_fixed_size(OVERVIEW_CLOSE_BUTTON_SIZE, OVERVIEW_CLOSE_BUTTON_SIZE)
-        .with_direction(FlexDirection::Row)
-        .with_align_items(AlignItems::Center)
-        .with_justify_content(JustifyContent::Center)
-        .with_background_color(transition(
-            background,
-            AnimationParameters::default()
-                .with_duration(Duration::from_millis(OVERVIEW_CONTROL_TRANSITION_MS))
-                .with_easing(EasingFunction::EaseOut)
-                .to_transition_options(),
-            ctx,
-        ))
-        .with_border(Border::uniform(Stroke::new(
-            OVERVIEW_CLOSE_BUTTON_BORDER_WIDTH,
-            border_color,
-        )))
-        .with_border_radius(BorderRadius::all(OVERVIEW_CLOSE_BUTTON_SIZE * 0.5))
-        .with_cursor(CursorIcon::PointingHand)
-}
-
-pub(super) fn overview_window_close_icon_style() -> Style {
-    Style::new().with_fixed_size(
-        OVERVIEW_CLOSE_ICON_SIZE as f32,
-        OVERVIEW_CLOSE_ICON_SIZE as f32,
-    )
+        .with_fixed_size(ROUND_ICON_BUTTON_SIZE, ROUND_ICON_BUTTON_SIZE)
 }
 
 pub(super) fn overview_carousel_style() -> Style {

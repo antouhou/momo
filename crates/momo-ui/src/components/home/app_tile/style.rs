@@ -1,3 +1,7 @@
+use crate::components::home::model::{
+    TILE_BORDER_RADIUS, TILE_BORDER_WIDTH, TILE_CONTENT_GAP, TILE_FOCUS_ANIMATION_DURATION_MS,
+    TILE_HEIGHT, TILE_PADDING, TILE_WIDTH,
+};
 use daiko::{
     animation::{AnimationParameters, easing::EasingFunction, transition},
     component::ComponentContext,
@@ -5,14 +9,8 @@ use daiko::{
     style::{Border, BorderRadius, Color, Stroke, Style, Transform},
     widgets::text::{TextStyle, TextWrap},
 };
+use momo_kit::style::SYSTEM_TEXT_SIZE;
 use std::time::Duration;
-
-use crate::components::home::model::{
-    TILE_BORDER_RADIUS, TILE_BORDER_WIDTH, TILE_CONTENT_GAP, TILE_FOCUS_ANIMATION_DURATION_MS,
-    TILE_HEIGHT, TILE_PADDING, TILE_WIDTH,
-};
-
-const TILE_TITLE_TEXT_SIZE: f32 = 18.0;
 
 #[derive(Clone, Copy)]
 pub(crate) struct AppButtonSurfaceMetrics {
@@ -40,7 +38,7 @@ pub fn tile_title_color() -> Color {
 
 pub fn tile_title_style() -> TextStyle {
     TextStyle::default()
-        .with_font_size(TILE_TITLE_TEXT_SIZE)
+        .with_font_size(SYSTEM_TEXT_SIZE)
         .with_font_color(tile_title_color())
         .with_center_alignment()
         .with_wrap(TextWrap::NoWrap)

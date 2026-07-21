@@ -5,11 +5,10 @@ use daiko::{
 };
 
 use super::super::style::{
-    SETTINGS_COMPACT_CONTENT_GAP, SETTINGS_MENU_CONTENT_WIDTH, SETTINGS_MENU_GAP,
-    SETTINGS_MENU_HORIZONTAL_PADDING, SETTINGS_SCROLLABLE_FOCUS_PADDING,
-    SETTINGS_SUBMENU_SECTION_LABEL_HEIGHT, SETTINGS_SUBMENU_SECTION_PADDING,
-    SETTINGS_SUBMENU_SECTION_TITLE_TEXT_SIZE, settings_label_text_style,
-    settings_surface_muted_color,
+    SETTINGS_COMPACT_CONTENT_GAP, SETTINGS_LABEL_HEIGHT, SETTINGS_MENU_CONTENT_WIDTH,
+    SETTINGS_MENU_GAP, SETTINGS_MENU_HORIZONTAL_PADDING, SETTINGS_SCROLLABLE_FOCUS_PADDING,
+    SETTINGS_SUBMENU_SECTION_PADDING, SETTINGS_SUBMENU_SECTION_TITLE_TEXT_SIZE,
+    settings_label_text_style, settings_surface_muted_color,
 };
 
 pub(in crate::components::quick_settings) fn submenu_body_style() -> Style {
@@ -36,7 +35,7 @@ pub(in crate::components::quick_settings) fn submenu_section_style() -> Style {
 pub(in crate::components::quick_settings) fn submenu_section_label_style() -> Style {
     Style::new()
         .with_padding(SETTINGS_SUBMENU_SECTION_PADDING)
-        .with_fixed_height(ItemSize::Points(SETTINGS_SUBMENU_SECTION_LABEL_HEIGHT))
+        .with_fixed_height(ItemSize::Points(SETTINGS_LABEL_HEIGHT))
         .with_direction(FlexDirection::Row)
         .with_align_items(AlignItems::Center)
         .with_justify_content(JustifyContent::FlexStart)

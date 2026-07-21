@@ -1,9 +1,12 @@
-use crate::{CapabilitySet, CompositorEvent, CompositorSnapshot, ShortcutRegistration};
+use crate::{
+    CapabilitySet, CompositorCommand, CompositorEvent, CompositorSnapshot, ShortcutRegistration,
+};
 use std::{
     sync::mpsc::{Receiver, Sender},
     thread::JoinHandle,
 };
 use thiserror::Error;
+use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use tokio::sync::oneshot;
 
 struct EventLoopShutdownSender {
@@ -19,8 +22,20 @@ pub struct CompositorSession {
     capabilities: CapabilitySet,
     snapshot: CompositorSnapshot,
     event_receiver: Option<Receiver<CompositorEvent>>,
+    command_sender: CompositorCommandSender,
     shutdown_sender: EventLoopShutdownSender,
     thread_handle: Option<JoinHandle<()>>,
+}
+
+#[derive(Clone)]
+pub struct CompositorCommandSender {
+    sender: UnboundedSender<CompositorCommand>,
+}
+
+impl CompositorCommandSender {
+    pub fn send(&self, command: CompositorCommand) -> Result<(), CompositorCommand> {
+        self.sender.send(command).map_err(|error| error.0)
+    }
 }
 
 fn event_loop_shutdown_channel() -> (EventLoopShutdownSender, EventLoopShutdownReceiver) {
@@ -58,17 +73,21 @@ impl CompositorSession {
         snapshot: CompositorSnapshot,
         event_loop: impl FnOnce(
             Sender<CompositorEvent>,
+            UnboundedReceiver<CompositorCommand>,
             EventLoopShutdownReceiver,
         ) -> Result<(), CompositorError>
         + Send
         + 'static,
     ) -> Result<Self, CompositorError> {
         let (event_sender, event_receiver) = std::sync::mpsc::channel();
+        let (command_sender, command_receiver) = tokio::sync::mpsc::unbounded_channel();
         let (shutdown_sender, shutdown_receiver) = event_loop_shutdown_channel();
         let thread_handle = std::thread::Builder::new()
             .name("momo-compositor-runtime".to_string())
             .spawn(move || {
-                if let Err(error) = event_loop(event_sender.clone(), shutdown_receiver) {
+                if let Err(error) =
+                    event_loop(event_sender.clone(), command_receiver, shutdown_receiver)
+                {
                     tracing::error!(?error, "compositor runtime stopped after an error");
                     let _ = event_sender.send(CompositorEvent::Disconnected);
                 }
@@ -81,6 +100,9 @@ impl CompositorSession {
             capabilities,
             snapshot,
             event_receiver: Some(event_receiver),
+            command_sender: CompositorCommandSender {
+                sender: command_sender,
+            },
             shutdown_sender,
             thread_handle: Some(thread_handle),
         })
@@ -100,6 +122,10 @@ impl CompositorSession {
 
     pub fn take_event_receiver(&mut self) -> Option<Receiver<CompositorEvent>> {
         self.event_receiver.take()
+    }
+
+    pub fn command_sender(&self) -> CompositorCommandSender {
+        self.command_sender.clone()
     }
 
     pub fn stop(&mut self) {

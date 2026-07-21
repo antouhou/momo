@@ -2,8 +2,8 @@ use crate::{WayfireBackend, WayfireIpcConfiguration};
 use bytes::Bytes;
 use futures_util::{SinkExt, StreamExt};
 use momo_compositor::{
-    CompositorBackend, CompositorEvent, CompositorStartupConfiguration, Key, ShortcutId,
-    ShortcutRegistration, ShortcutTrigger,
+    CompositorBackend, CompositorCommand, CompositorEvent, CompositorStartupConfiguration, Key,
+    ShortcutId, ShortcutRegistration, ShortcutTrigger,
 };
 use serde_json::{Value, json};
 use std::{sync::mpsc, thread, time::Duration};
@@ -52,6 +52,7 @@ fn registers_configured_shortcut_and_forwards_queued_and_live_binding_events() {
                 &json!({"result": "ok", "binding-id": 42}),
             )
             .await;
+            complete_view_management_startup(&mut framed_stream, json!([])).await;
             wait_to_send_live_event
                 .await
                 .expect("test should release the live event");
@@ -93,12 +94,16 @@ fn registers_configured_shortcut_and_forwards_queued_and_live_binding_events() {
             .expect("connected event should be forwarded"),
         event_receiver
             .recv_timeout(TEST_TIMEOUT)
+            .expect("initial snapshot should be forwarded"),
+        event_receiver
+            .recv_timeout(TEST_TIMEOUT)
             .expect("queued binding event should be forwarded"),
     ];
     assert_eq!(
         events,
         vec![
             CompositorEvent::Connected,
+            CompositorEvent::SnapshotChanged(Default::default()),
             CompositorEvent::ShortcutActivated(TEST_SHORTCUT_ID),
         ]
     );
@@ -149,6 +154,7 @@ fn startup_does_not_wait_for_the_binding_registration_response() {
                 &json!({"result": "ok", "binding-id": 42}),
             )
             .await;
+            complete_view_management_startup(&mut framed_stream, json!([])).await;
 
             let next_frame = tokio::time::timeout(TEST_TIMEOUT, framed_stream.next())
                 .await
@@ -216,6 +222,108 @@ fn startup_does_not_wait_for_the_binding_registration_response() {
     server_thread.join().expect("fake server should finish");
 }
 
+#[test]
+fn lists_focuses_and_closes_toplevel_views() {
+    let temporary_directory = tempfile::tempdir().expect("temporary directory should be created");
+    let socket_path = temporary_directory.path().join("wayfire.socket");
+    let server_socket_path = socket_path.clone();
+    let (socket_ready_sender, socket_ready_receiver) = mpsc::channel();
+    let server_thread = thread::spawn(move || {
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_io()
+            .enable_time()
+            .build()
+            .expect("fake Wayfire runtime should be created");
+        runtime.block_on(async move {
+            let listener =
+                UnixListener::bind(&server_socket_path).expect("fake Wayfire socket should bind");
+            socket_ready_sender
+                .send(())
+                .expect("fake Wayfire server should report readiness");
+            let (stream, _) = listener.accept().await.expect("backend should connect");
+            let mut framed_stream = framed_stream(stream);
+            let view = test_view(17, "Project notes", false);
+            complete_view_management_startup(&mut framed_stream, json!([view])).await;
+
+            let focus_request = read_json_frame(&mut framed_stream).await;
+            assert_eq!(focus_request["method"], "window-rules/focus-view");
+            assert_eq!(focus_request["data"]["id"], 17);
+            write_json_frame(&mut framed_stream, &json!({"result": "ok"})).await;
+            write_json_frame(
+                &mut framed_stream,
+                &json!({"event": "view-focused", "view": test_view(17, "Project notes", true)}),
+            )
+            .await;
+
+            let close_request = read_json_frame(&mut framed_stream).await;
+            assert_eq!(close_request["method"], "window-rules/close-view");
+            assert_eq!(close_request["data"]["id"], 17);
+            write_json_frame(&mut framed_stream, &json!({"result": "ok"})).await;
+            write_json_frame(
+                &mut framed_stream,
+                &json!({"event": "view-unmapped", "view": test_view(17, "Project notes", true)}),
+            )
+            .await;
+
+            let next_frame = tokio::time::timeout(TEST_TIMEOUT, framed_stream.next())
+                .await
+                .expect("backend should close the socket during shutdown");
+            assert!(next_frame.is_none(), "shutdown should close the IPC stream");
+        });
+    });
+    socket_ready_receiver
+        .recv_timeout(TEST_TIMEOUT)
+        .expect("fake Wayfire server should become ready");
+
+    let backend = WayfireBackend::new(WayfireIpcConfiguration {
+        socket_path: Some(socket_path),
+    });
+    let mut session = backend
+        .start(CompositorStartupConfiguration::default())
+        .expect("backend should start");
+    let command_sender = session.command_sender();
+    let event_receiver = session
+        .take_event_receiver()
+        .expect("session should expose compositor events");
+    assert_eq!(
+        event_receiver.recv_timeout(TEST_TIMEOUT),
+        Ok(CompositorEvent::Connected)
+    );
+    let initial_snapshot = event_receiver
+        .recv_timeout(TEST_TIMEOUT)
+        .expect("initial snapshot should arrive");
+    let CompositorEvent::SnapshotChanged(initial_snapshot) = initial_snapshot else {
+        panic!("expected initial snapshot");
+    };
+    assert_eq!(initial_snapshot.views.len(), 1);
+    assert_eq!(initial_snapshot.views[0].title.as_str(), "Project notes");
+
+    command_sender
+        .send(CompositorCommand::FocusView { view_id: 17 })
+        .expect("focus command should send");
+    assert_eq!(
+        event_receiver.recv_timeout(TEST_TIMEOUT),
+        Ok(CompositorEvent::ViewFocused { view_id: 17 })
+    );
+    let _focused_snapshot = event_receiver
+        .recv_timeout(TEST_TIMEOUT)
+        .expect("focused snapshot should arrive");
+
+    command_sender
+        .send(CompositorCommand::CloseView { view_id: 17 })
+        .expect("close command should send");
+    let closed_snapshot = event_receiver
+        .recv_timeout(TEST_TIMEOUT)
+        .expect("closed snapshot should arrive");
+    let CompositorEvent::SnapshotChanged(closed_snapshot) = closed_snapshot else {
+        panic!("expected closed snapshot");
+    };
+    assert!(closed_snapshot.views.is_empty());
+
+    session.stop();
+    server_thread.join().expect("fake server should finish");
+}
+
 fn framed_stream(stream: UnixStream) -> FramedUnixStream {
     LengthDelimitedCodec::builder()
         .little_endian()
@@ -239,4 +347,27 @@ async fn write_json_frame(stream: &mut FramedUnixStream, value: &Value) {
         .send(Bytes::from(payload))
         .await
         .expect("response frame should write");
+}
+
+async fn complete_view_management_startup(stream: &mut FramedUnixStream, views: Value) {
+    let watch_request = read_json_frame(stream).await;
+    assert_eq!(watch_request["method"], "window-rules/events/watch");
+    write_json_frame(stream, &json!({"result": "ok"})).await;
+
+    let list_views_request = read_json_frame(stream).await;
+    assert_eq!(list_views_request["method"], "window-rules/list-views");
+    write_json_frame(stream, &views).await;
+}
+
+fn test_view(id: u64, title: &str, activated: bool) -> Value {
+    json!({
+        "id": id,
+        "title": title,
+        "app-id": "org.example.App",
+        "output-name": "HDMI-A-1",
+        "wset-index": 0,
+        "activated": activated,
+        "mapped": true,
+        "type": "toplevel"
+    })
 }

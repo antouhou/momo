@@ -59,11 +59,25 @@ impl App for MomoUi {
             self.system_control.volume(),
             self.system_control.battery(),
         );
+        let initial_compositor_snapshot = self
+            .compositor_session
+            .as_ref()
+            .map(|session| session.snapshot().clone())
+            .unwrap_or_default();
+        let compositor_command_sender = self
+            .compositor_session
+            .as_ref()
+            .map(CompositorSession::command_sender);
         let compositor_event_receiver = self
             .compositor_session
             .as_mut()
             .and_then(CompositorSession::take_event_receiver);
-        initialize_compositor_events(app_context, compositor_event_receiver);
+        initialize_compositor_events(
+            app_context,
+            initial_compositor_snapshot,
+            compositor_command_sender,
+            compositor_event_receiver,
+        );
         init_app_state(app_context);
         Home::new()
     }

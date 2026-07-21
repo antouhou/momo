@@ -2,8 +2,8 @@ mod backend;
 mod model;
 
 pub use backend::{
-    BackendMetadata, CompositorBackend, CompositorError, CompositorSession,
-    CompositorStartupConfiguration, EventLoopShutdownReceiver,
+    BackendMetadata, CompositorBackend, CompositorCommandSender, CompositorError,
+    CompositorSession, CompositorStartupConfiguration, EventLoopShutdownReceiver,
 };
 pub use daikore::integration::input::Key;
 pub use model::{

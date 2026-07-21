@@ -1,3 +1,7 @@
+use crate::components::home::model::{
+    TILE_BORDER_RADIUS, TILE_BORDER_WIDTH, TILE_CONTENT_GAP, TILE_FOCUS_ANIMATION_DURATION_MS,
+    TILE_HEIGHT, TILE_PADDING, TILE_WIDTH,
+};
 use daiko::{
     animation::{AnimationParameters, easing::EasingFunction, transition},
     component::ComponentContext,
@@ -7,10 +11,6 @@ use daiko::{
 };
 use momo_kit::style::SYSTEM_TEXT_SIZE;
 use std::time::Duration;
-use crate::components::home::model::{
-    TILE_BORDER_RADIUS, TILE_BORDER_WIDTH, TILE_CONTENT_GAP, TILE_FOCUS_ANIMATION_DURATION_MS,
-    TILE_HEIGHT, TILE_PADDING, TILE_WIDTH,
-};
 
 #[derive(Clone, Copy)]
 pub(crate) struct AppButtonSurfaceMetrics {

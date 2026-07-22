@@ -4,10 +4,11 @@ use self::style::{
     overview_accent_color, overview_glyph_color, overview_glyph_frame_style, overview_glyph_size,
 };
 use super::icon::{DOCK_BUTTON_SIZE, dock_button_style};
-use crate::components::home::model::tile_focus_transform;
+use crate::components::home::{
+    HOME_VIEW_REQUEST_CHANNEL_ID, HomeView, model::tile_focus_transform, use_home_view_state,
+};
 use daiko::{
     Element, Vec2,
-    channel::Channel,
     component::{Component, ComponentContext},
     widgets::image::{Image, ImageParams, ImageSource, ImageType},
 };
@@ -16,13 +17,20 @@ use momo_kit::interaction::ButtonBehavior;
 const OVERVIEW_ICON: &[u8] = include_bytes!("../../../../assets/window-maximize.svg");
 
 pub(super) struct OverviewDockButton {
-    pub(super) activation_channel: Channel<()>,
     pub(super) interactions_disabled: bool,
-    pub(super) is_active: bool,
 }
 
 impl Component for OverviewDockButton {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
+        let home_view = use_home_view_state(ctx);
+        let active_home_view = *home_view.read();
+        let is_active = matches!(active_home_view, HomeView::Overview);
+        let target_view = match active_home_view {
+            HomeView::Apps => HomeView::Overview,
+            HomeView::Overview => HomeView::Apps,
+        };
+        let home_view_request_channel =
+            ctx.use_channel_with_id::<HomeView>(HOME_VIEW_REQUEST_CHANNEL_ID);
         let button = ButtonBehavior::new(ctx)
             .with_enabled(!self.interactions_disabled)
             .apply();
@@ -33,17 +41,17 @@ impl Component for OverviewDockButton {
         );
 
         if button.just_activated {
-            let _ = self.activation_channel.send(());
+            let _ = home_view_request_channel.send(target_view);
         }
 
         Element::new()
             .with_tag("overview-toggle")
             .with_style(dock_button_style(
                 ctx,
-                overview_accent_color(self.is_active),
+                overview_accent_color(is_active),
                 &button_transform,
                 button.is_hovering,
-                button.is_focus_visible || self.is_active,
+                button.is_focus_visible || is_active,
             ))
             .with_content(
                 Element::new()
@@ -55,7 +63,7 @@ impl Component for OverviewDockButton {
                             image_type: Some(ImageType::Svg),
                             source: ImageSource::BytesSlice(OVERVIEW_ICON),
                         })
-                        .fill_color(Some(overview_glyph_color(self.is_active))),
+                        .fill_color(Some(overview_glyph_color(is_active))),
                     ),
             )
     }

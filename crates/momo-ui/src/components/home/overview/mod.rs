@@ -13,6 +13,7 @@ use self::{
 };
 use super::compositor::use_compositor_integration_state;
 use super::surface_layer_controller::HOME_HIDE_SHELL_CHANNEL_ID;
+use super::{HOME_VIEW_REQUEST_CHANNEL_ID, HomeView};
 use daiko::{
     Element, Id, Vec2,
     animation::SmoothFollowConfig,
@@ -61,46 +62,35 @@ impl OverviewCardPosition {
     }
 }
 
-pub(super) struct Overview {
-    show_apps_channel: Channel<()>,
-}
-
-impl Overview {
-    pub(super) fn new(show_apps_channel: Channel<()>) -> Self {
-        Self { show_apps_channel }
-    }
-}
+pub(super) struct Overview;
 
 impl Component for Overview {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
+        let home_view_request_channel =
+            ctx.use_channel_with_id::<HomeView>(HOME_VIEW_REQUEST_CHANNEL_ID);
         let focus_scope = ctx.focus_scope();
         focus_scope.capture_when_contains_focus(&[
             NavigationInputAction::Cancel,
             NavigationInputAction::Back,
         ]);
         if focus_scope.drain_captured_actions().next().is_some() {
-            let _ = self.show_apps_channel.send(());
+            let _ = home_view_request_channel.send(HomeView::Apps);
         }
 
         Element::new()
             .with_tag("overview")
             .with_style(overview_style())
-            .with_content(OverviewCarousel {
-                show_apps_channel: self.show_apps_channel.clone(),
-            })
+            .with_content(OverviewCarousel)
     }
 }
 
 #[derive(Clone)]
-struct OverviewCarousel {
-    show_apps_channel: Channel<()>,
-}
+struct OverviewCarousel;
 
 impl Component for OverviewCarousel {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         let carousel_state = ctx.use_local_state(OverviewCarouselState::default);
         let action_channel: Channel<OverviewCarouselAction> = ctx.create_channel();
-        let hide_shell_channel = ctx.use_channel_with_id::<()>(HOME_HIDE_SHELL_CHANNEL_ID);
         let compositor_integration = use_compositor_integration_state(ctx);
         let compositor_integration = compositor_integration.read();
         let views = &compositor_integration.snapshot.views;
@@ -149,8 +139,6 @@ impl Component for OverviewCarousel {
                 viewport_size,
                 action_channel: action_channel.clone(),
                 command_sender: compositor_integration.command_sender.clone(),
-                show_apps_channel: self.show_apps_channel.clone(),
-                hide_shell_channel: hide_shell_channel.clone(),
             });
         }
 
@@ -197,12 +185,13 @@ struct OverviewCard {
     viewport_size: Vec2,
     action_channel: Channel<OverviewCarouselAction>,
     command_sender: Option<CompositorCommandSender>,
-    show_apps_channel: Channel<()>,
-    hide_shell_channel: Channel<()>,
 }
 
 impl Component for OverviewCard {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
+        let home_view_request_channel =
+            ctx.use_channel_with_id::<HomeView>(HOME_VIEW_REQUEST_CHANNEL_ID);
+        let hide_shell_channel = ctx.use_channel_with_id::<()>(HOME_HIDE_SHELL_CHANNEL_ID);
         let target_frame =
             overview_card_target_frame(self.viewport_size, self.card_index, self.active_card_index);
         let motion_config = overview_page_motion_config();
@@ -232,8 +221,8 @@ impl Component for OverviewCard {
                 let _ = command_sender.send(CompositorCommand::FocusView {
                     view_id: self.view_id,
                 });
-                let _ = self.show_apps_channel.send(());
-                let _ = self.hide_shell_channel.send(());
+                let _ = home_view_request_channel.send(HomeView::Apps);
+                let _ = hide_shell_channel.send(());
             }
         } else if (button.just_activated || focused_from_navigation)
             && let Some(action) = self.position.action()

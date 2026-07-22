@@ -37,9 +37,13 @@ use daiko::{
     channel::Channel,
     component::{Component, ComponentContext},
     layout::{FlexDirection, ItemSize},
+    state_management::StateHandle,
     style::Style,
 };
 use momo_kit::style::shell_background_gradient;
+
+pub(crate) const HOME_VIEW_REQUEST_CHANNEL_ID: &str = "momo_home_view_request_channel";
+const HOME_VIEW_STATE_ID: &str = "momo_home_view_state";
 
 #[derive(Clone, Copy)]
 pub struct Home {
@@ -47,10 +51,14 @@ pub struct Home {
 }
 
 #[derive(Clone, Copy, Default, PartialEq, Eq)]
-enum HomeView {
+pub(crate) enum HomeView {
     #[default]
     Apps,
     Overview,
+}
+
+pub(crate) fn use_home_view_state(ctx: &mut ComponentContext) -> StateHandle<HomeView> {
+    ctx.use_shared_state(Id::new(HOME_VIEW_STATE_ID), HomeView::default)
 }
 
 impl Home {
@@ -81,14 +89,12 @@ impl Component for Home {
         let launch = use_launch_controller(ctx);
         let launch_is_active = launch.active_launch.is_some();
         let should_render_settings_menu = should_render_settings_menu(ctx);
-        let home_view = ctx.use_local_state(HomeView::default);
-        let show_overview_channel: Channel<()> = ctx.create_channel();
-        let show_apps_channel: Channel<()> = ctx.create_channel();
+        let home_view = use_home_view_state(ctx);
+        let home_view_request_channel: Channel<HomeView> =
+            ctx.use_channel_with_id(HOME_VIEW_REQUEST_CHANNEL_ID);
 
-        if show_overview_channel.iter().next().is_some() {
-            *home_view.write() = HomeView::Overview;
-        } else if show_apps_channel.iter().next().is_some() {
-            *home_view.write() = HomeView::Apps;
+        if let Some(requested_home_view) = home_view_request_channel.iter().next() {
+            *home_view.write() = requested_home_view;
         }
 
         let active_home_view = *home_view.read();
@@ -111,13 +117,8 @@ impl Component for Home {
                 preferred_focus_app_id: launch.preferred_focus_app_id,
                 prefer_first_tile: launch.preferred_dock_focus_key.is_none(),
             }),
-            HomeView::Overview => root.add_content(Overview::new(show_apps_channel.clone())),
+            HomeView::Overview => root.add_content(Overview),
         }
-
-        let overview_toggle_channel = match active_home_view {
-            HomeView::Apps => show_overview_channel,
-            HomeView::Overview => show_apps_channel,
-        };
 
         root.add_content(
             Element::new()
@@ -126,8 +127,6 @@ impl Component for Home {
                     interactions_disabled: launch_is_active,
                     hidden_app_id: launch.launched_app_id,
                     preferred_focus_key: launch.preferred_dock_focus_key,
-                    overview_toggle_channel,
-                    overview_is_active: matches!(active_home_view, HomeView::Overview),
                 }),
         );
 

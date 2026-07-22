@@ -105,10 +105,7 @@ impl Component for SurfaceLayerController {
         }
 
         if hide_shell_requested && !self.launch_is_active {
-            ctx.set_surface_keyboard_interactivity(SurfaceKeyboardInteractivity::None);
-            ctx.set_surface_layer(SurfaceLayer::Background);
-            surface_layer_control.set_current_layer(SurfaceLayer::Background);
-            *transition.write_silent() = VisibilityTransition::Hiding;
+            hide_shell(ctx, &surface_layer_control, &transition);
         }
 
         if !hide_shell_requested && requested_toggle_count % 2 == 1 && !self.launch_is_active {
@@ -120,16 +117,24 @@ impl Component for SurfaceLayerController {
                     *transition.write_silent() = VisibilityTransition::Showing;
                 }
                 SurfaceLayer::Top | SurfaceLayer::Bottom | SurfaceLayer::Overlay => {
-                    ctx.set_surface_keyboard_interactivity(SurfaceKeyboardInteractivity::None);
-                    ctx.set_surface_layer(SurfaceLayer::Background);
-                    surface_layer_control.set_current_layer(SurfaceLayer::Background);
-                    *transition.write_silent() = VisibilityTransition::Hiding;
+                    hide_shell(ctx, &surface_layer_control, &transition);
                 }
             }
         }
 
         Element::new().with_style(no_view_style())
     }
+}
+
+fn hide_shell(
+    ctx: &mut ComponentContext,
+    surface_layer_control: &SurfaceLayerControl,
+    transition: &StateHandle<VisibilityTransition>,
+) {
+    ctx.set_surface_keyboard_interactivity(SurfaceKeyboardInteractivity::None);
+    ctx.set_surface_layer(SurfaceLayer::Background);
+    surface_layer_control.set_current_layer(SurfaceLayer::Background);
+    *transition.write_silent() = VisibilityTransition::Hiding;
 }
 
 fn focus_event(event: &WindowEvent) -> Option<FocusEvent> {

@@ -315,55 +315,67 @@ fn forward_message(
 ) -> Result<bool, CompositorError> {
     let event: WayfireEvent = serde_json::from_value(message)
         .map_err(|error| CompositorError::new(format!("invalid Wayfire event: {error}")))?;
-    if event.event == "command-binding" {
-        let Some(shortcut_id) = event
-            .binding_id
-            .and_then(|binding_id| binding_shortcuts.get(&binding_id).copied())
-        else {
-            return Ok(true);
-        };
-        return Ok(event_sender
-            .send(CompositorEvent::ShortcutActivated(shortcut_id))
-            .is_ok());
-    }
 
-    let focused_view_id = update_snapshot_from_event(snapshot, &event);
-    if let Some(view_id) = focused_view_id
-        && event_sender
-            .send(CompositorEvent::ViewFocused { view_id })
-            .is_err()
-    {
-        return Ok(false);
-    }
-    Ok(event_sender
-        .send(CompositorEvent::SnapshotChanged(snapshot.clone()))
-        .is_ok())
+    let should_continue = match event.event.as_str() {
+        "command-binding" => handle_command_binding_event(binding_shortcuts, &event, event_sender),
+        "view-unmapped" => handle_view_unmapped_event(snapshot, &event, event_sender),
+        "view-focused" => handle_view_updated_event(snapshot, &event, true, event_sender),
+        "view-mapped" | "view-title-changed" | "view-app-id-changed" => {
+            handle_view_updated_event(snapshot, &event, false, event_sender)
+        }
+        _ => true,
+    };
+    Ok(should_continue)
 }
 
-fn update_snapshot_from_event(
+fn handle_command_binding_event(
+    binding_shortcuts: &HashMap<u64, ShortcutId>,
+    event: &WayfireEvent,
+    event_sender: &Sender<CompositorEvent>,
+) -> bool {
+    let Some(shortcut_id) = event
+        .binding_id
+        .and_then(|binding_id| binding_shortcuts.get(&binding_id).copied())
+    else {
+        return true;
+    };
+    event_sender
+        .send(CompositorEvent::ShortcutActivated(shortcut_id))
+        .is_ok()
+}
+
+fn handle_view_unmapped_event(
     snapshot: &mut CompositorSnapshot,
     event: &WayfireEvent,
-) -> Option<u64> {
-    if event.event == "view-unmapped" {
-        if let Some(view) = &event.view {
-            snapshot
-                .views
-                .retain(|summary| summary.identifier != view.id);
-        }
-        return None;
+    event_sender: &Sender<CompositorEvent>,
+) -> bool {
+    if let Some(view) = &event.view {
+        snapshot
+            .views
+            .retain(|summary| summary.identifier != view.id);
     }
+    event_sender
+        .send(CompositorEvent::SnapshotChanged(snapshot.clone()))
+        .is_ok()
+}
 
-    if event.event == "view-focused" {
+fn handle_view_updated_event(
+    snapshot: &mut CompositorSnapshot,
+    event: &WayfireEvent,
+    is_focus_event: bool,
+    event_sender: &Sender<CompositorEvent>,
+) -> bool {
+    if is_focus_event {
         for view in &mut snapshot.views {
             view.is_focused = false;
         }
     }
     let summary = event.view.clone().and_then(view_summary);
-    let focused_view_id = (event.event == "view-focused")
+    let focused_view_id = is_focus_event
         .then(|| summary.as_ref().map(|view| view.identifier))
         .flatten();
     if let Some(mut summary) = summary {
-        if event.event == "view-focused" {
+        if is_focus_event {
             summary.is_focused = true;
         }
         if let Some(existing) = snapshot
@@ -376,7 +388,16 @@ fn update_snapshot_from_event(
             snapshot.views.push(summary);
         }
     }
-    focused_view_id
+    if let Some(view_id) = focused_view_id
+        && event_sender
+            .send(CompositorEvent::ViewFocused { view_id })
+            .is_err()
+    {
+        return false;
+    }
+    event_sender
+        .send(CompositorEvent::SnapshotChanged(snapshot.clone()))
+        .is_ok()
 }
 
 fn view_summary(view: WayfireView) -> Option<ViewSummary> {

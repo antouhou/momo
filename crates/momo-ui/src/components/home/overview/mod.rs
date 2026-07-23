@@ -83,7 +83,6 @@ impl Component for Overview {
     }
 }
 
-#[derive(Clone)]
 struct OverviewCarousel;
 
 impl Component for OverviewCarousel {

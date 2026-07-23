@@ -1,15 +1,19 @@
 mod state;
 mod style;
+mod window_controls;
 
 use self::{
-    state::{OVERVIEW_CARD_COUNT, OverviewCarouselAction, OverviewCarouselState},
+    state::{OverviewCarouselAction, OverviewCarouselState},
     style::{
         OverviewCardFrame, overview_card_layout_style, overview_card_stage_style,
         overview_card_surface_style, overview_card_target_frame, overview_carousel_style,
-        overview_style, overview_window_close_position_style,
-        overview_window_close_target_position,
+        overview_style,
     },
+    window_controls::OverviewWindowControls,
 };
+use super::compositor::use_compositor_integration_state;
+use super::state::{HomeView, use_home_view_request_channel};
+use super::surface_layer_controller::HOME_HIDE_SHELL_CHANNEL_ID;
 use daiko::{
     Element, Id, Vec2,
     animation::SmoothFollowConfig,
@@ -17,18 +21,13 @@ use daiko::{
     component::{Component, ComponentContext},
     navigation::NavigationInputAction,
 };
-use momo_kit::{
-    assets::XMARK_ICON,
-    components::{RoundIconButton, RoundIconButtonVariant},
-    interaction::{ButtonBehavior, PageScrollDirection, ScrollPagingBehavior},
-};
-use std::time::Duration;
+use momo_compositor::{CompositorCommand, CompositorCommandSender};
+use momo_kit::interaction::{ButtonBehavior, PageScrollDirection, ScrollPagingBehavior};
+use std::{sync::Arc, time::Duration};
 
 const OVERVIEW_SCROLL_STATE_ID: &str = "momo_home_overview_scroll_state";
 const OVERVIEW_CARD_POSITION_MOTION_ID: &str = "momo_home_overview_card_position_motion";
 const OVERVIEW_CARD_SIZE_MOTION_ID: &str = "momo_home_overview_card_size_motion";
-const OVERVIEW_WINDOW_CLOSE_POSITION_MOTION_ID: &str =
-    "momo_home_overview_window_close_position_motion";
 const OVERVIEW_FALLBACK_VIEWPORT_SIZE: Vec2 = Vec2::new(1200.0, 360.0);
 const OVERVIEW_PAGE_MOTION_DURATION_MS: u64 = 260;
 
@@ -63,25 +62,18 @@ impl OverviewCardPosition {
     }
 }
 
-pub(super) struct Overview {
-    show_apps_channel: Channel<()>,
-}
-
-impl Overview {
-    pub(super) fn new(show_apps_channel: Channel<()>) -> Self {
-        Self { show_apps_channel }
-    }
-}
+pub(super) struct Overview;
 
 impl Component for Overview {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
+        let home_view_request_channel = use_home_view_request_channel(ctx);
         let focus_scope = ctx.focus_scope();
         focus_scope.capture_when_contains_focus(&[
             NavigationInputAction::Cancel,
             NavigationInputAction::Back,
         ]);
         if focus_scope.drain_captured_actions().next().is_some() {
-            let _ = self.show_apps_channel.send(());
+            let _ = home_view_request_channel.send(HomeView::Apps);
         }
 
         Element::new()
@@ -91,19 +83,24 @@ impl Component for Overview {
     }
 }
 
-#[derive(Clone, Copy)]
 struct OverviewCarousel;
 
 impl Component for OverviewCarousel {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         let carousel_state = ctx.use_local_state(OverviewCarouselState::default);
         let action_channel: Channel<OverviewCarouselAction> = ctx.create_channel();
+        let compositor_integration = use_compositor_integration_state(ctx);
+        let compositor_integration = compositor_integration.read();
+        let views = &compositor_integration.snapshot.views;
+        let card_count = views.len();
+        let preferred_card_index = views.iter().position(|view| view.is_focused);
         ctx.focus_scope();
         let current_state = *carousel_state.read();
         let mut next_state = current_state;
+        next_state.reconcile(card_count, preferred_card_index);
 
         for action in action_channel.iter() {
-            next_state.apply(action);
+            next_state.apply(action, card_count);
         }
 
         if let Some(page_scroll_direction) =
@@ -113,7 +110,7 @@ impl Component for OverviewCarousel {
                 PageScrollDirection::Previous => OverviewCarouselAction::ShowPrevious,
                 PageScrollDirection::Next => OverviewCarouselAction::ShowNext,
             };
-            next_state.apply(action);
+            next_state.apply(action, card_count);
         }
 
         if next_state != current_state {
@@ -130,23 +127,28 @@ impl Component for OverviewCarousel {
             .with_tag("overview-card-stage")
             .with_style(overview_card_stage_style());
 
-        for card_index in 0..OVERVIEW_CARD_COUNT {
-            let position = overview_card_position(card_index, next_state);
+        for (card_index, view) in views.iter().enumerate() {
+            let position = overview_card_position(card_index, next_state, card_count);
             card_stage.add_content(OverviewCard {
                 card_index,
-                active_card_index: active_card_index.unwrap_or(OVERVIEW_CARD_COUNT / 2),
+                active_card_index: active_card_index.unwrap_or(0),
+                view_id: view.identifier,
                 position,
                 viewport_size,
                 action_channel: action_channel.clone(),
+                command_sender: compositor_integration.command_sender.clone(),
             });
         }
 
         if let Some(active_card_index) = active_card_index {
             let active_card_frame =
                 overview_card_target_frame(viewport_size, active_card_index, active_card_index);
-            card_stage.add_content(OverviewWindowCloseButton {
-                action_channel,
-                target_position: overview_window_close_target_position(active_card_frame),
+            let active_view = &views[active_card_index];
+            card_stage.add_content(OverviewWindowControls {
+                view_id: active_view.identifier,
+                window_title: Arc::clone(&active_view.title),
+                command_sender: compositor_integration.command_sender.clone(),
+                active_card_frame,
             });
         }
 
@@ -157,14 +159,16 @@ impl Component for OverviewCarousel {
     }
 }
 
-fn overview_card_position(card_index: usize, state: OverviewCarouselState) -> OverviewCardPosition {
-    if !state.is_card_visible(card_index) {
-        OverviewCardPosition::Hidden
-    } else if state.active_card_index() == Some(card_index) {
+fn overview_card_position(
+    card_index: usize,
+    state: OverviewCarouselState,
+    card_count: usize,
+) -> OverviewCardPosition {
+    if state.active_card_index() == Some(card_index) {
         OverviewCardPosition::Active
     } else if state.previous_card_index() == Some(card_index) {
         OverviewCardPosition::Previous
-    } else if state.next_card_index() == Some(card_index) {
+    } else if state.next_card_index(card_count) == Some(card_index) {
         OverviewCardPosition::Next
     } else {
         OverviewCardPosition::Hidden
@@ -174,13 +178,17 @@ fn overview_card_position(card_index: usize, state: OverviewCarouselState) -> Ov
 struct OverviewCard {
     card_index: usize,
     active_card_index: usize,
+    view_id: u64,
     position: OverviewCardPosition,
     viewport_size: Vec2,
     action_channel: Channel<OverviewCarouselAction>,
+    command_sender: Option<CompositorCommandSender>,
 }
 
 impl Component for OverviewCard {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
+        let home_view_request_channel = use_home_view_request_channel(ctx);
+        let hide_shell_channel = ctx.use_channel_with_id::<()>(HOME_HIDE_SHELL_CHANNEL_ID);
         let target_frame =
             overview_card_target_frame(self.viewport_size, self.card_index, self.active_card_index);
         let motion_config = overview_page_motion_config();
@@ -205,7 +213,15 @@ impl Component for OverviewCard {
             .apply();
 
         let focused_from_navigation = button.just_focused && button.is_focus_visible;
-        if (button.just_activated || focused_from_navigation)
+        if button.just_activated && matches!(self.position, OverviewCardPosition::Active) {
+            if let Some(command_sender) = &self.command_sender {
+                let _ = command_sender.send(CompositorCommand::FocusView {
+                    view_id: self.view_id,
+                });
+                let _ = home_view_request_channel.send(HomeView::Apps);
+                let _ = hide_shell_channel.send(());
+            }
+        } else if (button.just_activated || focused_from_navigation)
             && let Some(action) = self.position.action()
         {
             let _ = self.action_channel.send(action);
@@ -235,37 +251,7 @@ impl Component for OverviewCard {
     }
 }
 
-struct OverviewWindowCloseButton {
-    action_channel: Channel<OverviewCarouselAction>,
-    target_position: Vec2,
-}
-
-impl Component for OverviewWindowCloseButton {
-    fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        let rendered_position = {
-            let mut position_motion = ctx.smooth_follow_with_id::<Vec2>(
-                Id::new(OVERVIEW_WINDOW_CLOSE_POSITION_MOTION_ID),
-                overview_page_motion_config(),
-            );
-            position_motion.follow(self.target_position)
-        };
-        let mut button = RoundIconButton::new(ctx, XMARK_ICON)
-            .with_tag("overview-window-close")
-            .with_variant(RoundIconButtonVariant::Danger);
-
-        if button.has_been_activated() {
-            let _ = self
-                .action_channel
-                .send(OverviewCarouselAction::CloseActive);
-        }
-
-        Element::new()
-            .with_style(overview_window_close_position_style(rendered_position))
-            .with_content(button)
-    }
-}
-
-fn overview_page_motion_config() -> SmoothFollowConfig {
+pub(super) fn overview_page_motion_config() -> SmoothFollowConfig {
     SmoothFollowConfig::new(
         Duration::from_millis(OVERVIEW_PAGE_MOTION_DURATION_MS),
         0.3,

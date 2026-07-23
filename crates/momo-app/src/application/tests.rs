@@ -45,7 +45,7 @@ impl CompositorBackend for FakeBackend {
             BackendMetadata { name: "fake" },
             CapabilitySet::default(),
             CompositorSnapshot::default(),
-            move |event_sender, shutdown_receiver| {
+            move |event_sender, _command_receiver, shutdown_receiver| {
                 event_sender
                     .send(CompositorEvent::ShortcutActivated(ShortcutId::new(0)))
                     .map_err(|error| CompositorError::new(error.to_string()))?;

@@ -14,6 +14,7 @@ use style::no_view_style;
 // Please note that only one Component can read from the channel. It is not enforced by the
 //  compiler, but something to keep in mind
 pub(super) const HOME_FOCUS_LOST_CHANNEL_ID: &str = "momo_home_focus_lost_channel";
+pub(super) const HOME_HIDE_SHELL_CHANNEL_ID: &str = "momo_home_hide_shell_channel";
 const HOME_SURFACE_LAYER_STATE_ID: &str = "momo_home_surface_layer_state";
 
 #[derive(Clone, Copy)]
@@ -62,6 +63,7 @@ impl Component for SurfaceLayerController {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
         let surface_layer_control = use_surface_layer_control(ctx);
         let focus_lost_channel = ctx.use_channel_with_id::<()>(HOME_FOCUS_LOST_CHANNEL_ID);
+        let hide_shell_channel = ctx.use_channel_with_id::<()>(HOME_HIDE_SHELL_CHANNEL_ID);
         let transition = ctx.use_local_state(VisibilityTransition::default);
         let compositor_event_inbox = use_compositor_event_inbox(ctx);
         let requested_toggle_count = {
@@ -79,6 +81,7 @@ impl Component for SurfaceLayerController {
             .iter()
             .filter_map(focus_event)
             .next_back();
+        let hide_shell_requested = hide_shell_channel.iter().next().is_some();
 
         match latest_focus_event {
             Some(FocusEvent::Gained) => {
@@ -101,7 +104,11 @@ impl Component for SurfaceLayerController {
             Some(FocusEvent::Lost) | None => {}
         }
 
-        if requested_toggle_count % 2 == 1 && !self.launch_is_active {
+        if hide_shell_requested && !self.launch_is_active {
+            hide_shell(ctx, &surface_layer_control, &transition);
+        }
+
+        if !hide_shell_requested && requested_toggle_count % 2 == 1 && !self.launch_is_active {
             match surface_layer_control.current_layer() {
                 SurfaceLayer::Background => {
                     ctx.set_surface_layer(SurfaceLayer::Top);
@@ -110,16 +117,24 @@ impl Component for SurfaceLayerController {
                     *transition.write_silent() = VisibilityTransition::Showing;
                 }
                 SurfaceLayer::Top | SurfaceLayer::Bottom | SurfaceLayer::Overlay => {
-                    ctx.set_surface_keyboard_interactivity(SurfaceKeyboardInteractivity::None);
-                    ctx.set_surface_layer(SurfaceLayer::Background);
-                    surface_layer_control.set_current_layer(SurfaceLayer::Background);
-                    *transition.write_silent() = VisibilityTransition::Hiding;
+                    hide_shell(ctx, &surface_layer_control, &transition);
                 }
             }
         }
 
         Element::new().with_style(no_view_style())
     }
+}
+
+fn hide_shell(
+    ctx: &mut ComponentContext,
+    surface_layer_control: &SurfaceLayerControl,
+    transition: &StateHandle<VisibilityTransition>,
+) {
+    ctx.set_surface_keyboard_interactivity(SurfaceKeyboardInteractivity::None);
+    ctx.set_surface_layer(SurfaceLayer::Background);
+    surface_layer_control.set_current_layer(SurfaceLayer::Background);
+    *transition.write_silent() = VisibilityTransition::Hiding;
 }
 
 fn focus_event(event: &WindowEvent) -> Option<FocusEvent> {

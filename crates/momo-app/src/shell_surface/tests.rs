@@ -1,4 +1,4 @@
-use super::{desktop_shell_runner_options, greeter_shell_runner_options};
+use super::desktop_shell_runner_options;
 use dailand::{
     ShellBackend, ShellInputRegion, ShellKeyboardInteractivity, ShellLayer, ShellOutputTarget,
 };

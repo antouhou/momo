@@ -1,6 +1,6 @@
 use super::{
-    Home, bluetooth::initialize_bluetooth_state, model::TILE_HEIGHT,
-    system_status::initialize_system_status_state,
+    Home, bluetooth::initialize_bluetooth_state, compositor::initialize_compositor_events,
+    model::TILE_HEIGHT, system_status::initialize_system_status_state,
 };
 use crate::app_state::{APPS_STATE_ID, AppEntry, AppsState};
 use daiko::{
@@ -13,6 +13,10 @@ use daiko::{
     style::{Color, Transform},
     testing::TestRunner,
     window_events::WindowEvent,
+};
+use momo_compositor::{
+    BackendMetadata, CapabilitySet, CompositorCommand, CompositorSession, CompositorSnapshot,
+    ViewSummary,
 };
 use std::{
     path::PathBuf,
@@ -29,6 +33,29 @@ fn initialize_test_app_state(ctx: &mut AppContext) {
     let mut apps_state = apps_state.write();
     apps_state.is_loading = false;
     apps_state.app_entries = test_apps();
+}
+
+fn initialize_test_compositor_state(ctx: &mut AppContext) {
+    initialize_compositor_events(ctx, test_compositor_snapshot(), None, None);
+}
+
+fn test_compositor_snapshot() -> CompositorSnapshot {
+    let views = ["Terminal", "Browser", "Files"]
+        .into_iter()
+        .enumerate()
+        .map(|(index, title)| ViewSummary {
+            identifier: index as u64,
+            title: Arc::new(title.to_string()),
+            app_id: None,
+            output_name: None,
+            workspace_identifier: None,
+            is_focused: index == 1,
+        })
+        .collect();
+    CompositorSnapshot {
+        outputs: Vec::new(),
+        views,
+    }
 }
 
 fn test_apps() -> Vec<AppEntry> {
@@ -71,6 +98,10 @@ fn test_apps() -> Vec<AppEntry> {
 
 struct HomeTestApp;
 
+struct OverviewCommandTestApp {
+    compositor_session: Option<CompositorSession>,
+}
+
 impl App for HomeTestApp {
     type RootComponent = Home;
 
@@ -80,10 +111,70 @@ impl App for HomeTestApp {
         initialize_bluetooth_state(ctx, system_control.bluetooth());
         initialize_system_status_state(ctx, system_control.volume(), system_control.battery());
         initialize_test_app_state(ctx);
+        initialize_test_compositor_state(ctx);
         Home::for_testing()
     }
 
     fn stop(&mut self, _ctx: &mut AppContext) {}
+}
+
+impl App for OverviewCommandTestApp {
+    type RootComponent = Home;
+
+    fn create(&mut self, ctx: &mut AppContext) -> Self::RootComponent {
+        let system_control =
+            SystemControl::new().expect("failed to initialize system control for tests");
+        initialize_bluetooth_state(ctx, system_control.bluetooth());
+        initialize_system_status_state(ctx, system_control.volume(), system_control.battery());
+        initialize_test_app_state(ctx);
+        let compositor_session = self
+            .compositor_session
+            .as_mut()
+            .expect("overview command test should have a compositor session");
+        initialize_compositor_events(
+            ctx,
+            compositor_session.snapshot().clone(),
+            Some(compositor_session.command_sender()),
+            compositor_session.take_event_receiver(),
+        );
+        Home::for_testing()
+    }
+
+    fn stop(&mut self, _ctx: &mut AppContext) {
+        if let Some(compositor_session) = self.compositor_session.as_mut() {
+            compositor_session.stop();
+        }
+    }
+}
+
+fn overview_command_test_app() -> (OverviewCommandTestApp, mpsc::Receiver<CompositorCommand>) {
+    let (command_sender, command_receiver) = mpsc::channel();
+    let compositor_session = CompositorSession::spawn(
+        BackendMetadata { name: "test" },
+        CapabilitySet {
+            view_management: true,
+            ..CapabilitySet::default()
+        },
+        test_compositor_snapshot(),
+        move |_event_sender, mut compositor_command_receiver, shutdown_receiver| {
+            std::thread::spawn(move || {
+                while let Some(command) = compositor_command_receiver.blocking_recv() {
+                    if command_sender.send(command).is_err() {
+                        break;
+                    }
+                }
+            });
+            shutdown_receiver.blocking_wait();
+            Ok(())
+        },
+    )
+    .expect("test compositor session should start");
+    (
+        OverviewCommandTestApp {
+            compositor_session: Some(compositor_session),
+        },
+        command_receiver,
+    )
 }
 
 #[test]
@@ -128,6 +219,38 @@ fn overview_card_size_grows_with_the_available_height() {
 
     let resized_size = runner.get_element_bounds("overview-card-active").1;
     assert!(resized_size.x > initial_size.x + 100.0);
+}
+
+#[test]
+fn activating_the_active_overview_card_focuses_its_window_and_hides_the_shell() {
+    let (app, command_receiver) = overview_command_test_app();
+    let mut runner = TestRunner::new(app);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+    let (app_message_sender, app_message_receiver) = mpsc::channel();
+    runner
+        .app_runner_mut()
+        .context
+        .set_app_message_bus(app_message_sender);
+
+    runner.click_element("overview-toggle");
+    runner.run_frame();
+    assert!(
+        runner
+            .find_element_by_tag("overview-window-controls")
+            .is_some()
+    );
+    runner.click_element("overview-card-active");
+    runner.run_frame();
+
+    assert_eq!(
+        command_receiver.try_recv(),
+        Ok(CompositorCommand::FocusView { view_id: 1 })
+    );
+    assert!(
+        received_surface_layer(&app_message_receiver, SurfaceLayer::Background),
+        "switching windows should move the shell behind the selected window"
+    );
 }
 
 #[test]

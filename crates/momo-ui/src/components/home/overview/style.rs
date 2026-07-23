@@ -7,10 +7,8 @@ use daiko::{
     layout::{AlignItems, FlexDirection, ItemSize, JustifyContent},
     style::{Border, BorderRadius, Color, CursorIcon, Overflow, Stroke, Style},
 };
-use momo_kit::components::{ROUND_ICON_BUTTON_BORDER_WIDTH, ROUND_ICON_BUTTON_SIZE};
 use std::time::Duration;
 
-const OVERVIEW_CLOSE_BUTTON_GAP: f32 = 18.0;
 const OVERVIEW_CARD_ACTIVE_HEIGHT_RATIO: f32 = 0.58;
 const OVERVIEW_CARD_ACTIVE_WIDTH_RATIO: f32 = 0.5;
 const OVERVIEW_CARD_ACTIVE_ASPECT_RATIO: f32 = 480.0 / 278.0;
@@ -34,20 +32,6 @@ pub(super) fn overview_style() -> Style {
         .with_min_height(ItemSize::Points(0.0))
         .with_grow(1.0)
         .with_overflow(Overflow::Visible)
-}
-
-pub(super) fn overview_window_close_target_position(active_card_frame: OverviewCardFrame) -> Vec2 {
-    let close_button_outer_size = ROUND_ICON_BUTTON_SIZE + ROUND_ICON_BUTTON_BORDER_WIDTH * 2.0;
-    Vec2::new(
-        active_card_frame.position.x + (active_card_frame.size.x - close_button_outer_size) * 0.5,
-        active_card_frame.position.y - close_button_outer_size - OVERVIEW_CLOSE_BUTTON_GAP,
-    )
-}
-
-pub(super) fn overview_window_close_position_style(rendered_position: Vec2) -> Style {
-    Style::new()
-        .with_absolute_position(rendered_position)
-        .with_fixed_size(ROUND_ICON_BUTTON_SIZE, ROUND_ICON_BUTTON_SIZE)
 }
 
 pub(super) fn overview_carousel_style() -> Style {

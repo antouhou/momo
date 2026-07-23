@@ -1,4 +1,5 @@
 use daikore::integration::input::Key;
+use std::sync::Arc;
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct CapabilitySet {
@@ -59,7 +60,7 @@ pub struct Workspace {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ViewSummary {
     pub identifier: u64,
-    pub title: String,
+    pub title: Arc<String>,
     pub app_id: Option<String>,
     pub output_name: Option<String>,
     pub workspace_identifier: Option<String>,

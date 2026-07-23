@@ -23,11 +23,9 @@ pub(super) struct OverviewDockButton {
 
 impl Component for OverviewDockButton {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        let active_home_view = use_home_view(ctx);
-        let is_active = matches!(active_home_view, HomeView::Overview);
-        let target_view = match active_home_view {
-            HomeView::Apps => HomeView::Overview,
-            HomeView::Overview => HomeView::Apps,
+        let (target_view, is_active) = match use_home_view(ctx) {
+            HomeView::Apps => (HomeView::Overview, true),
+            HomeView::Overview => (HomeView::Apps, false),
         };
         let home_view_request_channel = use_home_view_request_channel(ctx);
         let button = ButtonBehavior::new(ctx)

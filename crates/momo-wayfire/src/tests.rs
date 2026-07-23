@@ -1,4 +1,7 @@
-use crate::{WayfireBackend, WayfireIpcConfiguration};
+use crate::{
+    WayfireBackend, WayfireIpcConfiguration,
+    protocol::{WayfireEvent, WayfireEventKind},
+};
 use bytes::Bytes;
 use futures_util::{SinkExt, StreamExt};
 use momo_compositor::{
@@ -16,6 +19,18 @@ const TEST_TIMEOUT: Duration = Duration::from_secs(1);
 const TEST_SHORTCUT_ID: ShortcutId = ShortcutId::new(7);
 
 type FramedUnixStream = Framed<UnixStream, LengthDelimitedCodec>;
+
+#[test]
+fn parses_recognized_and_unsupported_event_kinds() {
+    let recognized_event: WayfireEvent = serde_json::from_value(json!({"event": "view-focused"}))
+        .expect("recognized Wayfire event should deserialize");
+    let unsupported_event: WayfireEvent =
+        serde_json::from_value(json!({"event": "workspace-changed"}))
+            .expect("unsupported Wayfire event should deserialize");
+
+    assert_eq!(recognized_event.kind, WayfireEventKind::ViewFocused);
+    assert_eq!(unsupported_event.kind, WayfireEventKind::Unsupported);
+}
 
 #[test]
 fn registers_configured_shortcut_and_forwards_queued_and_live_binding_events() {

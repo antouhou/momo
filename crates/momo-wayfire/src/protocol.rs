@@ -24,10 +24,29 @@ pub(super) struct BindingRegistrationResponse {
 
 #[derive(Debug, Deserialize)]
 pub(super) struct WayfireEvent {
-    pub(super) event: String,
+    #[serde(rename = "event")]
+    pub(super) kind: WayfireEventKind,
     #[serde(rename = "binding-id")]
     pub(super) binding_id: Option<u64>,
     pub(super) view: Option<WayfireView>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+pub(super) enum WayfireEventKind {
+    #[serde(rename = "command-binding")]
+    CommandBinding,
+    #[serde(rename = "view-mapped")]
+    ViewMapped,
+    #[serde(rename = "view-unmapped")]
+    ViewUnmapped,
+    #[serde(rename = "view-focused")]
+    ViewFocused,
+    #[serde(rename = "view-title-changed")]
+    ViewTitleChanged,
+    #[serde(rename = "view-app-id-changed")]
+    ViewAppIdChanged,
+    #[serde(other)]
+    Unsupported,
 }
 
 #[derive(Debug, Clone, Deserialize)]

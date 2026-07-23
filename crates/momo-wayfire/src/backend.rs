@@ -1,7 +1,10 @@
 use crate::{
     binding::wayfire_binding,
     client::WayfireClient,
-    protocol::{BindingRegistrationResponse, MethodCall, WayfireEvent, WayfireView, object},
+    protocol::{
+        BindingRegistrationResponse, MethodCall, WayfireEvent, WayfireEventKind, WayfireView,
+        object,
+    },
 };
 use momo_compositor::{
     BackendMetadata, CapabilitySet, CompositorBackend, CompositorCommand, CompositorError,
@@ -316,14 +319,22 @@ fn forward_message(
     let event: WayfireEvent = serde_json::from_value(message)
         .map_err(|error| CompositorError::new(format!("invalid Wayfire event: {error}")))?;
 
-    let should_continue = match event.event.as_str() {
-        "command-binding" => handle_command_binding_event(binding_shortcuts, &event, event_sender),
-        "view-unmapped" => handle_view_unmapped_event(snapshot, &event, event_sender),
-        "view-focused" => handle_view_updated_event(snapshot, &event, true, event_sender),
-        "view-mapped" | "view-title-changed" | "view-app-id-changed" => {
+    let should_continue = match event.kind {
+        WayfireEventKind::CommandBinding => {
+            handle_command_binding_event(binding_shortcuts, &event, event_sender)
+        }
+        WayfireEventKind::ViewUnmapped => {
+            handle_view_unmapped_event(snapshot, &event, event_sender)
+        }
+        WayfireEventKind::ViewFocused => {
+            handle_view_updated_event(snapshot, &event, true, event_sender)
+        }
+        WayfireEventKind::ViewMapped
+        | WayfireEventKind::ViewTitleChanged
+        | WayfireEventKind::ViewAppIdChanged => {
             handle_view_updated_event(snapshot, &event, false, event_sender)
         }
-        _ => true,
+        WayfireEventKind::Unsupported => true,
     };
     Ok(should_continue)
 }

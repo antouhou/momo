@@ -13,6 +13,7 @@ mod overview;
 pub(crate) mod power;
 // pub(crate) mod settings_button;
 pub(crate) mod session;
+pub(crate) mod state;
 pub(crate) mod surface_layer_controller;
 pub(crate) mod system_status;
 #[cfg(test)]
@@ -27,6 +28,7 @@ use crate::components::{
         launch::{controller::use_launch_controller, overlay::LaunchOverlay},
         model::{HOME_CLOCK_STATE_ID, HOME_CLOCK_THREAD_ID, SECTION_GAP},
         overview::Overview,
+        state::{HomeView, update_active_home_view_from_requests},
         surface_layer_controller::SurfaceLayerController,
         time::{read_system_time, spawn_clock_thread},
     },
@@ -34,31 +36,15 @@ use crate::components::{
 };
 use daiko::{
     Element, Id,
-    channel::Channel,
     component::{Component, ComponentContext},
     layout::{FlexDirection, ItemSize},
-    state_management::StateHandle,
     style::Style,
 };
 use momo_kit::style::shell_background_gradient;
 
-pub(crate) const HOME_VIEW_REQUEST_CHANNEL_ID: &str = "momo_home_view_request_channel";
-const HOME_VIEW_STATE_ID: &str = "momo_home_view_state";
-
 #[derive(Clone, Copy)]
 pub struct Home {
     live_clock: bool,
-}
-
-#[derive(Clone, Copy, Default, PartialEq, Eq)]
-pub(crate) enum HomeView {
-    #[default]
-    Apps,
-    Overview,
-}
-
-pub(crate) fn use_home_view_state(ctx: &mut ComponentContext) -> StateHandle<HomeView> {
-    ctx.use_shared_state(Id::new(HOME_VIEW_STATE_ID), HomeView::default)
 }
 
 impl Home {
@@ -89,15 +75,7 @@ impl Component for Home {
         let launch = use_launch_controller(ctx);
         let launch_is_active = launch.active_launch.is_some();
         let should_render_settings_menu = should_render_settings_menu(ctx);
-        let home_view = use_home_view_state(ctx);
-        let home_view_request_channel: Channel<HomeView> =
-            ctx.use_channel_with_id(HOME_VIEW_REQUEST_CHANNEL_ID);
-
-        if let Some(requested_home_view) = home_view_request_channel.iter().next() {
-            *home_view.write() = requested_home_view;
-        }
-
-        let active_home_view = *home_view.read();
+        let active_home_view = update_active_home_view_from_requests(ctx);
         let header = match active_home_view {
             HomeView::Apps => HomeHeader::new(PageDots),
             HomeView::Overview => HomeHeader::new(OverviewHeaderTitle),

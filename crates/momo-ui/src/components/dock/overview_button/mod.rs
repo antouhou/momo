@@ -5,7 +5,8 @@ use self::style::{
 };
 use super::icon::{DOCK_BUTTON_SIZE, dock_button_style};
 use crate::components::home::{
-    HOME_VIEW_REQUEST_CHANNEL_ID, HomeView, model::tile_focus_transform, use_home_view_state,
+    model::tile_focus_transform,
+    state::{HomeView, use_home_view, use_home_view_request_channel},
 };
 use daiko::{
     Element, Vec2,
@@ -22,15 +23,13 @@ pub(super) struct OverviewDockButton {
 
 impl Component for OverviewDockButton {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        let home_view = use_home_view_state(ctx);
-        let active_home_view = *home_view.read();
+        let active_home_view = use_home_view(ctx);
         let is_active = matches!(active_home_view, HomeView::Overview);
         let target_view = match active_home_view {
             HomeView::Apps => HomeView::Overview,
             HomeView::Overview => HomeView::Apps,
         };
-        let home_view_request_channel =
-            ctx.use_channel_with_id::<HomeView>(HOME_VIEW_REQUEST_CHANNEL_ID);
+        let home_view_request_channel = use_home_view_request_channel(ctx);
         let button = ButtonBehavior::new(ctx)
             .with_enabled(!self.interactions_disabled)
             .apply();

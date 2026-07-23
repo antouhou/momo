@@ -12,8 +12,8 @@ use self::{
     window_controls::OverviewWindowControls,
 };
 use super::compositor::use_compositor_integration_state;
+use super::state::{HomeView, use_home_view_request_channel};
 use super::surface_layer_controller::HOME_HIDE_SHELL_CHANNEL_ID;
-use super::{HOME_VIEW_REQUEST_CHANNEL_ID, HomeView};
 use daiko::{
     Element, Id, Vec2,
     animation::SmoothFollowConfig,
@@ -66,8 +66,7 @@ pub(super) struct Overview;
 
 impl Component for Overview {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        let home_view_request_channel =
-            ctx.use_channel_with_id::<HomeView>(HOME_VIEW_REQUEST_CHANNEL_ID);
+        let home_view_request_channel = use_home_view_request_channel(ctx);
         let focus_scope = ctx.focus_scope();
         focus_scope.capture_when_contains_focus(&[
             NavigationInputAction::Cancel,
@@ -189,8 +188,7 @@ struct OverviewCard {
 
 impl Component for OverviewCard {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        let home_view_request_channel =
-            ctx.use_channel_with_id::<HomeView>(HOME_VIEW_REQUEST_CHANNEL_ID);
+        let home_view_request_channel = use_home_view_request_channel(ctx);
         let hide_shell_channel = ctx.use_channel_with_id::<()>(HOME_HIDE_SHELL_CHANNEL_ID);
         let target_frame =
             overview_card_target_frame(self.viewport_size, self.card_index, self.active_card_index);

@@ -1,12 +1,18 @@
 use super::{
-    Home, bluetooth::initialize_bluetooth_state, compositor::initialize_compositor_events,
-    model::TILE_HEIGHT, system_status::initialize_system_status_state,
+    Home,
+    bluetooth::initialize_bluetooth_state,
+    compositor::{
+        CompositorEventInbox, HOME_COMPOSITOR_EVENT_INBOX_STATE_ID, initialize_compositor_events,
+    },
+    model::TILE_HEIGHT,
+    surface_layer_controller::HOME_SURFACE_LAYER_STATE_ID,
+    system_status::initialize_system_status_state,
 };
 use crate::app_state::{APPS_STATE_ID, AppEntry, AppsState};
 use daiko::{
     App, AppContext, Id, Pos2, SurfaceId, Vec2,
     integration::{
-        AppMessage, SurfaceCommand, SurfaceLayer,
+        AppMessage, SurfaceCommand, SurfaceKeyboardInteractivity, SurfaceLayer,
         input::{InputEvent, InputEventModifiers},
     },
     navigation::{FocusKey, FocusOrigin},
@@ -15,8 +21,8 @@ use daiko::{
     window_events::WindowEvent,
 };
 use momo_compositor::{
-    BackendMetadata, CapabilitySet, CompositorCommand, CompositorSession, CompositorSnapshot,
-    ViewSummary,
+    BackendMetadata, CapabilitySet, CompositorCommand, CompositorEvent, CompositorSession,
+    CompositorSnapshot, ShortcutId, ViewSummary,
 };
 use std::{
     path::PathBuf,
@@ -582,6 +588,129 @@ fn window_focus_gain_moves_shell_to_top_layer() {
     );
 }
 
+#[test]
+fn super_opens_overview_and_then_restores_the_visible_home_view() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+    let (app_message_sender, app_message_receiver) = mpsc::channel();
+    runner
+        .app_runner_mut()
+        .context
+        .set_app_message_bus(app_message_sender);
+
+    activate_super_shortcut(&mut runner);
+    runner.run_frame();
+    runner.run_frame();
+
+    assert!(runner.find_element_by_tag("overview").is_some());
+    assert!(
+        !received_surface_layer(&app_message_receiver, SurfaceLayer::Background),
+        "opening overview from a visible home view should keep the shell visible"
+    );
+
+    activate_super_shortcut(&mut runner);
+    runner.run_frame();
+    runner.run_frame();
+
+    assert!(runner.find_element_by_tag("apps-grid").is_some());
+    assert!(
+        !received_surface_layer(&app_message_receiver, SurfaceLayer::Background),
+        "returning to the previous visible home view should keep the shell visible"
+    );
+}
+
+#[test]
+fn super_reverses_an_active_launch_and_opens_overview() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+
+    runner.click_element("movies");
+    runner.run_frame();
+    assert!(runner.find_element_by_tag("launch-overlay").is_some());
+    wait_for_launch_expansion(&mut runner);
+    let (app_message_sender, app_message_receiver) = mpsc::channel();
+    runner
+        .app_runner_mut()
+        .context
+        .set_app_message_bus(app_message_sender);
+
+    activate_super_shortcut(&mut runner);
+    runner.run_frame();
+    assert!(
+        received_keyboard_interactivity(
+            &app_message_receiver,
+            SurfaceKeyboardInteractivity::Exclusive
+        ),
+        "opening overview during launch should return keyboard control to the shell"
+    );
+    runner.run_frame();
+
+    assert!(runner.find_element_by_tag("overview").is_some());
+    assert!(
+        runner.find_element_by_tag("launch-overlay").is_some(),
+        "the launch overlay should contract over the newly visible overview"
+    );
+
+    run_until(
+        &mut runner,
+        "launch animation reversal into overview",
+        |runner| {
+            runner.find_element_by_tag("launch-overlay").is_none()
+                && runner.find_element_by_tag("overview").is_some()
+        },
+    );
+}
+
+#[test]
+fn super_opens_overview_and_then_restores_the_previously_focused_window() {
+    let mut runner = TestRunner::new(HomeTestApp);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+    let surface_layer = runner
+        .app_runner_mut()
+        .context
+        .peek_shared_state(Id::new(HOME_SURFACE_LAYER_STATE_ID), || SurfaceLayer::Top);
+    *surface_layer.write() = SurfaceLayer::Background;
+    let (app_message_sender, app_message_receiver) = mpsc::channel();
+    runner
+        .app_runner_mut()
+        .context
+        .set_app_message_bus(app_message_sender);
+
+    activate_super_shortcut(&mut runner);
+    runner.run_frame();
+    runner.run_frame();
+
+    assert!(runner.find_element_by_tag("overview").is_some());
+    assert!(
+        received_surface_layer(&app_message_receiver, SurfaceLayer::Top),
+        "opening overview should raise the shell above the focused window"
+    );
+
+    activate_super_shortcut(&mut runner);
+    runner.run_frame();
+    runner.run_frame();
+
+    assert!(runner.find_element_by_tag("apps-grid").is_some());
+    assert!(
+        received_surface_layer(&app_message_receiver, SurfaceLayer::Background),
+        "leaving overview should lower the shell and return focus to the previous window"
+    );
+}
+
+fn activate_super_shortcut(runner: &mut TestRunner<HomeTestApp>) {
+    let compositor_event_inbox = runner.app_runner_mut().context.peek_global_state(
+        Id::new(HOME_COMPOSITOR_EVENT_INBOX_STATE_ID),
+        CompositorEventInbox::default,
+    );
+    compositor_event_inbox
+        .write()
+        .pending_events
+        .push(CompositorEvent::ShortcutActivated(ShortcutId::new(0)));
+}
+
 fn received_surface_layer(
     app_message_receiver: &mpsc::Receiver<AppMessage>,
     expected_layer: SurfaceLayer,
@@ -593,6 +722,21 @@ fn received_surface_layer(
                 SurfaceId::ROOT,
                 SurfaceCommand::SetLayer(layer)
             ) if layer == expected_layer
+        )
+    })
+}
+
+fn received_keyboard_interactivity(
+    app_message_receiver: &mpsc::Receiver<AppMessage>,
+    expected_interactivity: SurfaceKeyboardInteractivity,
+) -> bool {
+    app_message_receiver.try_iter().any(|message| {
+        matches!(
+            message,
+            AppMessage::SurfaceCommand(
+                SurfaceId::ROOT,
+                SurfaceCommand::SetKeyboardInteractivity(interactivity)
+            ) if interactivity == expected_interactivity
         )
     })
 }

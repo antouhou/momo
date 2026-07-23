@@ -21,12 +21,16 @@ pub(super) struct OverviewDockButton {
     pub(super) interactions_disabled: bool,
 }
 
+fn overview_button_state(current_home_view: HomeView) -> (HomeView, bool) {
+    match current_home_view {
+        HomeView::Apps => (HomeView::Overview, false),
+        HomeView::Overview => (HomeView::Apps, true),
+    }
+}
+
 impl Component for OverviewDockButton {
     fn to_element(&self, ctx: &mut ComponentContext) -> Element {
-        let (target_view, is_active) = match use_home_view(ctx) {
-            HomeView::Apps => (HomeView::Overview, true),
-            HomeView::Overview => (HomeView::Apps, false),
-        };
+        let (target_view, is_active) = overview_button_state(use_home_view(ctx));
         let home_view_request_channel = use_home_view_request_channel(ctx);
         let button = ButtonBehavior::new(ctx)
             .with_enabled(!self.interactions_disabled)

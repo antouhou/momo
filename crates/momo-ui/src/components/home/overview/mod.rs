@@ -29,7 +29,6 @@ use std::{sync::Arc, time::Duration};
 const OVERVIEW_SCROLL_STATE_ID: &str = "momo_home_overview_scroll_state";
 const OVERVIEW_CARD_POSITION_MOTION_ID: &str = "momo_home_overview_card_position_motion";
 const OVERVIEW_CARD_SIZE_MOTION_ID: &str = "momo_home_overview_card_size_motion";
-const OVERVIEW_FALLBACK_VIEWPORT_SIZE: Vec2 = Vec2::new(1200.0, 360.0);
 const OVERVIEW_PAGE_MOTION_DURATION_MS: u64 = 260;
 const OVERVIEW_EMPTY_STATE_MESSAGE: &str = "No apps are currently open";
 const WINDOW_SWITCH_REQUEST_CHANNEL_ID: &str = "momo_home_window_switch_request_channel";
@@ -170,8 +169,7 @@ impl Component for OverviewCarousel {
         let viewport_size = ctx
             .layout()
             .map(|layout| layout.size)
-            .filter(|size| size.x > 0.0 && size.y > 0.0)
-            .unwrap_or(OVERVIEW_FALLBACK_VIEWPORT_SIZE);
+            .filter(|size| size.x > 0.0 && size.y > 0.0);
         let mut card_stage = Element::new()
             .with_tag("overview-card-stage")
             .with_style(overview_card_stage_style());
@@ -188,29 +186,32 @@ impl Component for OverviewCarousel {
             );
         }
 
-        for (card_index, view) in views.iter().enumerate() {
-            let position = overview_card_position(card_index, next_state, card_count);
-            card_stage.add_content(OverviewCard {
-                card_index,
-                active_card_index: active_card_index.unwrap_or(0),
-                view_id: view.identifier,
-                position,
-                viewport_size,
-                action_channel: action_channel.clone(),
-                command_sender: compositor_integration.command_sender.clone(),
-            });
-        }
+        // Do not awkwardly follow things into existence if the component hasn't been laid out yet
+        if let Some(viewport_size) = viewport_size {
+            for (card_index, view) in views.iter().enumerate() {
+                let position = overview_card_position(card_index, next_state, card_count);
+                card_stage.add_content(OverviewCard {
+                    card_index,
+                    active_card_index: active_card_index.unwrap_or(0),
+                    view_id: view.identifier,
+                    position,
+                    viewport_size,
+                    action_channel: action_channel.clone(),
+                    command_sender: compositor_integration.command_sender.clone(),
+                });
+            }
 
-        if let Some(active_card_index) = active_card_index {
-            let active_card_frame =
-                overview_card_target_frame(viewport_size, active_card_index, active_card_index);
-            let active_view = &views[active_card_index];
-            card_stage.add_content(OverviewWindowControls {
-                view_id: active_view.identifier,
-                window_title: Arc::clone(&active_view.title),
-                command_sender: compositor_integration.command_sender.clone(),
-                active_card_frame,
-            });
+            if let Some(active_card_index) = active_card_index {
+                let active_card_frame =
+                    overview_card_target_frame(viewport_size, active_card_index, active_card_index);
+                let active_view = &views[active_card_index];
+                card_stage.add_content(OverviewWindowControls {
+                    view_id: active_view.identifier,
+                    window_title: Arc::clone(&active_view.title),
+                    command_sender: compositor_integration.command_sender.clone(),
+                    active_card_frame,
+                });
+            }
         }
 
         Element::new()

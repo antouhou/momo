@@ -1,7 +1,7 @@
 mod style;
 
 use super::{
-    compositor::use_compositor_event_inbox,
+    compositor::{use_compositor_event_inbox, use_compositor_integration_state},
     model::{LaunchControllerRequest, use_launch_controller_request_channel},
     overview::{WindowSwitchRequest, use_window_switch_request_channel},
     state::{HomeView, use_home_view, use_home_view_request_channel},
@@ -70,7 +70,7 @@ struct OverviewVisit {
 struct SurfaceLayerControllerState {
     visibility_transition: VisibilityTransition,
     overview_visit: Option<OverviewVisit>,
-    window_switch_is_active: bool,
+    window_switch_visit: Option<OverviewVisit>,
 }
 
 pub(crate) struct SurfaceLayerControl {
@@ -108,6 +108,11 @@ impl Component for SurfaceLayerController {
         let home_view_request_channel = use_home_view_request_channel(ctx);
         let window_switch_request_channel = use_window_switch_request_channel(ctx);
         let launch_controller_request_channel = use_launch_controller_request_channel(ctx);
+        let has_open_views = !use_compositor_integration_state(ctx)
+            .read()
+            .snapshot
+            .views
+            .is_empty();
         let compositor_event_inbox = use_compositor_event_inbox(ctx);
         let (requested_toggle_count, requested_window_switch_count) = {
             let mut compositor_event_inbox = compositor_event_inbox.write_silent();
@@ -159,7 +164,7 @@ impl Component for SurfaceLayerController {
                 ctx.set_surface_layer(SurfaceLayer::Top);
                 surface_layer_control.set_current_layer(SurfaceLayer::Top);
                 if next_controller_state.visibility_transition == VisibilityTransition::Showing {
-                    if !next_controller_state.window_switch_is_active {
+                    if next_controller_state.window_switch_visit.is_none() {
                         ctx.set_surface_keyboard_interactivity(
                             SurfaceKeyboardInteractivity::OnDemand,
                         );
@@ -183,12 +188,12 @@ impl Component for SurfaceLayerController {
 
         if hide_shell_requested && !self.launch_is_active {
             next_controller_state.overview_visit = None;
-            next_controller_state.window_switch_is_active = false;
+            next_controller_state.window_switch_visit = None;
             hide_shell(ctx, &surface_layer_control, &mut next_controller_state);
         }
 
         if !hide_shell_requested && requested_toggle_count % 2 == 1 {
-            next_controller_state.window_switch_is_active = false;
+            next_controller_state.window_switch_visit = None;
             if self.launch_is_active {
                 reverse_launch_animation_and_show_overview(
                     ctx,
@@ -210,11 +215,14 @@ impl Component for SurfaceLayerController {
         }
 
         if !hide_shell_requested && requested_window_switch_count > 0 {
-            let window_switch_was_active = next_controller_state.window_switch_is_active;
+            let window_switch_was_active = next_controller_state.window_switch_visit.is_some();
             let cycle_request_count = if window_switch_was_active {
                 requested_window_switch_count
             } else {
-                next_controller_state.window_switch_is_active = true;
+                next_controller_state.window_switch_visit = Some(OverviewVisit {
+                    previous_home_view: current_home_view,
+                    previous_surface_layer: surface_layer_control.current_layer(),
+                });
                 next_controller_state.overview_visit = None;
                 if self.launch_is_active {
                     let _ = launch_controller_request_channel
@@ -233,7 +241,7 @@ impl Component for SurfaceLayerController {
             }
         }
 
-        if next_controller_state.window_switch_is_active {
+        if next_controller_state.window_switch_visit.is_some() {
             for _ in 0..previous_arrow_count {
                 let _ = window_switch_request_channel.send(WindowSwitchRequest::CyclePrevious);
             }
@@ -242,10 +250,23 @@ impl Component for SurfaceLayerController {
             }
         }
 
-        if alt_was_released && next_controller_state.window_switch_is_active {
-            let _ = window_switch_request_channel.send(WindowSwitchRequest::Commit);
-            next_controller_state.window_switch_is_active = false;
-            ctx.set_surface_keyboard_interactivity(SurfaceKeyboardInteractivity::OnDemand);
+        if alt_was_released
+            && let Some(window_switch_visit) = next_controller_state.window_switch_visit
+        {
+            if has_open_views {
+                let _ = window_switch_request_channel.send(WindowSwitchRequest::Commit);
+                ctx.set_surface_keyboard_interactivity(SurfaceKeyboardInteractivity::OnDemand);
+            } else {
+                restore_overview_visit(
+                    ctx,
+                    current_home_view,
+                    window_switch_visit,
+                    &home_view_request_channel,
+                    &surface_layer_control,
+                    &mut next_controller_state,
+                );
+            }
+            next_controller_state.window_switch_visit = None;
         }
 
         if next_controller_state != current_controller_state {
@@ -253,6 +274,24 @@ impl Component for SurfaceLayerController {
         }
 
         Element::new().with_style(no_view_style())
+    }
+}
+
+fn restore_overview_visit(
+    ctx: &mut ComponentContext,
+    current_home_view: HomeView,
+    overview_visit: OverviewVisit,
+    home_view_request_channel: &Channel<HomeView>,
+    surface_layer_control: &SurfaceLayerControl,
+    controller_state: &mut SurfaceLayerControllerState,
+) {
+    if current_home_view != overview_visit.previous_home_view {
+        let _ = home_view_request_channel.send(overview_visit.previous_home_view);
+    }
+    if overview_visit.previous_surface_layer == SurfaceLayer::Background {
+        hide_shell(ctx, surface_layer_control, controller_state);
+    } else {
+        ctx.set_surface_keyboard_interactivity(SurfaceKeyboardInteractivity::OnDemand);
     }
 }
 

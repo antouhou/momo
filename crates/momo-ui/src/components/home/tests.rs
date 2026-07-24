@@ -155,6 +155,12 @@ impl App for OverviewCommandTestApp {
 }
 
 fn overview_command_test_app() -> (OverviewCommandTestApp, mpsc::Receiver<CompositorCommand>) {
+    overview_command_test_app_with_snapshot(test_compositor_snapshot())
+}
+
+fn overview_command_test_app_with_snapshot(
+    compositor_snapshot: CompositorSnapshot,
+) -> (OverviewCommandTestApp, mpsc::Receiver<CompositorCommand>) {
     let (command_sender, command_receiver) = mpsc::channel();
     let compositor_session = CompositorSession::spawn(
         BackendMetadata { name: "test" },
@@ -162,7 +168,7 @@ fn overview_command_test_app() -> (OverviewCommandTestApp, mpsc::Receiver<Compos
             view_management: true,
             ..CapabilitySet::default()
         },
-        test_compositor_snapshot(),
+        compositor_snapshot,
         move |_event_sender, mut compositor_command_receiver, shutdown_receiver| {
             std::thread::spawn(move || {
                 while let Some(command) = compositor_command_receiver.blocking_recv() {
@@ -724,6 +730,40 @@ fn alt_tab_and_arrows_cycle_while_held_and_focus_the_selected_window_on_release(
     assert_eq!(
         command_receiver.try_recv(),
         Ok(CompositorCommand::FocusView { view_id: 1 })
+    );
+}
+
+#[test]
+fn empty_alt_tab_overview_shows_a_message_and_restores_the_previous_home_view() {
+    let (app, command_receiver) =
+        overview_command_test_app_with_snapshot(CompositorSnapshot::default());
+    let mut runner = TestRunner::new(app);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+
+    activate_window_switch_shortcut(&mut runner);
+    runner.run_frame();
+    runner.run_frame();
+
+    assert!(runner.find_element_by_tag("overview-empty-state").is_some());
+
+    runner.app_runner_mut().context.add_input_event(
+        SurfaceId::ROOT,
+        InputEvent::key(
+            Key::AltLeft,
+            KeyState::Released,
+            None,
+            InputEventModifiers::default(),
+            Instant::now(),
+        ),
+    );
+    runner.run_frame();
+    runner.run_frame();
+
+    assert!(runner.find_element_by_tag("apps-grid").is_some());
+    assert!(
+        command_receiver.try_recv().is_err(),
+        "an empty overview should not send a window focus command"
     );
 }
 

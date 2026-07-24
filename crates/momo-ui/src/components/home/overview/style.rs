@@ -6,7 +6,9 @@ use daiko::{
     component::ComponentContext,
     layout::{AlignItems, FlexDirection, ItemSize, JustifyContent},
     style::{Border, BorderRadius, Color, CursorIcon, Overflow, Stroke, Style},
+    widgets::text::{TextStyle, TextWrap},
 };
+use momo_kit::style::SYSTEM_TEXT_SIZE;
 use std::time::Duration;
 
 const OVERVIEW_CARD_ACTIVE_HEIGHT_RATIO: f32 = 0.58;
@@ -54,6 +56,20 @@ pub(super) fn overview_card_stage_style() -> Style {
         .with_fixed_width(ItemSize::Percent(1.0))
         .with_fixed_height(ItemSize::Percent(1.0))
         .with_overflow(Overflow::Visible)
+}
+
+pub(super) fn overview_empty_state_style() -> Style {
+    Style::new()
+        .with_align_items(AlignItems::Center)
+        .with_justify_content(JustifyContent::Center)
+        .with_grow(1.0)
+}
+
+pub(super) fn overview_empty_state_text_style() -> TextStyle {
+    TextStyle::default()
+        .with_font_size(SYSTEM_TEXT_SIZE)
+        .with_font_color(Color::from_rgb(236, 246, 255))
+        .with_wrap(TextWrap::NoWrap)
 }
 
 pub(super) fn overview_card_target_frame(

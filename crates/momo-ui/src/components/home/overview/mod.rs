@@ -7,7 +7,7 @@ use self::{
     style::{
         OverviewCardFrame, overview_card_layout_style, overview_card_stage_style,
         overview_card_surface_style, overview_card_target_frame, overview_carousel_style,
-        overview_style,
+        overview_empty_state_style, overview_empty_state_text_style, overview_style,
     },
     window_controls::OverviewWindowControls,
 };
@@ -20,6 +20,7 @@ use daiko::{
     channel::Channel,
     component::{Component, ComponentContext},
     navigation::NavigationInputAction,
+    widgets::text::Text,
 };
 use momo_compositor::{CompositorCommand, CompositorCommandSender};
 use momo_kit::interaction::{ButtonBehavior, PageScrollDirection, ScrollPagingBehavior};
@@ -30,6 +31,7 @@ const OVERVIEW_CARD_POSITION_MOTION_ID: &str = "momo_home_overview_card_position
 const OVERVIEW_CARD_SIZE_MOTION_ID: &str = "momo_home_overview_card_size_motion";
 const OVERVIEW_FALLBACK_VIEWPORT_SIZE: Vec2 = Vec2::new(1200.0, 360.0);
 const OVERVIEW_PAGE_MOTION_DURATION_MS: u64 = 260;
+const OVERVIEW_EMPTY_STATE_MESSAGE: &str = "No apps are currently open";
 const WINDOW_SWITCH_REQUEST_CHANNEL_ID: &str = "momo_home_window_switch_request_channel";
 
 #[derive(Clone, Copy)]
@@ -173,6 +175,18 @@ impl Component for OverviewCarousel {
         let mut card_stage = Element::new()
             .with_tag("overview-card-stage")
             .with_style(overview_card_stage_style());
+
+        if views.is_empty() {
+            card_stage.add_content(
+                Element::new()
+                    .with_tag("overview-empty-state")
+                    .with_style(overview_empty_state_style())
+                    .with_content(
+                        Text::new(OVERVIEW_EMPTY_STATE_MESSAGE)
+                            .with_style(overview_empty_state_text_style()),
+                    ),
+            );
+        }
 
         for (card_index, view) in views.iter().enumerate() {
             let position = overview_card_position(card_index, next_state, card_count);

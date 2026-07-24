@@ -55,6 +55,8 @@ pub(super) fn overview_card_stage_style() -> Style {
     Style::new()
         .with_fixed_width(ItemSize::Percent(1.0))
         .with_fixed_height(ItemSize::Percent(1.0))
+        .with_direction(FlexDirection::Column)
+        .with_justify_content(JustifyContent::FlexEnd)
         .with_overflow(Overflow::Visible)
 }
 

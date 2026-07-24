@@ -30,11 +30,9 @@ impl Component for OverviewAppsButton {
         }
 
         Element::new()
-            .with_tag("overview-apps-button-band")
             .with_style(overview_apps_button_band_style())
             .with_content(
                 Element::new()
-                    .with_tag("overview-apps-button")
                     .with_style(overview_apps_button_style(
                         ctx,
                         &button_transform,

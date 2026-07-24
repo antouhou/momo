@@ -1,8 +1,10 @@
+mod apps_button;
 mod state;
 mod style;
 mod window_controls;
 
 use self::{
+    apps_button::OverviewAppsButton,
     state::{OverviewCarouselAction, OverviewCarouselState},
     style::{
         OverviewCardFrame, overview_card_layout_style, overview_card_stage_style,
@@ -213,6 +215,8 @@ impl Component for OverviewCarousel {
                 });
             }
         }
+
+        card_stage.add_content(OverviewAppsButton);
 
         Element::new()
             .with_tag("overview-carousel")

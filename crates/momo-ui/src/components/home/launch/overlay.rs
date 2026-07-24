@@ -10,9 +10,9 @@ use crate::components::home::{
     app_icon::{app_icon, app_icon_background_color},
     launch::{
         AnimatedRect, HOME_HERO_ICON_GLYPH_SIZE, HOME_HERO_ICON_SIZE, HOME_LAUNCH_ANIMATION_ID,
-        HOME_LAUNCH_BACKDROP_TAG, HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID, HOME_LAUNCH_SURFACE_RADIUS,
-        HOME_LAUNCH_SURFACE_TAG, HOME_SHARED_CONTENT_WIDTH, LaunchOverlayEvent, LaunchPhase,
-        LaunchTransitionState,
+        HOME_LAUNCH_BACKDROP_TAG, HOME_LAUNCH_SURFACE_RADIUS, HOME_LAUNCH_SURFACE_TAG,
+        HOME_SHARED_CONTENT_WIDTH, LaunchOverlayEvent, LaunchPhase, LaunchTransitionState,
+        use_launch_overlay_event_channel,
     },
     model::{LaunchRequest, TILE_BORDER_RADIUS, TILE_ICON_GLYPH_SIZE, TILE_ICON_SIZE},
 };
@@ -52,7 +52,7 @@ impl Component for LaunchOverlay {
 }
 
 fn update_launch_animation(ctx: &mut ComponentContext, launch: LaunchTransitionState) -> f32 {
-    let overlay_event_channel = ctx.use_channel_with_id(HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID);
+    let overlay_event_channel = use_launch_overlay_event_channel(ctx);
     let animation_state_handle = ctx.use_local_state(LaunchOverlayAnimationState::default);
     let mut animation_state = animation_state_handle.read().clone();
     let launch_animation = ctx.animation_with_id(

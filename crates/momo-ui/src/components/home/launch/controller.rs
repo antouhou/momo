@@ -2,13 +2,13 @@ use crate::{
     app_state::{AppOpResult, use_apps_state},
     components::home::{
         launch::{
-            HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID, LaunchOverlayEvent, LaunchPhase,
-            LaunchTransitionState,
+            LaunchOverlayEvent, LaunchPhase, LaunchTransitionState,
+            use_launch_overlay_event_channel,
         },
         model::{
-            HOME_LAUNCH_CONTROLLER_REQUEST_CHANNEL_ID, LaunchControllerRequest, LaunchRestoreFocus,
+            LaunchControllerRequest, LaunchRestoreFocus, use_launch_controller_request_channel,
         },
-        surface_layer_controller::HOME_FOCUS_LOST_CHANNEL_ID,
+        surface_layer_controller::use_focus_lost_channel,
     },
 };
 use daiko::{
@@ -42,11 +42,10 @@ pub(in crate::components::home) struct LaunchControllerOutput {
 pub(in crate::components::home) fn use_launch_controller(
     ctx: &mut ComponentContext,
 ) -> LaunchControllerOutput {
-    let focus_lost_channel = ctx.use_channel_with_id::<()>(HOME_FOCUS_LOST_CHANNEL_ID);
+    let focus_lost_channel = use_focus_lost_channel(ctx);
     let handoff_signal_received = focus_lost_channel.iter().next().is_some();
-    let launch_controller_request_channel = ctx
-        .use_channel_with_id::<LaunchControllerRequest>(HOME_LAUNCH_CONTROLLER_REQUEST_CHANNEL_ID);
-    let overlay_event_channel = ctx.use_channel_with_id(HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID);
+    let launch_controller_request_channel = use_launch_controller_request_channel(ctx);
+    let overlay_event_channel = use_launch_overlay_event_channel(ctx);
     let launch_state_handle = ctx.use_local_state(|| None::<LaunchTransitionState>);
     let restore_focus_app_id = ctx.use_local_state(|| None::<Arc<String>>);
     let restore_dock_focus_key = ctx.use_local_state(|| None::<(Arc<String>, FocusKey)>);

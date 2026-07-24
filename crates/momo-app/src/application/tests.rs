@@ -1,9 +1,9 @@
-use super::ShellApp;
+use super::{ShellApp, TOGGLE_OVERVIEW_SHORTCUT_ID, WINDOW_SWITCH_SHORTCUT_ID};
 use crate::{ShellConfiguration, ShellMode};
 use momo_compositor::{
     BackendMetadata, CapabilitySet, CompositorBackend, CompositorError, CompositorEvent,
-    CompositorSession, CompositorSnapshot, CompositorStartupConfiguration, ShortcutId,
-    ShortcutRegistration, ShortcutTrigger,
+    CompositorSession, CompositorSnapshot, CompositorStartupConfiguration, ShortcutRegistration,
+    ShortcutTrigger,
 };
 use std::{
     sync::{
@@ -35,10 +35,16 @@ impl CompositorBackend for FakeBackend {
         self.connected.store(true, Ordering::SeqCst);
         assert_eq!(
             configuration.shortcuts,
-            vec![ShortcutRegistration {
-                id: ShortcutId::new(0),
-                trigger: ShortcutTrigger::super_key(),
-            }]
+            vec![
+                ShortcutRegistration {
+                    id: TOGGLE_OVERVIEW_SHORTCUT_ID,
+                    trigger: ShortcutTrigger::super_key(),
+                },
+                ShortcutRegistration {
+                    id: WINDOW_SWITCH_SHORTCUT_ID,
+                    trigger: ShortcutTrigger::alt_tab(),
+                },
+            ]
         );
         self.shortcut_registered.store(true, Ordering::SeqCst);
         CompositorSession::spawn(
@@ -47,7 +53,9 @@ impl CompositorBackend for FakeBackend {
             CompositorSnapshot::default(),
             move |event_sender, _command_receiver, shutdown_receiver| {
                 event_sender
-                    .send(CompositorEvent::ShortcutActivated(ShortcutId::new(0)))
+                    .send(CompositorEvent::ShortcutActivated(
+                        TOGGLE_OVERVIEW_SHORTCUT_ID,
+                    ))
                     .map_err(|error| CompositorError::new(error.to_string()))?;
                 shutdown_receiver.blocking_wait();
                 self.event_loop_stopped.store(true, Ordering::SeqCst);
@@ -58,7 +66,7 @@ impl CompositorBackend for FakeBackend {
 }
 
 #[test]
-fn shell_mode_registers_and_forwards_the_launcher_shortcut() {
+fn shell_mode_registers_shortcuts_and_forwards_the_overview_shortcut() {
     let connected = Arc::new(AtomicBool::new(false));
     let shortcut_registered = Arc::new(AtomicBool::new(false));
     let event_loop_stopped = Arc::new(AtomicBool::new(false));
@@ -88,7 +96,7 @@ fn shell_mode_registers_and_forwards_the_launcher_shortcut() {
     assert!(shortcut_registered.load(Ordering::SeqCst));
     assert_eq!(
         event,
-        CompositorEvent::ShortcutActivated(ShortcutId::new(0))
+        CompositorEvent::ShortcutActivated(TOGGLE_OVERVIEW_SHORTCUT_ID)
     );
     started
         .compositor_session

@@ -13,16 +13,17 @@ use daiko::{
     App, AppContext, Id, Pos2, SurfaceId, Vec2,
     integration::{
         AppMessage, SurfaceCommand, SurfaceKeyboardInteractivity, SurfaceLayer,
-        input::{InputEvent, InputEventModifiers},
+        input::{InputEvent, InputEventModifiers, Key, KeyState},
     },
     navigation::{FocusKey, FocusOrigin},
     style::{Color, Transform},
     testing::TestRunner,
     window_events::WindowEvent,
 };
+use momo_app::{TOGGLE_OVERVIEW_SHORTCUT_ID, WINDOW_SWITCH_SHORTCUT_ID};
 use momo_compositor::{
     BackendMetadata, CapabilitySet, CompositorCommand, CompositorEvent, CompositorSession,
-    CompositorSnapshot, ShortcutId, ViewSummary,
+    CompositorSnapshot, ViewSummary,
 };
 use std::{
     path::PathBuf,
@@ -664,6 +665,69 @@ fn super_reverses_an_active_launch_and_opens_overview() {
 }
 
 #[test]
+fn alt_tab_and_arrows_cycle_while_held_and_focus_the_selected_window_on_release() {
+    let (app, command_receiver) = overview_command_test_app();
+    let mut runner = TestRunner::new(app);
+    runner.set_viewport_size(1280.0, 720.0);
+    runner.run_frame();
+
+    activate_window_switch_shortcut(&mut runner);
+    runner.run_frame();
+    runner.run_frame();
+
+    assert!(runner.find_element_by_tag("overview").is_some());
+    assert!(
+        command_receiver.try_recv().is_err(),
+        "starting window switching should not focus a window"
+    );
+
+    activate_window_switch_shortcut(&mut runner);
+    runner.run_frame();
+    assert!(
+        command_receiver.try_recv().is_err(),
+        "cycling while Alt is held should not focus a window"
+    );
+
+    for key in [Key::ArrowLeft, Key::ArrowLeft, Key::ArrowRight] {
+        runner.app_runner_mut().context.add_input_event(
+            SurfaceId::ROOT,
+            InputEvent::key(
+                key,
+                KeyState::Pressed,
+                None,
+                InputEventModifiers {
+                    alt_left: true,
+                    ..InputEventModifiers::default()
+                },
+                Instant::now(),
+            ),
+        );
+        runner.run_frame();
+    }
+    assert!(
+        command_receiver.try_recv().is_err(),
+        "navigating with arrows while Alt is held should not focus a window"
+    );
+
+    runner.app_runner_mut().context.add_input_event(
+        SurfaceId::ROOT,
+        InputEvent::key(
+            Key::AltLeft,
+            KeyState::Released,
+            None,
+            InputEventModifiers::default(),
+            Instant::now(),
+        ),
+    );
+    runner.run_frame();
+
+    assert_eq!(
+        command_receiver.try_recv(),
+        Ok(CompositorCommand::FocusView { view_id: 1 })
+    );
+}
+
+#[test]
 fn super_opens_overview_and_then_restores_the_previously_focused_window() {
     let mut runner = TestRunner::new(HomeTestApp);
     runner.set_viewport_size(1280.0, 720.0);
@@ -708,7 +772,22 @@ fn activate_super_shortcut(runner: &mut TestRunner<HomeTestApp>) {
     compositor_event_inbox
         .write()
         .pending_events
-        .push(CompositorEvent::ShortcutActivated(ShortcutId::new(0)));
+        .push(CompositorEvent::ShortcutActivated(
+            TOGGLE_OVERVIEW_SHORTCUT_ID,
+        ));
+}
+
+fn activate_window_switch_shortcut(runner: &mut TestRunner<OverviewCommandTestApp>) {
+    let compositor_event_inbox = runner.app_runner_mut().context.peek_global_state(
+        Id::new(HOME_COMPOSITOR_EVENT_INBOX_STATE_ID),
+        CompositorEventInbox::default,
+    );
+    compositor_event_inbox
+        .write()
+        .pending_events
+        .push(CompositorEvent::ShortcutActivated(
+            WINDOW_SWITCH_SHORTCUT_ID,
+        ));
 }
 
 fn received_surface_layer(

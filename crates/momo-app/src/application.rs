@@ -4,6 +4,9 @@ use momo_compositor::{
     CompositorStartupConfiguration, ShortcutId, ShortcutRegistration, ShortcutTrigger,
 };
 
+pub const TOGGLE_OVERVIEW_SHORTCUT_ID: ShortcutId = ShortcutId::new(0);
+pub const WINDOW_SWITCH_SHORTCUT_ID: ShortcutId = ShortcutId::new(1);
+
 #[cfg(test)]
 mod tests;
 
@@ -41,10 +44,16 @@ where
 
         let mode = self.configuration.mode;
         let compositor_session = self.backend.start(CompositorStartupConfiguration {
-            shortcuts: vec![ShortcutRegistration {
-                id: ShortcutId::new(0),
-                trigger: ShortcutTrigger::super_key(),
-            }],
+            shortcuts: vec![
+                ShortcutRegistration {
+                    id: TOGGLE_OVERVIEW_SHORTCUT_ID,
+                    trigger: ShortcutTrigger::super_key(),
+                },
+                ShortcutRegistration {
+                    id: WINDOW_SWITCH_SHORTCUT_ID,
+                    trigger: ShortcutTrigger::alt_tab(),
+                },
+            ],
         })?;
         let view_model = shell_view_model(
             mode,

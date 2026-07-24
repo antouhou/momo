@@ -2,11 +2,13 @@ use crate::{
     app_state::{AppOpResult, use_apps_state},
     components::home::{
         launch::{
-            HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID, LaunchOverlayEvent, LaunchPhase,
-            LaunchTransitionState,
+            LaunchOverlayEvent, LaunchPhase, LaunchTransitionState,
+            use_launch_overlay_event_channel,
         },
-        model::{HOME_LAUNCH_CHANNEL_ID, LaunchRequest, LaunchRestoreFocus},
-        surface_layer_controller::HOME_FOCUS_LOST_CHANNEL_ID,
+        model::{
+            LaunchControllerRequest, LaunchRestoreFocus, use_launch_controller_request_channel,
+        },
+        surface_layer_controller::use_focus_lost_channel,
     },
 };
 use daiko::{
@@ -40,10 +42,10 @@ pub(in crate::components::home) struct LaunchControllerOutput {
 pub(in crate::components::home) fn use_launch_controller(
     ctx: &mut ComponentContext,
 ) -> LaunchControllerOutput {
-    let focus_lost_channel = ctx.use_channel_with_id::<()>(HOME_FOCUS_LOST_CHANNEL_ID);
+    let focus_lost_channel = use_focus_lost_channel(ctx);
     let handoff_signal_received = focus_lost_channel.iter().next().is_some();
-    let launch_channel = ctx.use_channel_with_id::<LaunchRequest>(HOME_LAUNCH_CHANNEL_ID);
-    let overlay_event_channel = ctx.use_channel_with_id(HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID);
+    let launch_controller_request_channel = use_launch_controller_request_channel(ctx);
+    let overlay_event_channel = use_launch_overlay_event_channel(ctx);
     let launch_state_handle = ctx.use_local_state(|| None::<LaunchTransitionState>);
     let restore_focus_app_id = ctx.use_local_state(|| None::<Arc<String>>);
     let restore_dock_focus_key = ctx.use_local_state(|| None::<(Arc<String>, FocusKey)>);
@@ -51,8 +53,18 @@ pub(in crate::components::home) fn use_launch_controller(
     let home_focusable_handle = ctx.focusable();
 
     let mut next_launch_request = None;
-    for launch_request in launch_channel.iter() {
-        next_launch_request = Some(launch_request);
+    let mut launch_animation_reversal_requested = false;
+    for launch_controller_request in launch_controller_request_channel.iter() {
+        match launch_controller_request {
+            LaunchControllerRequest::BeginLaunchAnimation(launch_request) => {
+                next_launch_request = Some(launch_request);
+                launch_animation_reversal_requested = false;
+            }
+            LaunchControllerRequest::ReverseLaunchAnimation => {
+                next_launch_request = None;
+                launch_animation_reversal_requested = true;
+            }
+        }
     }
 
     let mut overlay_expanded_app_id = None;
@@ -82,7 +94,9 @@ pub(in crate::components::home) fn use_launch_controller(
                 NavigationInputAction::Cancel | NavigationInputAction::Back
             )
         });
-    let mut should_reverse_launch = home_focusable_handle.just_cancelled() || just_pressed_cancel;
+    let mut should_reverse_launch_animation = launch_animation_reversal_requested
+        || home_focusable_handle.just_cancelled()
+        || just_pressed_cancel;
 
     let apps_state_handle = use_apps_state(ctx);
     let mut current_launch_failed = false;
@@ -112,7 +126,7 @@ pub(in crate::components::home) fn use_launch_controller(
 
     if launch_transition_state.is_some() && (current_launch_failed || handoff_signal_received) {
         next_launch_request = None;
-        should_reverse_launch = true;
+        should_reverse_launch_animation = true;
     }
 
     if let Some(request) = next_launch_request {
@@ -130,7 +144,7 @@ pub(in crate::components::home) fn use_launch_controller(
     if let Some(current_launch_transition_state) = launch_transition_state {
         match current_launch_transition_state.phase {
             LaunchPhase::Expanding => {
-                if should_reverse_launch {
+                if should_reverse_launch_animation {
                     launch_state_handle.set_phase(LaunchPhase::Contracting);
                 } else if overlay_expanded_app_id.as_deref().map(String::as_str)
                     == Some(current_launch_transition_state.request.app.id())
@@ -163,7 +177,7 @@ pub(in crate::components::home) fn use_launch_controller(
                 }
             }
             LaunchPhase::WaitingForSurface => {
-                if should_reverse_launch {
+                if should_reverse_launch_animation {
                     launch_state_handle.set_phase(LaunchPhase::Contracting);
                 }
             }

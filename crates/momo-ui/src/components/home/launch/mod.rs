@@ -3,12 +3,11 @@ pub(super) mod overlay;
 mod style;
 
 use crate::components::home::model::LaunchRequest;
-use daiko::Vec2;
+use daiko::{Vec2, channel::Channel, component::ComponentContext};
 use std::sync::Arc;
 
 pub(super) const HOME_LAUNCH_ANIMATION_ID: &str = "momo_home_launch_animation";
-pub(super) const HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID: &str =
-    "momo_home_launch_overlay_event_channel";
+const HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID: &str = "momo_home_launch_overlay_event_channel";
 pub(super) const HOME_LAUNCH_BACKDROP_TAG: &str = "launch-overlay";
 pub(super) const HOME_LAUNCH_SURFACE_TAG: &str = "launch-overlay-surface";
 pub(super) const HOME_LAUNCH_SURFACE_RADIUS: f32 = 0.0;
@@ -36,6 +35,12 @@ pub(super) struct LaunchTransitionState {
 pub(super) enum LaunchOverlayEvent {
     Expanded { app_id: Arc<String> },
     Contracted { app_id: Arc<String> },
+}
+
+pub(super) fn use_launch_overlay_event_channel(
+    ctx: &mut ComponentContext,
+) -> Channel<LaunchOverlayEvent> {
+    ctx.use_channel_with_id(HOME_LAUNCH_OVERLAY_EVENT_CHANNEL_ID)
 }
 
 #[derive(Clone, Copy)]

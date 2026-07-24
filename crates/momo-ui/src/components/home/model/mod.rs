@@ -1,5 +1,7 @@
 use crate::components::home::app_tile::AppInfo;
-use daiko::{Vec2, component::ComponentContext, navigation::FocusKey, style::Transform};
+use daiko::{
+    Vec2, channel::Channel, component::ComponentContext, navigation::FocusKey, style::Transform,
+};
 use momo_kit::animation::focus_transform;
 use std::time::Duration;
 
@@ -20,7 +22,8 @@ pub(super) const HOME_VOLUME_OBSERVATION_ID: &str = "momo_home_volume_observatio
 pub(super) const HOME_VOLUME_STATE_ID: &str = "momo_home_volume_state";
 pub(super) const HOME_POWER_HANDLE_ID: &str = "momo_home_power_handle";
 pub(super) const HOME_SESSION_HANDLE_ID: &str = "momo_home_session_handle";
-pub(super) const HOME_LAUNCH_CHANNEL_ID: &str = "momo_home_launch_channel";
+const HOME_LAUNCH_CONTROLLER_REQUEST_CHANNEL_ID: &str =
+    "momo_home_launch_controller_request_channel";
 // pub(super) const HOME_TOP_ROW_APPS_FOCUS_KEY_ID: &str = "momo_home_top_row_apps";
 // pub(super) const HOME_TOP_ROW_SETTINGS_FOCUS_KEY_ID: &str = "momo_home_top_row_settings";
 
@@ -55,6 +58,18 @@ pub(super) struct LaunchRequest {
     pub size: Vec2,
     pub icon_position: Vec2,
     pub icon_size: Vec2,
+}
+
+#[derive(Clone)]
+pub(super) enum LaunchControllerRequest {
+    BeginLaunchAnimation(LaunchRequest),
+    ReverseLaunchAnimation,
+}
+
+pub(super) fn use_launch_controller_request_channel(
+    ctx: &mut ComponentContext,
+) -> Channel<LaunchControllerRequest> {
+    ctx.use_channel_with_id(HOME_LAUNCH_CONTROLLER_REQUEST_CHANNEL_ID)
 }
 
 #[derive(Clone, Copy)]

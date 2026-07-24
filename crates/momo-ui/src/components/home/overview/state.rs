@@ -20,6 +20,20 @@ impl OverviewCarouselState {
         self.active_card_index
     }
 
+    pub(super) fn begin_window_switch(
+        &mut self,
+        card_count: usize,
+        focused_card_index: Option<usize>,
+    ) {
+        if let Some(focused_card_index) =
+            focused_card_index.filter(|card_index| *card_index < card_count)
+        {
+            self.active_card_index = Some(focused_card_index);
+        } else {
+            self.reconcile(card_count, None);
+        }
+    }
+
     pub(super) fn previous_card_index(self) -> Option<usize> {
         self.active_card_index?.checked_sub(1)
     }
@@ -41,6 +55,20 @@ impl OverviewCarouselState {
                     self.active_card_index = Some(next_card_index);
                 }
             }
+            OverviewCarouselAction::CyclePrevious => {
+                self.active_card_index = match (card_count, self.active_card_index) {
+                    (0, _) => None,
+                    (_, Some(0) | None) => Some(card_count - 1),
+                    (_, Some(active_card_index)) => Some(active_card_index - 1),
+                };
+            }
+            OverviewCarouselAction::CycleNext => {
+                self.active_card_index = match (card_count, self.active_card_index) {
+                    (0, _) => None,
+                    (_, Some(active_card_index)) => Some((active_card_index + 1) % card_count),
+                    (_, None) => Some(0),
+                };
+            }
         }
     }
 }
@@ -49,4 +77,6 @@ impl OverviewCarouselState {
 pub(super) enum OverviewCarouselAction {
     ShowPrevious,
     ShowNext,
+    CyclePrevious,
+    CycleNext,
 }

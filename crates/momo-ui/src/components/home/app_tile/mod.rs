@@ -6,9 +6,9 @@ use crate::{
         app_icon::app_icon,
         app_tile::style::{tile_style, tile_title_style},
         model::{
-            HOME_LAUNCH_CHANNEL_ID, LaunchRequest, LaunchRestoreFocus, TILE_HEIGHT,
+            LaunchControllerRequest, LaunchRequest, LaunchRestoreFocus, TILE_HEIGHT,
             TILE_ICON_GLYPH_SIZE, TILE_ICON_SIZE, TILE_WIDTH, tile_focus_transform,
-            tile_icon_origin, transformed_local_rect,
+            tile_icon_origin, transformed_local_rect, use_launch_controller_request_channel,
         },
     },
 };
@@ -84,15 +84,17 @@ pub(crate) fn send_app_launch_request(
     );
     let (icon_position, icon_size) =
         transformed_local_rect(layout.position_absolute, transform, icon_origin, icon_size);
-    let launch_channel = ctx.use_channel_with_id(HOME_LAUNCH_CHANNEL_ID);
-    let _ = launch_channel.send(LaunchRequest {
-        app,
-        restore_focus,
-        position: surface_position,
-        size: surface_size,
-        icon_position,
-        icon_size,
-    });
+    let launch_controller_request_channel = use_launch_controller_request_channel(ctx);
+    let _ = launch_controller_request_channel.send(LaunchControllerRequest::BeginLaunchAnimation(
+        LaunchRequest {
+            app,
+            restore_focus,
+            position: surface_position,
+            size: surface_size,
+            icon_position,
+            icon_size,
+        },
+    ));
 }
 
 impl Component for AppTile {

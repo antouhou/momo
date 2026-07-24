@@ -30,6 +30,12 @@ impl ShortcutTrigger {
             keys: vec![Key::Super],
         }
     }
+
+    pub fn alt_tab() -> Self {
+        Self {
+            keys: vec![Key::Alt, Key::Tab],
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
